@@ -1,0 +1,14 @@
+{
+  "ext": "cjs,css,html,js,json,mjs,png",
+  "ignore": [
+    "package.json",
+    "package-lock.json",
+    "README.md",
+    ".gitignore",
+    ".eslintrc.json",
+    ".vscode",
+    "nodemon.json",
+    "node_modules",
+    "src"
+  ]
+}

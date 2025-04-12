@@ -1,0 +1,35 @@
+{
+  "name": "automator-lite",
+  "version": "1.0.0",
+  "description": "A Chrome extension that automates repetitive tasks in the browser.",
+  "scripts": {
+    "build": "npm run build:background && npm run build:content && npm run build:popup",
+    "build:background": "esbuild --bundle src/background.ts --outfile=dist/background.js",
+    "build:background:watch": "npm run build:background -- --watch --sourcemap=inline",
+    "build:content": "esbuild --bundle src/content.ts --outfile=dist/content.js",
+    "build:content:watch": "npm run build:content -- --watch --sourcemap=inline",
+    "build:popup": "esbuild --bundle src/popup.ts --outfile=dist/popup.js",
+    "build:popup:watch": "npm run build:popup -- --watch --sourcemap=inline",
+    "build:watch": "npm-run-all --parallel build:background:watch build:content:watch build:popup:watch",
+    "clean": "rimraf dist",
+    "clean:all": "npm run clean && rimraf node_modules",
+    "launch": "open -a \"Google Chrome\" --args --load-extension=\".\"",
+    "launch:watch": "nodemon --verbose --exec \"npm run launch\"",
+    "start": "npm-run-all --parallel build:watch launch:watch"
+  },
+  "author": "Mark Nemmer",
+  "license": "ISC",
+  "dependencies": {
+    "lodash-es": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.313",
+    "@types/lodash-es": "^4.17.12",
+    "esbuild": "^0.25.2",
+    "nodemon": "^3.1.9",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3",
+    "utility-types": "^3.11.0"
+  }
+}
