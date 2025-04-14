@@ -1,15 +1,17 @@
 // This script runs in the context of the web page.
 
-import { AutoRecord, loadRecords } from './models/auto-record';
-import { loadState, saveState } from './utils/state';
-import { scheduleRecord } from './utils/auto-record-executor';
+import type { Nullish } from 'utility-types';
+import { AutoRecord } from './models/auto-record';
+import { initExecutor } from './utils/auto-record-executor';
 import { deriveElementSelector } from './utils/element-analysis';
+import { loadState, saveState } from './utils/state';
+import { openRecordConfigModal } from './views/auto-record-config-modal';
 
 /**
  * This is the {@link HTMLElement} that will be highlighted when the user hovers over.
  * If the user clicks on it, it will have a {@link AutoRecord} created for it.
  */
-let addTargetElem: HTMLElement | null = null;
+let addTargetElem: HTMLElement | Nullish;
 
 /**
  * Initializes the content script.
@@ -17,14 +19,7 @@ let addTargetElem: HTMLElement | null = null;
  * @returns A {@link Promise} that resolves when the initialization is complete.
  */
 async function init() {
-  const records = await loadRecords();
-
-  // Schedule all records for execution.
-  for (const record of records) {
-    // if (record.autoRun && record.frequency) {
-      scheduleRecord(record);
-    // }
-  }
+  await initExecutor();
 
   // Bind event listeners to the document for adding a new record.
   document.addEventListener('mouseover', async (event) => await setAddTargetElem(event.target as HTMLElement));
@@ -79,15 +74,11 @@ async function addClickTarget(event: MouseEvent): Promise<void> {
   if (!(await isAddActive()) || !target?.id && !target?.className) return;
   event.preventDefault();
   unsetAddTargetElem();
-
-  // Generate state data to merge into the current state.
-  const state = await loadState();
-  state.addActive = false;
+  await saveState({ addActive: false });
 
   const [selector, queryIdx] = deriveElementSelector(target);
-  state.records = state.records.concat(AutoRecord.create(selector, queryIdx));
-
-  await saveState(state);
+  const autoRecord = await openRecordConfigModal(AutoRecord.create(selector, queryIdx));
+  await autoRecord?.save(); // Record will be nullish if the user cancels the modal.
 }
 
 init().then().catch((error) => {

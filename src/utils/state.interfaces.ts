@@ -18,4 +18,21 @@ export interface State {
 
 }
 
+/**
+ * The state change event.
+ */
+export interface StateChange {
+
+  /**
+   * The old value of the {@link State}.
+   */
+  oldState: State;
+
+  /**
+   * The new value of the {@link State}.
+   */
+  newState: State;
+
+}
+
 export type { AutoRecordState as RecordState }

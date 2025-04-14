@@ -1,7 +1,7 @@
 // This is a shared state management module for the MN Auto Click extension.
 
 import { isEqual } from 'lodash-es';
-import type { State } from './state.interfaces.js';
+import type { State, StateChange } from './state.interfaces.js';
 
 /**
  * Retrieves the {@link State} of the current page from Chrome storage.
@@ -41,7 +41,7 @@ export async function saveState(state: Partial<State>): Promise<State> {
  * @param callback - The callback function to execute when the {@link State} changes.
  * @param property The specific property to listen for changes on.
  */
-export async function onStateChange(callback: (state: State) => void, property?: keyof State): Promise<void> {
+export async function onStateChange(callback: (change: StateChange) => void, property?: keyof State): Promise<void> {
   const stateUid = await getStateUid();
 
   chrome.storage.local.onChanged.addListener((changes) => {
@@ -49,7 +49,10 @@ export async function onStateChange(callback: (state: State) => void, property?:
       const { oldValue, newValue } = changes[stateUid];
 
       if (!property || !isEqual(newValue[property], oldValue[property])) {
-        callback(newValue);
+        callback({
+          oldState: oldValue,
+          newState: newValue,
+        });
       }
     }
   });

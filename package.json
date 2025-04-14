@@ -20,6 +20,7 @@
   "author": "Mark Nemmer",
   "license": "ISC",
   "dependencies": {
+    "lit-html": "^3.3.0",
     "lodash-es": "^4.17.21"
   },
   "devDependencies": {

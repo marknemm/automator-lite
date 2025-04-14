@@ -121,9 +121,9 @@ export class AutoRecord implements AutoRecordState {
     // Either add new record or update existing one.
     const state = await saveState({
       records: recordStateIdx === -1
-        ? records.concat(this)
+        ? records.concat(this.#toSaveData())
         : records.slice(0, recordStateIdx)
-          .concat(this)
+          .concat(this.#toSaveData())
           .concat(records.slice(recordStateIdx + 1)),
     });
 
@@ -155,6 +155,33 @@ export class AutoRecord implements AutoRecordState {
     records.splice(recordStateIdx, 1);
     await saveState({ records });
     return true; // Record deleted successfully.
+  }
+
+  /**
+   * Converts this {@link AutoRecord} instance to a format suitable for saving.
+   *
+   * @returns The {@link AutoRecordState} data to be saved.
+   */
+  #toSaveData(): AutoRecordState {
+    const saveData: any = { ...this };
+    let proto: any = Object.getPrototypeOf(this);
+
+    while (proto && proto !== Object.prototype) {
+      const descriptors = Object.getOwnPropertyDescriptors(proto);
+      for (const [key, descriptor] of Object.entries(descriptors)) {
+        if (typeof descriptor.get === 'function' && !(key in saveData)) {
+          try {
+            saveData[key] = this[key as keyof this]; // Invokes the getter
+          } catch (error) {
+            saveData[key] = undefined; // Handle any errors gracefully
+            console.error(`Error getting property ${key}:`, error);
+          }
+        }
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+
+    return saveData;
   }
 
 }

@@ -1,4 +1,5 @@
-import { type AutoRecord, type AutoRecordUid } from '../models/auto-record';
+import { AutoRecord, loadRecords, type AutoRecordUid } from '../models/auto-record';
+import { onStateChange, type StateChange } from './state';
 
 /**
  * A map to keep track of scheduled auto-records.
@@ -6,30 +7,70 @@ import { type AutoRecord, type AutoRecordUid } from '../models/auto-record';
  */
 const recordScheduleRegistry = new Map<AutoRecordUid, number>();
 
-const defaultDispatchOpts = {
-  bubbles: true,
-  cancelable: true,
-};
+/**
+ * Default options for dispatching {@link MouseEvent}s and {@link KeyboardEvent}s.
+ */
+const defaultDispatchOpts = { bubbles: true, cancelable: true };
+
+/**
+ * Initializes the executor for auto-records.
+ * This function loads all records and schedules them for execution.
+ *
+ * @return A {@link Promise} that resolves when the initialization is complete.
+ */
+export async function initExecutor(): Promise<void> {
+  const records = await loadRecords();
+
+  // Schedule all records for execution.
+  for (const record of records) {
+    // if (record.autoRun && record.frequency) {
+      scheduleRecord(record);
+    // }
+  }
+
+  // Listen for 'records' state changes and schedule / unschedule records accordingly.
+  onStateChange((change: StateChange) => {
+    const { oldState: oldValue, newState: newValue } = change;
+    const oldRecords = oldValue.records.map((record) => new AutoRecord(record));
+    const newRecords = newValue.records.map((record) => new AutoRecord(record));
+
+    // Schedule any newly added records.
+    for (const newRecord of newRecords) {
+      if (!oldRecords.some((oldRec) => oldRec.uid === newRecord.uid)) {
+        scheduleRecord(newRecord);
+      }
+    }
+
+    // Unschedule any removed records.
+    for (const oldRecord of oldRecords) {
+      if (!newRecords.some((newRecord) => newRecord.uid === oldRecord.uid)) {
+        unscheduleRecord(oldRecord);
+      }
+    }
+  }, 'records');
+}
 
 /**
  * Schedules a given {@link AutoRecord} instance for execution.
  * This function will clear any existing interval for the same record before scheduling a new one.
  *
- * @param autoRecord - The {@link AutoRecord} instance to schedule.
+ * @param record - The {@link AutoRecord} instance to schedule.
  * @returns The interval ID of the scheduled action.
  * @see {@link unscheduleRecord} for unscheduling a record.
  */
-export function scheduleRecord(autoRecord: AutoRecord): number {
-  unscheduleRecord(autoRecord); // Clear any existing interval for this record.
+export function scheduleRecord(record: AutoRecord): number {
+  unscheduleRecord(record); // Clear any existing interval for this record.
+
+  // if (!record.autoRun || !record.frequency) return 0; // Do not schedule if autoRun is false.
 
   // Schedule the auto-record action with a repeat interval.
   const intervalId = setInterval(async () => {
-    console.log(`Performing action: ${autoRecord.action} \nOn record: ${autoRecord.uid}`);
-    await execRecord(autoRecord);
-  }, autoRecord.frequency ?? 5000);
+    console.log(`Performing action: ${record.action} \nOn record: ${record.uid}`);
+    await execRecord(record);
+  }, record.frequency ?? 5000);
 
   // Store the interval ID in the registry
-  recordScheduleRegistry.set(autoRecord.uid, intervalId);
+  recordScheduleRegistry.set(record.uid, intervalId);
   return intervalId;
 }
 
