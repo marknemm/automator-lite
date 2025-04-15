@@ -12,6 +12,7 @@ import type { State, StateChange } from './state.interfaces.js';
 export async function loadState(): Promise<State> {
   const stateUid = await getStateUid();
   const storage = await chrome.storage.local.get(stateUid) ?? {};
+  console.log(stateUid);
 
   const state = (storage[stateUid] ?? {}) as State;
   state.addActive = state.addActive ?? false;
@@ -64,12 +65,13 @@ export async function onStateChange(callback: (change: StateChange) => void, pro
  */
 async function getStateUid(): Promise<string> {
   return new Promise((resolve) => {
+    const topWindow = window.top ?? window;
     (chrome.tabs) // Is script running in extension popup or content ctx.
       ? chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           const url = new URL(tabs[0].url ?? '');
           resolve(url.hostname + url.pathname);
         })
-      : resolve(window.location.hostname + window.location.pathname);
+      : resolve(topWindow.location.hostname + topWindow.location.pathname);
   });
 }
 

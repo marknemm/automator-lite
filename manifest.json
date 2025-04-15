@@ -36,7 +36,8 @@
     {
       "matches": ["<all_urls>"],
       "js": ["dist/content.js"],
-      "css": ["styles/content.css"]
+      "css": ["styles/content.css"],
+      "all_frames": true
     }
   ]
 }
