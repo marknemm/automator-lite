@@ -4,8 +4,12 @@ import type { Nullish } from 'utility-types';
 import { AutoRecord } from './models/auto-record';
 import { initExecutor } from './utils/auto-record-executor';
 import { deriveElementSelector } from './utils/element-analysis';
-import { loadState, saveState } from './utils/state';
 import { openRecordConfigModal } from './views/auto-record-config-modal';
+
+/**
+ * Whether the add functionality is active.
+ */
+let addActive = false;
 
 /**
  * This is the {@link HTMLElement} that will be highlighted when the user hovers over.
@@ -24,16 +28,16 @@ async function init() {
   // Bind event listeners to the document for adding a new record.
   document.addEventListener('mouseover', async (event) => await setAddTargetElem(event.target as HTMLElement));
   document.addEventListener('mouseout', () => unsetAddTargetElem());
-}
 
-/**
- * Checks if the add button is active.
- *
- * @returns `true` if the add button is active, `false` otherwise.
- */
-async function isAddActive(): Promise<boolean> {
-  const { addActive } = await loadState();
-  return addActive;
+  chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+    addActive = (message.type === 'addActive');
+
+    console.log(message);
+    if (message.type === 'configureRecord') {
+      const record = await openRecordConfigModal(new AutoRecord(message.payload))
+      await record?.save();
+    }
+  });
 }
 
 /**
@@ -43,8 +47,8 @@ async function isAddActive(): Promise<boolean> {
  * @param target - The target {@link HTMLElement} to set as the add target.
  * @returns A {@link Promise} that resolves when the target element is set.
  */
-async function setAddTargetElem(target: HTMLElement): Promise<void> {
-  if (!(await isAddActive()) || !target?.classList) return;
+function setAddTargetElem(target: HTMLElement): void {
+  if (!addActive || !target?.classList) return;
   unsetAddTargetElem(); // Unset the previous target element if it exists.
 
   target.classList.add('mn-highlight');
@@ -71,10 +75,11 @@ function unsetAddTargetElem() {
  */
 async function addClickTarget(event: MouseEvent): Promise<void> {
   const target = event?.target as HTMLElement;
-  if (!(await isAddActive()) || !target?.id && !target?.className) return;
+  if (!addActive || !target?.id && !target?.className) return;
+
   event.preventDefault();
   unsetAddTargetElem();
-  await saveState({ addActive: false });
+  addActive = false;
 
   const [selector, queryIdx] = deriveElementSelector(target);
   const autoRecord = await openRecordConfigModal(AutoRecord.create(selector, queryIdx));

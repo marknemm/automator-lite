@@ -40,16 +40,16 @@ export async function saveState(state: Partial<State>): Promise<State> {
 /**
  * Listens for changes to the {@link State} in Chrome storage.
  * @param callback - The callback function to execute when the {@link State} changes.
- * @param property The specific property to listen for changes on.
+ * @param properties The specific properties to listen for changes on.
  */
-export async function onStateChange(callback: (change: StateChange) => void, property?: keyof State): Promise<void> {
+export async function onStateChange(callback: (change: StateChange) => void, ...properties: (keyof State)[]): Promise<void> {
   const stateUid = await getStateUid();
 
   chrome.storage.local.onChanged.addListener((changes) => {
     if (changes[stateUid]) {
       const { oldValue, newValue } = changes[stateUid];
 
-      if (!property || !isEqual(newValue[property], oldValue[property])) {
+      if (!properties || properties.some((property) => !isEqual(newValue[property], oldValue[property]))) {
         callback({
           oldState: oldValue,
           newState: newValue,

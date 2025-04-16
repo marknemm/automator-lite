@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // When the add button is clicked, set the state to addActive and close the popup.
   const addButton = document.getElementById('mn-add-auto-record') as HTMLButtonElement;
-  addButton?.addEventListener('click', async () => {
-    await saveState({ addActive: true });
+  addButton?.addEventListener('click', () => {
+    sendContentMessage({ type: 'addActive', payload: true });
     window.close();
   });
 
@@ -29,7 +29,16 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function refreshList(): Promise<void> {
   const records = await loadRecords();
-  renderAutoRecordList(records, deleteRecord);
+  renderAutoRecordList(records, configureRecord, deleteRecord, toggleRecordPause);
+}
+
+/**
+ * Configures a record by opening the configuration modal.
+ *
+ * @param record - The {@link AutoRecord} to configure.
+ */
+function configureRecord(record: AutoRecord) {
+  sendContentMessage({ type: 'configureRecord', payload: record.recordState });
 }
 
 /**
@@ -41,5 +50,23 @@ async function refreshList(): Promise<void> {
 async function deleteRecord(record: AutoRecord): Promise<void> {
   if (!window.confirm('Are you sure you want to delete this record?')) return;
   await record.delete();
-  await refreshList();
+}
+
+/**
+ * Toggles the pause state of a record.
+ *
+ * @param record - The {@link AutoRecord} to toggle the pause state for.
+ * @returns A {@link Promise} that resolves when the pause state is toggled.
+ */
+async function toggleRecordPause(record: AutoRecord): Promise<void> {
+  record.paused = !record.paused;
+  await record.save();
+}
+
+function sendContentMessage(message: any): void {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]?.id) {
+      chrome.tabs.sendMessage(tabs[0].id, message);
+    }
+  });
 }

@@ -18,6 +18,7 @@ export class AutoRecord implements AutoRecordState {
   #frequency: number | Nullish;
   #keyStrokes: string[] = [];
   #name = '';
+  #paused: boolean | Nullish;
   #recordState: Partial<AutoRecordState>;
   #script = '';
   #updateTimestamp: number;
@@ -43,6 +44,7 @@ export class AutoRecord implements AutoRecordState {
     this.frequency = recordState.frequency;
     this.keyStrokes = recordState.keyStrokes;
     this.name = recordState.name;
+    this.paused = recordState.paused;
     this.script = recordState.script;
     this.#updateTimestamp = recordState.updateTimestamp ?? this.createTimestamp;
   }
@@ -65,6 +67,9 @@ export class AutoRecord implements AutoRecordState {
 
   get name(): string { return this.#name || this.selector; }
   set name(name: string | Nullish) { this.#name = name?.trim() ?? ''; }
+
+  get paused(): boolean { return this.#paused ?? false; }
+  set paused(paused: boolean | Nullish) { this.#paused = paused ?? false; }
 
   /**
    * The raw {@link AutoRecordState} data.

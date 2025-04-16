@@ -1,5 +1,5 @@
 import { AutoRecord, loadRecords, type AutoRecordUid } from '../models/auto-record';
-import { onStateChange, type StateChange } from './state';
+import { loadState, onStateChange, type StateChange } from './state';
 
 /**
  * A map to keep track of scheduled auto-records.
@@ -23,9 +23,11 @@ export async function initExecutor(): Promise<void> {
 
   // Schedule all records for execution.
   for (const record of records) {
-    // if (record.autoRun && record.frequency) {
-      scheduleRecord(record);
-    // }
+    if (record.autoRun) {
+      (record.frequency)
+        ? scheduleRecord(record)
+        : setTimeout(() => execRecord(record), 1000);
+    }
   }
 
   // Listen for 'records' state changes and schedule / unschedule records accordingly.
@@ -34,20 +36,17 @@ export async function initExecutor(): Promise<void> {
     const oldRecords = oldValue.records.map((record) => new AutoRecord(record));
     const newRecords = newValue.records.map((record) => new AutoRecord(record));
 
-    // Schedule any newly added records.
-    for (const newRecord of newRecords) {
-      if (!oldRecords.some((oldRec) => oldRec.uid === newRecord.uid)) {
-        scheduleRecord(newRecord);
-      }
+    // Unschedule all previously scheduled records.
+    for (const oldRecord of oldRecords) {
+      unscheduleRecord(oldRecord);
     }
 
-    // Unschedule any removed records.
-    for (const oldRecord of oldRecords) {
-      if (!newRecords.some((newRecord) => newRecord.uid === oldRecord.uid)) {
-        unscheduleRecord(oldRecord);
-      }
+    // Schedule all new records.
+    for (const newRecord of newRecords) {
+      scheduleRecord(newRecord);
     }
-  }, 'records');
+
+  }, 'records', 'allPaused');
 }
 
 /**
@@ -61,11 +60,13 @@ export async function initExecutor(): Promise<void> {
 export function scheduleRecord(record: AutoRecord): number {
   unscheduleRecord(record); // Clear any existing interval for this record.
 
-  // if (!record.autoRun || !record.frequency) return 0; // Do not schedule if autoRun is false.
+  if (!record.frequency || record.frequency < 0) return 0;
 
   // Schedule the auto-record action with a repeat interval.
   const intervalId = setInterval(async () => {
-    console.log(`Performing action: ${record.action} \nOn record: ${record.uid}`);
+    const { allPaused } = await loadState();
+    if (allPaused || record.paused) return; // Do not execute if paused.
+
     await execRecord(record);
   }, record.frequency ?? 5000);
 
@@ -82,14 +83,16 @@ export function scheduleRecord(record: AutoRecord): number {
  * @returns `true` if the record was unscheduled, `false` otherwise.
  * @see {@link scheduleRecord} for scheduling a record.
  */
-export function unscheduleRecord(autoRecord: AutoRecord): boolean {
-  if (!recordScheduleRegistry.has(autoRecord.uid)) {
+export function unscheduleRecord(autoRecord: AutoRecord | AutoRecordUid): boolean {
+  const uid = autoRecord instanceof AutoRecord ? autoRecord.uid : autoRecord;
+
+  if (!recordScheduleRegistry.has(uid)) {
     return false; // No action was taken, as the record was not scheduled.
   }
 
   // Clear the interval for the scheduled record.
-  clearInterval(recordScheduleRegistry.get(autoRecord.uid)!);
-  recordScheduleRegistry.delete(autoRecord.uid);
+  clearInterval(recordScheduleRegistry.get(uid)!);
+  recordScheduleRegistry.delete(uid);
   return true; // Successfully unscheduled the record.
 }
 

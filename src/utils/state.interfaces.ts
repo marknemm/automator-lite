@@ -12,6 +12,11 @@ export interface State {
   addActive: boolean;
 
   /**
+   * Whether all records are paused.
+   */
+  allPaused: boolean;
+
+  /**
    * The auto-records state.
    */
   records: AutoRecordState[];

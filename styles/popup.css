@@ -1,3 +1,15 @@
+:root {
+  --action-blue: #0078d4;
+  --action-blue-darker: #005a9e;
+  --action-blue-lightest: #e4edfd;
+  --action-green: #70b770;
+  --action-green-darker: #5a9f5a;
+  --action-green-lightest: #defdeb;
+  --action-red: #d83b01;
+  --action-red-darker: #c92a00;
+  --action-red-lightest: #fce2e2;
+}
+
 body {
   min-width: 300px;
 }
@@ -29,7 +41,7 @@ button {
   width: 48px;
   height: 48px;
   border: 5px solid #FFF;
-  border-bottom-color: #0078d4;
+  border-bottom-color: var(--action-blue);
   border-radius: 50%;
   display: inline-block;
   box-sizing: border-box;
@@ -83,19 +95,20 @@ button {
 .mn-add-button {
   border-radius: 50%;
   border: none;
-  background-color: #70b770;
+  background-color: var(--action-green);
   padding: 1px 7px;
   font-size: 20px;
 }
 
 .mn-add-button:hover {
-  background-color: #5a9f5a;
+  background-color: var(--action-green-darker);
 }
 
 .mn-auto-records-list {
   list-style: none;
   padding-left: 0;
   margin-top: 7px;
+  margin-bottom: 0;
 }
 
 .mn-auto-record-list-item {
@@ -104,6 +117,7 @@ button {
   align-items: center;
   padding: 5px;
   border-top: 1px solid #f0f0f0;
+  cursor: pointer;
 }
 
 .mn-auto-record-list-item:not(.not-found):hover {
@@ -130,15 +144,47 @@ button {
   justify-content: center;
 }
 
-.delete-button {
+.mn-record-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 3px;
+  margin-left: 10px;
+}
+
+.mn-round-button {
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: none;
   background-color: #fff;
-  color: #ff4d4d;
+  color: var(--action-blue);
   padding: 4px 7px;
   font-size: 16px;
 }
 
-.delete-button:hover {
-  background-color: #ffcccc;
+.mn-delete-button {
+  color: var(--action-red);
+}
+
+.mn-delete-button:hover {
+  background-color: var(--action-red-lightest);
+}
+
+.mn-play-button {
+  font-size: 14px;
+  color: var(--action-green);
+  background-color: #fff;
+}
+
+.mn-play-button:hover {
+  background-color: var(--action-green-lightest);
+}
+
+.mn-pause-button {
+  font-size: 20px;
+}
+
+.mn-pause-button:hover {
+  background-color: var(--action-blue-lightest);
 }

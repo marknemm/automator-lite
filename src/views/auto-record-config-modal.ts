@@ -62,6 +62,28 @@ const modalTemplate = (
             readonly
             value="${record.queryIdx}"
           />
+
+          <label for="mn-record-config-record-auto-run">
+            Auto Run:
+          </label>
+          <input
+            type="checkbox"
+            id="mn-record-config-record-auto-run"
+            name="autoRun"
+            ?checked="${record.autoRun ?? true}"
+          />
+
+          <label for="mn-record-config-record-interval">
+            Repeat Interval (ms):
+          </label>
+          <input
+            type="number"
+            id="mn-record-config-record-interval"
+            name="recordInterval"
+            placeholder="Enter record interval"
+            min="0"
+            value="${record.frequency ?? 0}"
+          />
         </form>
       </div>
       <div class="mn-modal-footer">
@@ -97,8 +119,9 @@ export async function openRecordConfigModal(record: AutoRecord): Promise<AutoRec
   return new Promise((resolve) => {
     const onConfirm = async () => {
       try {
-        const nameInput = document.getElementById('mn-record-config-record-name') as HTMLInputElement;
-        record.name = nameInput.value.trim();
+        record.name = (document.getElementById('mn-record-config-record-name') as HTMLInputElement).value.trim();
+        record.autoRun = (document.getElementById('mn-record-config-record-auto-run') as HTMLInputElement).checked;
+        record.frequency = parseInt((document.getElementById('mn-record-config-record-interval') as HTMLInputElement).value, 10) || 0;
         render('', document.body); // Close the modal
         resolve(record);
       } catch (error) {
@@ -113,6 +136,7 @@ export async function openRecordConfigModal(record: AutoRecord): Promise<AutoRec
       resolve(null); // Resolve with null to indicate cancellation
     };
 
+    console.log('Opening record config modal', record);
     render(modalTemplate(record, onConfirm, onCancel), document.body);
   });
 }
