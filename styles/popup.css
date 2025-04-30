@@ -153,13 +153,16 @@ button {
 }
 
 .mn-round-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 30px;
   height: 30px;
+  padding: 0;
   border-radius: 50%;
   border: none;
   background-color: #fff;
   color: var(--action-blue);
-  padding: 4px 7px;
   font-size: 16px;
 }
 

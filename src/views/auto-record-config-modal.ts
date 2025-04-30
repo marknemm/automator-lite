@@ -16,6 +16,7 @@ const modalTemplate = (
         <button
           id="mn-record-config-modal-close"
           class="mn-modal-close"
+          @click="${{ handleEvent: () => onCancel(), once: true }}"
           title="Close"
         >
           &#10006;
