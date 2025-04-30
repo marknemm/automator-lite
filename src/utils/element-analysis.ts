@@ -17,10 +17,6 @@ const interactiveAttributes = [
   'aria-checked',
   'aria-selected',
   'aria-controls',
-  'aria-current',
-  'aria-grabbed',
-  'aria-dropeffect',
-  'tabindex',
 ];
 
 const interactiveRoles = [
@@ -134,26 +130,26 @@ function scanHierarchyForIdentifyingElement(element: Element): [Element, 'ancest
 function deriveSingularSelector(element: Element): string {
   // Following build selector using identifying attributes.
   if (element.id) {
-    return `#${element.id}`;
+    return `#${CSS.escape(element.id)}`;
   }
 
   if (element.hasAttribute('name')) {
     const form = element.closest('form');
 
     return form
-      ? `form[action="${form.action}"] [name="${element.getAttribute('name')}"]`
-      : `[name="${element.getAttribute('name')}"]`;
+      ? `form[action="${form.action}"] [name="${CSS.escape(element.getAttribute('name')!)}"]`
+      : `[name="${CSS.escape(element.getAttribute('name')!)}"]`;
   }
 
   const identifyingAttr = identifyingAttributes.find(attr => element.hasAttribute(attr));
   if (identifyingAttr) {
-    return `[${identifyingAttr}="${element.getAttribute(identifyingAttr)}"]`;
+    return `[${identifyingAttr}="${CSS.escape(element.getAttribute(identifyingAttr)!)}"]`;
   }
   ////////////////////////////////////////////////////////////////
 
   // Anything below here is a fallback that is highly likely to be inconsistent upon reload.
   return (element.className)
-    ? `.${element.className.replace(/\s+/g, '.')}`
+    ? `.${CSS.escape(element.className).replace(/\s+/g, '.')}`
     : element.tagName.toLowerCase();
 }
 
