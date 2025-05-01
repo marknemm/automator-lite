@@ -1,14 +1,4 @@
-:root {
-  --action-blue: #0078d4;
-  --action-blue-darker: #005a9e;
-  --action-blue-lightest: #e4edfd;
-  --action-green: #70b770;
-  --action-green-darker: #5a9f5a;
-  --action-green-lightest: #defdeb;
-  --action-red: #d83b01;
-  --action-red-darker: #c92a00;
-  --action-red-lightest: #fce2e2;
-}
+@import url('./constants.css');
 
 body {
   min-width: 300px;
@@ -41,7 +31,7 @@ button {
   width: 48px;
   height: 48px;
   border: 5px solid #FFF;
-  border-bottom-color: var(--action-blue);
+  border-bottom-color: var(--mn-action-blue);
   border-radius: 50%;
   display: inline-block;
   box-sizing: border-box;
@@ -95,13 +85,13 @@ button {
 .mn-add-button {
   border-radius: 50%;
   border: none;
-  background-color: var(--action-green);
+  background-color: var(--mn-action-green);
   padding: 1px 7px;
   font-size: 20px;
 }
 
 .mn-add-button:hover {
-  background-color: var(--action-green-darker);
+  background-color: var(--mn-action-green-darker);
 }
 
 .mn-auto-records-list {
@@ -162,26 +152,26 @@ button {
   border-radius: 50%;
   border: none;
   background-color: #fff;
-  color: var(--action-blue);
+  color: var(--mn-action-blue);
   font-size: 16px;
 }
 
 .mn-delete-button {
-  color: var(--action-red);
+  color: var(--mn-action-red);
 }
 
 .mn-delete-button:hover {
-  background-color: var(--action-red-lightest);
+  background-color: var(--mn-action-red-lightest);
 }
 
 .mn-play-button {
   font-size: 14px;
-  color: var(--action-green);
+  color: var(--mn-action-green);
   background-color: #fff;
 }
 
 .mn-play-button:hover {
-  background-color: var(--action-green-lightest);
+  background-color: var(--mn-action-green-lightest);
 }
 
 .mn-pause-button {
@@ -189,5 +179,5 @@ button {
 }
 
 .mn-pause-button:hover {
-  background-color: var(--action-blue-lightest);
+  background-color: var(--mn-action-blue-lightest);
 }

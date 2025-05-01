@@ -1,6 +1,13 @@
 .mn-highlight {
-  outline: 1px solid green !important;
-  background-color: #0078D7 !important;
+  outline: 1px solid var(--mn-action-green-darker) !important;
+  background-color: var(--mn-action-blue) !important;
   transition: background-color 0.2s ease-in-out !important;
   cursor: cell !important;
+}
+
+#mn-modal-host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
 }

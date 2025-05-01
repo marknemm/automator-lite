@@ -39,6 +39,7 @@ async function refreshList(): Promise<void> {
  */
 function configureRecord(record: AutoRecord) {
   sendContentMessage({ type: 'configureRecord', payload: record.recordState });
+  window.close();
 }
 
 /**

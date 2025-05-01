@@ -1,3 +1,5 @@
+@import url('./constants.css');
+
 .mn-modal {
   position: fixed;
   top: 0;
@@ -12,7 +14,8 @@
 }
 
 .mn-modal-content {
-  background-color: #fff;
+  background-color: #000;
+  color: #fff;
   border-radius: 8px;
   width: 400px;
   max-width: 90%;
@@ -39,6 +42,12 @@
   border: none;
   font-size: 18px;
   cursor: pointer;
+  color: var(--mn-action-red);
+  transition: color 0.2s;
+}
+
+.mn-modal-close:hover {
+  color: var(--mn-action-red-darker);
 }
 
 .mn-modal-body {
@@ -55,22 +64,27 @@
   display: none;
 }
 
-.mn-modal-body form label {
+.mn-modal-body label {
   display: block;
   margin-bottom: 4px;
   font-weight: bold;
+  color: #ccc;
 }
 
-.mn-modal-body form input {
+.mn-modal-body input {
   width: calc(100% - 8px);
   padding: 8px;
   margin-bottom: 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  background-color: #333;
+  color: #fff;
+  outline: none;
+  border: 1px solid #aaa;
 }
 
-.mn-modal-body form input[type="checkbox"] {
+.mn-modal-body input[type="checkbox"] {
   width: auto;
   margin-right: 8px;
 }
@@ -84,7 +98,7 @@
 
 .mn-modal-cancel,
 .mn-modal-confirm {
-  background-color: #0078d4;
+  background-color: var(--mn-action-blue);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -95,7 +109,7 @@
 }
 
 .mn-modal-cancel {
-  background-color: #d9534f;
+  background-color: var(--mn-action-red);
 }
 
 .mn-modal-cancel:hover,

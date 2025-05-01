@@ -149,7 +149,7 @@ function deriveSingularSelector(element: Element): string {
 
   // Anything below here is a fallback that is highly likely to be inconsistent upon reload.
   return (element.className)
-    ? `.${CSS.escape(element.className).replace(/\s+/g, '.')}`
+    ? `.${element.className.replace(/\s+/g, '.')}`
     : element.tagName.toLowerCase();
 }
 

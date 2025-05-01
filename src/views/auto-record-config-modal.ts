@@ -7,6 +7,7 @@ const modalTemplate = (
   onCancel: () => void,
   error = ''
 ): TemplateResult => html`
+  <link rel="stylesheet" href="${chrome.runtime.getURL('styles/modal.css')}" />
   <div id="mn-record-config-modal" class="mn-modal">
     <div class="mn-modal-content">
       <div class="mn-modal-header">
@@ -18,16 +19,17 @@ const modalTemplate = (
           class="mn-modal-close"
           @click="${{ handleEvent: () => onCancel(), once: true }}"
           title="Close"
+          type="button"
         >
           &#10006;
         </button>
       </div>
-      <div class="mn-modal-body">
-        <div class="mn-modal-error">
-          ${error}
-        </div>
+      <form>
+        <div class="mn-modal-body">
+          <div class="mn-modal-error">
+            ${error}
+          </div>
 
-        <form>
           <label for="mn-record-config-record-name">
             Record Name:
           </label>
@@ -85,30 +87,34 @@ const modalTemplate = (
             min="0"
             value="${record.frequency ?? 0}"
           />
-        </form>
-      </div>
-      <div class="mn-modal-footer">
-        <button
-          id="mn-record-config-modal-cancel"
-          class="mn-modal-cancel"
-          @click="${{ handleEvent: () => onCancel(), once: true }}"
-          title="Cancel"
-        >
-          &#10006;
-        </button>
+        </div>
+        <div class="mn-modal-footer">
+          <button
+            id="mn-record-config-modal-cancel"
+            class="mn-modal-cancel"
+            @click="${{ handleEvent: () => onCancel(), once: true }}"
+            title="Cancel"
+            type="button"
+          >
+            &#10006;
+          </button>
 
-        <button
-          id="mn-record-config-modal-confirm"
-          class="mn-modal-confirm"
-          @click="${{ handleEvent: async () => await onConfirm(record), once: true }}"
-          title="Confirm"
-        >
-          &#10004;
-        </button>
-      </div>
+          <button
+            id="mn-record-config-modal-confirm"
+            class="mn-modal-confirm"
+            @click="${{ handleEvent: async () => await onConfirm(record), once: true }}"
+            title="Confirm"
+            type="submit"
+          >
+            &#10004;
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 `;
+
+let modalRoot: ShadowRoot | null = null;
 
 /**
  * Opens the record configuration modal.
@@ -117,27 +123,41 @@ const modalTemplate = (
  * @returns A {@link Promise} that resolves to the configured {@link record} when the modal is closed.
  */
 export async function openRecordConfigModal(record: AutoRecord): Promise<AutoRecord | null> {
+  if (!modalRoot) {
+    const modalHost = document.createElement('div');
+    modalHost.id = 'mn-modal-host';
+    document.body.appendChild(modalHost);
+    modalRoot = modalHost.attachShadow({ mode: 'open' });
+    modalRoot.addEventListener('keydown', (event) => {
+      if ((event as KeyboardEvent).key === 'Escape') {
+        event.preventDefault();
+        render('', modalRoot!); // Close the modal
+      }
+    });
+  }
+
   return new Promise((resolve) => {
     const onConfirm = async () => {
       try {
-        record.name = (document.getElementById('mn-record-config-record-name') as HTMLInputElement).value.trim();
-        record.autoRun = (document.getElementById('mn-record-config-record-auto-run') as HTMLInputElement).checked;
-        record.frequency = parseInt((document.getElementById('mn-record-config-record-interval') as HTMLInputElement).value, 10) || 0;
-        render('', document.body); // Close the modal
+        record.name = (modalRoot!.getElementById('mn-record-config-record-name') as HTMLInputElement).value.trim();
+        record.autoRun = (modalRoot!.getElementById('mn-record-config-record-auto-run') as HTMLInputElement).checked;
+        record.frequency = parseInt((modalRoot!.getElementById('mn-record-config-record-interval') as HTMLInputElement).value, 10) || 0;
+        render('', modalRoot!); // Close the modal
         resolve(record);
       } catch (error) {
         const errMsg = 'Error saving record, please try again.';
         console.error(errMsg, error);
-        render(modalTemplate(record, onConfirm, onCancel, errMsg), document.body);
+        render(modalTemplate(record, onConfirm, onCancel, errMsg), modalRoot!);
       }
     };
 
     const onCancel = () => {
-      render('', document.body); // Close the modal
+      render('', modalRoot!); // Close the modal
       resolve(null); // Resolve with null to indicate cancellation
     };
 
     console.log('Opening record config modal', record);
-    render(modalTemplate(record, onConfirm, onCancel), document.body);
+    render(modalTemplate(record, onConfirm, onCancel), modalRoot!);
+    requestAnimationFrame(() => modalRoot!.querySelector('input')?.focus());
   });
 }
