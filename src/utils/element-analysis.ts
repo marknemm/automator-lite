@@ -48,7 +48,7 @@ const interactiveSelector = [
 
 /**
  * Derives a CSS selector for the given {@link HTMLElement}.
- *
+ *Í
  * @param element - The {@link HTMLElement} to derive the selector for.
  * @returns A tuple containing the derived selector as a string and an index number.
  * The index number is the position of the element when queried from the DOM.
@@ -127,30 +127,39 @@ function scanHierarchyForIdentifyingElement(element: Element): [Element, 'ancest
   return [element, 'self'];
 }
 
+/**
+ * Derives a CSS selector for the given {@link Element}.
+ *
+ * @param element - The {@link Element} to derive the selector for.
+ * @returns A string representing the derived selector.
+ */
 function deriveSingularSelector(element: Element): string {
-  // Following build selector using identifying attributes.
+  // Use ID if available, as it is the most specific.
   if (element.id) {
     return `#${CSS.escape(element.id)}`;
   }
 
+  // Use name attribute if available, especially for form elements.
   if (element.hasAttribute('name')) {
     const form = element.closest('form');
-
     return form
-      ? `form[action="${form.action}"] [name="${CSS.escape(element.getAttribute('name')!)}"]`
+      ? `form[action="${CSS.escape(form.action)}"] [name="${CSS.escape(element.getAttribute('name')!)}"]`
       : `[name="${CSS.escape(element.getAttribute('name')!)}"]`;
   }
 
+  // Use identifying attributes if available (e.g., aria-label, href).
   const identifyingAttr = identifyingAttributes.find(attr => element.hasAttribute(attr));
   if (identifyingAttr) {
     return `[${identifyingAttr}="${CSS.escape(element.getAttribute(identifyingAttr)!)}"]`;
   }
-  ////////////////////////////////////////////////////////////////
 
-  // Anything below here is a fallback that is highly likely to be inconsistent upon reload.
-  return (element.className)
-    ? `.${element.className.replace(/\s+/g, '.')}`
-    : element.tagName.toLowerCase();
+  // Use class names if available.
+  if (element.className) {
+    return `${element.tagName.toLowerCase()}.${Array.from(element.classList).map(cls => CSS.escape(cls)).join('.')}`;
+  }
+
+  // Fallback to tag name if no other attributes are available.
+  return element.tagName.toLowerCase();
 }
 
 /**

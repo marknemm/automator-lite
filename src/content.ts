@@ -34,7 +34,7 @@ async function init() {
 
     console.log(message);
     if (message.type === 'configureRecord') {
-      const record = await openRecordConfigModal(new AutoRecord(message.payload))
+      const record = await openRecordConfigModal(new AutoRecord(message.payload)).onModalClose;
       await record?.save();
     }
   });
@@ -82,7 +82,7 @@ async function addClickTarget(event: MouseEvent): Promise<void> {
   addActive = false;
 
   const [selector, queryIdx] = deriveElementSelector(target);
-  const autoRecord = await openRecordConfigModal(AutoRecord.create(selector, queryIdx));
+  const autoRecord = await openRecordConfigModal(AutoRecord.create(selector, queryIdx)).onModalClose;
   await autoRecord?.save(); // Record will be nullish if the user cancels the modal.
 }
 
