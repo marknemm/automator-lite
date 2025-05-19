@@ -45,9 +45,14 @@ export function renderModal<T>(
   renderContent: (modalContext: ModalContext<T>) => TemplateResult,
   options: ModalOptions = {},
 ): ModalContext<T> {
+  let hostMount: HTMLElement = document.body;
+  try { // If in same origin iframe, use the top document body.
+    hostMount = window.top?.document.body || document.body;
+  } catch { /* Ignore cross-origin iframe access error */ }
+
   const modalHost = document.createElement('div');
   modalHost.id = 'mn-modal-host';
-  document.body.appendChild(modalHost);
+  hostMount.appendChild(modalHost);
   const modalRoot: ShadowRoot = modalHost.attachShadow({ mode: 'open' });
 
   // Create a close function to remove the modal and execute the onClose callback.
@@ -55,7 +60,7 @@ export function renderModal<T>(
   const closeModal = (data?: T) => {
     modalHost.remove();
     resolve(data);
-  }
+  };
 
   const onBackdropClick = () => options.closeOnBackdropClick && closeModal();
   const onEscape = () => !options.noCloseOnEscape && closeModal();
@@ -64,14 +69,14 @@ export function renderModal<T>(
     if (refocus) {
       requestAnimationFrame(() => (modalRoot.querySelector('input, select, textarea') as HTMLElement)?.focus());
     }
-  }
+  };
 
   const modalContent: ModalContext<T> = {
     modalRoot,
     closeModal,
     refreshModal,
     onModalClose,
-  }
+  };
 
   refreshModal(renderContent(modalContent), !options.noFocus);
   return modalContent;

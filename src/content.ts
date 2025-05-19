@@ -32,8 +32,7 @@ async function init() {
   chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     addActive = (message.type === 'addActive');
 
-    console.log(message);
-    if (message.type === 'configureRecord') {
+    if (message.type === 'configureRecord' && window.top === window) {
       const record = await openRecordConfigModal(new AutoRecord(message.payload)).onModalClose;
       await record?.save();
     }
