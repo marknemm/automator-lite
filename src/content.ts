@@ -6,6 +6,8 @@ import { initExecutor } from './utils/auto-record-executor';
 import { deriveElementSelector } from './utils/element-analysis';
 import { openRecordConfigModal } from './views/auto-record-config-modal';
 
+import './styles/content.scss';
+
 /**
  * Whether the add functionality is active.
  */

@@ -1,3 +1,5 @@
+@use 'constants';
+
 .mn-highlight {
   outline: 1px solid var(--mn-action-green-darker) !important;
   background-color: var(--mn-action-blue) !important;

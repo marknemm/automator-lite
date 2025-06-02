@@ -1,6 +1,7 @@
-@import url('./constants.css');
+@use 'field-help';
+@use 'constants';
 
-.mn-modal {
+.mn-modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
@@ -13,13 +14,13 @@
   z-index: 1000;
 }
 
-.mn-modal-content {
-  background-color: #000;
+.mn-modal {
+  background-color: #222;
   color: #fff;
   border-radius: 8px;
   width: 400px;
   max-width: 90%;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
   animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -65,15 +66,20 @@
 }
 
 .mn-modal-body label {
+  position: relative;
+  font-size: 14px;
   display: block;
+  width: 100%;
+  box-sizing: border-box;
   margin-bottom: 4px;
   font-weight: bold;
   color: #ccc;
 }
 
 .mn-modal-body input {
-  width: calc(100% - 8px);
   padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
   margin-bottom: 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -115,13 +121,4 @@
 .mn-modal-cancel:hover,
 .mn-modal-confirm:hover {
   opacity: 0.9;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }

@@ -9,3 +9,21 @@
   --mn-action-red-darker: #c92a00;
   --mn-action-red-lightest: #fce2e2;
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

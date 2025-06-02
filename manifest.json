@@ -36,14 +36,8 @@
     {
       "matches": ["<all_urls>"],
       "js": ["dist/content.js"],
-      "css": ["styles/constants.css", "styles/content.css"],
+      "css": ["dist/content.css"],
       "all_frames": true
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["styles/constants.css", "styles/content.css", "styles/modal.css"],
-      "matches": ["<all_urls>"]
     }
   ]
 }

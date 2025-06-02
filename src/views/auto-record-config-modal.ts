@@ -2,6 +2,7 @@ import { html, type TemplateResult } from 'lit-html';
 import { createRef, ref, type Ref } from 'lit-html/directives/ref.js';
 import { AutoRecord } from '../models/auto-record';
 import { ModalContext, renderModal } from '../utils/modal';
+import { fieldHelpTemplate } from '../partials/field-help';
 
 const formRef: Ref<HTMLFormElement> = createRef();
 
@@ -87,6 +88,7 @@ const contentTemplate = (
 
       <label for="mn-record-config-record-auto-run">
         Auto Run:
+        ${fieldHelpTemplate('Automatically run this record when the page loads.')}
       </label>
       <input
         type="checkbox"
@@ -96,7 +98,7 @@ const contentTemplate = (
       />
 
       <label for="mn-record-config-record-interval">
-        Repeat Interval (ms):
+        Repeat Interval:
       </label>
       <input
         type="number"

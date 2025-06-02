@@ -2,6 +2,8 @@ import { html, render, type TemplateResult } from 'lit-html';
 import deferredPromise from 'p-defer';
 import type { ModalContext, ModalOptions } from './modal.interfaces';
 
+import modalCss from '../styles/modal.shadow.scss';
+
 /**
  * Template for the modal popup.
  *
@@ -15,7 +17,7 @@ const modalTemplate = (
   onBackdropClick: () => void,
   onEscape: () => void,
 ): TemplateResult => html`
-  <link rel="stylesheet" href="${chrome.runtime.getURL('styles/modal.css')}" />
+  <style>${modalCss}</style>
   <div
     class="mn-modal-backdrop"
     @click="${{ handleEvent: onBackdropClick }}"

@@ -4,6 +4,8 @@ import { AutoRecord, loadRecords } from './models/auto-record.js';
 import { onStateChange, saveState } from './utils/state.js';
 import { renderAutoRecordList } from './views/auto-record-list.js';
 
+import './styles/popup.scss';
+
 // Once the extension popup DOM is fully loaded, initialize the popup.
 document.addEventListener('DOMContentLoaded', async () => {
 
