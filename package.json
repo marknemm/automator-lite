@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "A Chrome extension that automates repetitive tasks in the browser.",
   "scripts": {
-    "build": "npm run clean && node esbuild.config.mjs -- --minify",
-    "build:watch": "npm run clean && node esbuild.config.mjs -- --watch",
+    "build": "node esbuild.config.mjs -- --minify",
+    "build:watch": "node esbuild.config.mjs -- --watch",
     "clean": "rimraf dist",
     "clean:all": "npm run clean && rimraf node_modules"
   },
