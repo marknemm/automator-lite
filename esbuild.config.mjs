@@ -1,7 +1,9 @@
 import esbuild from 'esbuild';
 import { sassPlugin } from 'esbuild-sass-plugin';
+import { typecheckPlugin } from '@jgoz/esbuild-plugin-typecheck';
 
-const minify = process.argv.includes('--minify') || process.env.NODE_ENV === 'production';
+const prod = process.env.NODE_ENV === 'production';
+const minify = process.argv.includes('--minify') || prod;
 const watch = process.argv.includes('--watch');
 
 const ctx = await esbuild.context({
@@ -11,8 +13,14 @@ const ctx = await esbuild.context({
     'src/popup.ts',
   ],
   bundle: true,
+  write: true,
+  logLevel: 'info',
   outdir: 'dist',
   plugins: [
+    typecheckPlugin({
+      omitStartLog: true,
+      watch,
+    }),
     sassPlugin({
       type: 'css-text',
       filter: /\.shadow\.scss$/,
@@ -23,24 +31,20 @@ const ctx = await esbuild.context({
       sourceMap: !minify,
       sourceMapIncludeSources: !minify,
     }),
-    {
-      name: 'build-result-info',
-      setup(build) {
-        build.onEnd((result) => {
-          console.log('Build completed: ', result);
-        });
-      }
-    }
   ],
   treeShaking: true,
   sourcemap: !minify ? 'inline' : false,
   minify,
 });
 
-if (watch) {
-  await ctx.watch();
-  console.log('Watching for changes...');
-} else {
-  await ctx.rebuild();
-  await ctx.dispose();
+try {
+  if (watch) {
+    await ctx.watch();
+  } else {
+    await ctx.rebuild();
+    await ctx.dispose();
+  }
+} catch (error) {
+  console.error('Error during build process:', error);
+  process.exit(1);
 }
