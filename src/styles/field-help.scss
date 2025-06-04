@@ -1,5 +1,7 @@
 @use 'constants';
 
+$offset: 7px;
+
 .mn-field-help {
   position: absolute;
   right: 0;
@@ -7,7 +9,7 @@
   background-color: #aaa;
   color: #fff;
   border-radius: 50%;
-  padding: 1px 4px;
+  padding: 0px 4px;
   font-size: 13px;
   vertical-align: middle;
   cursor: pointer;
@@ -22,16 +24,25 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   width: 200px;
   z-index: 1001;
-  top: 100%;
-  right: 0;
-  transform: translateY(8px);
+  top: calc(100% + #{$offset + 1px});
+  right: -#{$offset - 1px};
   font-size: 12px;
   color: #aaa;
-  margin-top: -8px;
-  margin-bottom: 8px;
   opacity: 0;
   pointer-events: none;
   cursor: default;
+
+  &:before {
+    content: '';
+    position: absolute;
+    top: -#{$offset};
+    right: #{$offset};
+    width: 0;
+    height: 0;
+    border-left: $offset solid transparent;
+    border-right: $offset solid transparent;
+    border-bottom: $offset solid #000;
+  }
 }
 
 .mn-field-help:hover .mn-field-description {
