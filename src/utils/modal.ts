@@ -21,7 +21,13 @@ const modalTemplate = (
   <div
     class="mn-modal-backdrop"
     @click="${{ handleEvent: onBackdropClick }}"
-    @keydown="${{ handleEvent: onEscape }}"
+    @keydown="${{
+      handleEvent: (event: KeyboardEvent) => {
+        if (event.key !== 'Escape') return;
+        event.stopPropagation();
+        onEscape();
+      }
+    }}"
   >
     <div
       class="mn-modal"

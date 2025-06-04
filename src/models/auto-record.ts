@@ -65,7 +65,7 @@ export class AutoRecord implements AutoRecordState {
   get keyStrokes(): string[] { return this.#keyStrokes; }
   set keyStrokes(keyStrokes: string[] | Nullish) { this.#keyStrokes = keyStrokes ?? []; }
 
-  get name(): string { return this.#name || this.selector; }
+  get name(): string { return this.#name; }
   set name(name: string | Nullish) { this.#name = name?.trim() ?? ''; }
 
   get paused(): boolean { return this.#paused ?? false; }

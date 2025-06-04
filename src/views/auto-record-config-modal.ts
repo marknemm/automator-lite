@@ -51,17 +51,19 @@ const contentTemplate = (
 
       <label for="mn-record-config-record-name">
         Record Name:
+        ${fieldHelpTemplate('A unique name for this record. This helps in identifying the record later.')}
       </label>
       <input
         type="text"
         id="mn-record-config-record-name"
         name="recordName"
-        placeholder="Enter record name"
+        placeholder="${record.selector}"
         value="${record.name}"
       />
 
       <label for="mn-record-config-record-selector">
         Record Selector:
+        ${fieldHelpTemplate('The CSS selector used to identify the element(s) to be recorded. This should be unique to the element you want to target.')}
       </label>
       <input
         type="text"
@@ -75,6 +77,7 @@ const contentTemplate = (
 
       <label for="mn-record-config-record-query-idx">
         Record Query Index:
+        ${fieldHelpTemplate('The index of the query to be recorded. This is used when the selector matches multiple elements.')}
       </label>
       <input
         type="number"
@@ -99,6 +102,7 @@ const contentTemplate = (
 
       <label for="mn-record-config-record-interval">
         Repeat Interval:
+        ${fieldHelpTemplate('The interval in milliseconds between each record execution.')}
       </label>
       <input
         type="number"
