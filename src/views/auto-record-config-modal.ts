@@ -39,7 +39,7 @@ const contentTemplate = (
     ${ref(formRef)}
     @submit="${{ handleEvent: (event: Event) => {
       event.preventDefault();
-      if (formRef.value?.checkValidity()) {
+      if (formRef.value?.reportValidity()) {
         onConfirm(new FormData(formRef.value));
       }
     }}}"
