@@ -32,7 +32,7 @@ async function init() {
   document.addEventListener('mouseout', () => unsetAddTargetElem());
 
   chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    addActive = (message.type === 'addActive');
+    addActive = (message.type === 'addActive') && message.payload;
 
     if (message.type === 'configureRecord' && window.top === window) {
       const record = await openRecordConfigModal(new AutoRecord(message.payload)).onModalClose;

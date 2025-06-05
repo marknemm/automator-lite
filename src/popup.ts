@@ -1,7 +1,7 @@
 // This script runs in the context of the extension popup.
 
 import { AutoRecord, loadRecords } from './models/auto-record.js';
-import { onStateChange, saveState } from './utils/state.js';
+import { onStateChange } from './utils/state.js';
 import { renderAutoRecordList } from './views/auto-record-list.js';
 
 import './styles/popup.scss';
@@ -9,7 +9,7 @@ import './styles/popup.scss';
 // Once the extension popup DOM is fully loaded, initialize the popup.
 document.addEventListener('DOMContentLoaded', async () => {
 
-  await saveState({ addActive: false }); // Reset the addActive state to false.
+  sendContentMessage({ type: 'addActive', payload: false }); // Reset the addActive state to false.
 
   // When the add button is clicked, set the state to addActive and close the popup.
   const addButton = document.getElementById('mn-add-auto-record') as HTMLButtonElement;
