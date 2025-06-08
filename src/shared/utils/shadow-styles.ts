@@ -1,3 +1,5 @@
+const sheets = new Map<string, CSSStyleSheet>();
+
 /**
  * Injects CSS styles into a Shadow DOM.
  *
@@ -6,8 +8,12 @@
  */
 export function injectShadowStyles(root: ShadowRoot, styles: string) {
   if ('adoptedStyleSheets' in Document.prototype) {
-    const sheet = new CSSStyleSheet();
-    sheet.replaceSync(styles);
+    let sheet = sheets.get(styles);
+    if (!sheet) {
+      sheet = new CSSStyleSheet();
+      sheet.replaceSync(styles);
+      sheets.set(styles, sheet);
+    }
     root.adoptedStyleSheets.push(sheet);
   } else { // Fallback for browsers that do not support adoptedStyleSheets (Firefox)
     const style = document.createElement('style');
