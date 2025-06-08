@@ -31,7 +31,7 @@ async function init() {
   document.addEventListener('mouseover', async (event) => await setAddTargetElem(event.target as HTMLElement));
   document.addEventListener('mouseout', () => unsetAddTargetElem());
 
-  chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener(async (message) => {
     addActive = (message.type === 'addActive') && message.payload;
 
     if (message.type === 'configureRecord' && window.top === window) {

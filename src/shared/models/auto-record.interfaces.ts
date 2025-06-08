@@ -1,5 +1,4 @@
 import type { Nullish } from 'utility-types';
-import type { AutoRecord } from './auto-record.js';
 
 /**
  * The saved state of an {@link AutoRecord}.

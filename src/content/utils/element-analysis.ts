@@ -7,7 +7,7 @@ const identifyingAttributes = [
 ];
 
 const identifyingSelector = [
-  ...identifyingAttributes.map(attr => `[${attr}]`)
+  ...identifyingAttributes.map(attr => `[${attr}]`),
 ].join(', ');
 
 const interactiveAttributes = [
@@ -60,13 +60,13 @@ export function deriveElementSelector(element: Element): [string, number] {
   // Scan hierarchy for best identifying element candidate.
   const [
     identifyingElement,
-    identifyingRelationship
+    identifyingRelationship,
   ] = scanHierarchyForIdentifyingElement(interactiveElement);
 
   const identifyingSelector = deriveSingularSelector(identifyingElement);
 
   // Generate the best selector based on the relationship between both elements.
-  let selector = (identifyingRelationship === 'ancestor')
+  const selector = (identifyingRelationship === 'ancestor')
     ? `${identifyingSelector} ${deriveSingularSelector(interactiveElement)}`
     : identifyingSelector;
 
@@ -75,7 +75,7 @@ export function deriveElementSelector(element: Element): [string, number] {
   return [
     selector,
     Array.from(queryResult).findIndex(
-      (el) => el === interactiveElement || el === identifyingElement
+      (el) => el === interactiveElement || el === identifyingElement,
     ),
   ];
 }

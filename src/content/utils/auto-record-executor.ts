@@ -110,7 +110,7 @@ export async function execRecord(record: AutoRecord): Promise<void> {
   if (record.action !== 'Script' && (!element || !(element instanceof HTMLElement))) {
     console.warn(
       `Target element not found for record: ${record.name}\n`,
-      JSON.stringify(record, null, 2)
+      JSON.stringify(record, null, 2),
     );
     return; // Do NOT throw an error, just log a warning.
   }

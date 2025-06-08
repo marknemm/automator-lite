@@ -25,7 +25,7 @@ const modalTemplate = (
         if (event.key !== 'Escape') return;
         event.stopPropagation();
         onEscape();
-      }
+      },
     }}"
   >
     <div

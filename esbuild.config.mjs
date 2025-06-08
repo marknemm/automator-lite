@@ -2,6 +2,7 @@ import { TsconfigPathsPlugin } from '@esbuild-plugins/tsconfig-paths';
 import { typecheckPlugin } from '@jgoz/esbuild-plugin-typecheck';
 import esbuild from 'esbuild';
 import copy from 'esbuild-plugin-copy';
+import eslintPlugin from 'esbuild-plugin-eslint';
 import { sassPlugin } from 'esbuild-sass-plugin';
 import { rm } from 'fs/promises';
 
@@ -26,6 +27,9 @@ const ctx = await esbuild.context({
     typecheckPlugin({
       omitStartLog: true,
       watch,
+    }),
+    eslintPlugin({
+      throwOnError: true,
     }),
     sassPlugin({
       type: 'css-text',

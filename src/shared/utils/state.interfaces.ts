@@ -40,4 +40,4 @@ export interface StateChange {
 
 }
 
-export type { AutoRecordState }
+export type { AutoRecordState };

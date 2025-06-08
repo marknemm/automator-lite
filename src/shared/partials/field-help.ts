@@ -3,7 +3,7 @@ import { html, type TemplateResult } from 'lit-html';
 import './field-help.scss';
 
 export const fieldHelpTemplate = (
-  helpText: string
+  helpText: string,
 ): TemplateResult => html`
   <span class="mn-field-help">
     <span>&#63;</span>
