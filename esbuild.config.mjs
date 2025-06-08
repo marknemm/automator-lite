@@ -1,3 +1,4 @@
+import { TsconfigPathsPlugin } from '@esbuild-plugins/tsconfig-paths';
 import { typecheckPlugin } from '@jgoz/esbuild-plugin-typecheck';
 import esbuild from 'esbuild';
 import copy from 'esbuild-plugin-copy';
@@ -21,23 +22,26 @@ const ctx = await esbuild.context({
   logLevel: 'info',
   outdir: 'dist',
   plugins: [
+    TsconfigPathsPlugin({}),
     typecheckPlugin({
       omitStartLog: true,
       watch,
     }),
     sassPlugin({
       type: 'css-text',
-      filter: /\.shadow\.scss$/,
+      filter: /\.shadow\.s?css$/,
+      loadPaths: ['./src/shared/styles', './src/shared/partials'],
     }),
     sassPlugin({
       type: 'css',
       filter: /\.s?css$/,
+      loadPaths: ['./src/shared/styles', './src/shared/partials'],
       sourceMap: !minify,
       sourceMapIncludeSources: !minify,
     }),
     copy({
       assets: {
-        from: ['./src/**/*.{html,json,svg,png}'],
+        from: ['./src/**/*.{html,json,svg,png,jpg,jpeg,gif,webp}'],
         to: ['.'],
       },
     }),

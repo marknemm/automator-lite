@@ -1,4 +1,4 @@
-import type { AutoRecordState } from '../models/auto-record.interfaces';
+import type { AutoRecordState } from '~shared/models/auto-record.interfaces';
 
 /**
  * The global state of the extension.
@@ -40,4 +40,4 @@ export interface StateChange {
 
 }
 
-export type { AutoRecordState as RecordState }
+export type { AutoRecordState }

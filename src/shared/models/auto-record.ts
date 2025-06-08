@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash-es';
 import type { DeepReadonly, Nullish } from 'utility-types';
-import { loadState, saveState } from '../utils/state';
-import type { AutoRecordState, AutoRecordAction, AutoRecordUid } from './auto-record.interfaces';
+import { loadState, saveState } from '~shared/utils/state';
+import type { AutoRecordAction, AutoRecordState, AutoRecordUid } from './auto-record.interfaces';
 
 /**
  * Represents a {@link AutoRecord} of a re-playable action on a webpage.

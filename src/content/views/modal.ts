@@ -1,7 +1,7 @@
 import { html, render, type TemplateResult } from 'lit-html';
 import deferredPromise from 'p-defer';
+import { injectShadowStyles } from '~shared/utils/shadow-styles';
 import type { ModalContext, ModalOptions } from './modal.interfaces';
-
 import modalCss from './modal.shadow.scss';
 
 /**
@@ -17,7 +17,6 @@ const modalTemplate = (
   onBackdropClick: () => void,
   onEscape: () => void,
 ): TemplateResult => html`
-  <style>${modalCss}</style>
   <div
     class="mn-modal-backdrop"
     @click="${{ handleEvent: onBackdropClick }}"
@@ -62,6 +61,7 @@ export function renderModal<T>(
   modalHost.id = 'mn-modal-host';
   hostMount.appendChild(modalHost);
   const modalRoot: ShadowRoot = modalHost.attachShadow({ mode: 'open' });
+  injectShadowStyles(modalRoot, modalCss);
 
   // Create a close function to remove the modal and execute the onClose callback.
   const { promise: onModalClose, resolve } = deferredPromise<T | undefined>();

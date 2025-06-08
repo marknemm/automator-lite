@@ -1,5 +1,7 @@
 import { html, type TemplateResult } from 'lit-html';
 
+import './field-help.scss';
+
 export const fieldHelpTemplate = (
   helpText: string
 ): TemplateResult => html`

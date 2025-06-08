@@ -16,6 +16,7 @@
     "p-defer": "^4.0.1"
   },
   "devDependencies": {
+    "@esbuild-plugins/tsconfig-paths": "^0.1.2",
     "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
     "@types/chrome": "^0.0.313",
     "@types/lodash-es": "^4.17.12",

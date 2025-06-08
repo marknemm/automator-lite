@@ -1,5 +1,5 @@
-import { AutoRecord, loadRecords, type AutoRecordUid } from '../../shared/models/auto-record';
-import { loadState, onStateChange, type StateChange } from '../../shared/utils/state';
+import { AutoRecord, loadRecords, type AutoRecordUid } from '~shared/models/auto-record';
+import { loadState, onStateChange, type StateChange } from '~shared/utils/state';
 
 /**
  * A map to keep track of scheduled auto-records.

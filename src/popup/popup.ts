@@ -1,7 +1,7 @@
 // This script runs in the context of the extension popup.
 
-import { AutoRecord, loadRecords } from '../shared/models/auto-record.js';
-import { onStateChange } from '../shared/utils/state.js';
+import { AutoRecord, loadRecords } from '~shared/models/auto-record.js';
+import { onStateChange } from '~shared/utils/state.js';
 import { renderAutoRecordList } from './views/auto-record-list.js';
 
 import './popup.scss';
