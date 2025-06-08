@@ -1,12 +1,12 @@
 // This script runs in the context of the web page.
 
 import type { Nullish } from 'utility-types';
-import { AutoRecord } from './models/auto-record';
+import { AutoRecord } from '../shared/models/auto-record';
 import { initExecutor } from './utils/auto-record-executor';
 import { deriveElementSelector } from './utils/element-analysis';
 import { openRecordConfigModal } from './views/auto-record-config-modal';
 
-import './styles/content.scss';
+import './content.scss';
 
 /**
  * Whether the add functionality is active.

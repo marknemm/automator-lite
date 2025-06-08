@@ -1,5 +1,6 @@
 import { typecheckPlugin } from '@jgoz/esbuild-plugin-typecheck';
 import esbuild from 'esbuild';
+import copy from 'esbuild-plugin-copy';
 import { sassPlugin } from 'esbuild-sass-plugin';
 import { rm } from 'fs/promises';
 
@@ -11,9 +12,9 @@ await rm('dist', { recursive: true, force: true });
 
 const ctx = await esbuild.context({
   entryPoints: [
-    'src/background.ts',
-    'src/content.ts',
-    'src/popup.ts',
+    'src/background/background.ts',
+    'src/content/content.ts',
+    'src/popup/popup.ts',
   ],
   bundle: true,
   write: true,
@@ -33,6 +34,12 @@ const ctx = await esbuild.context({
       filter: /\.s?css$/,
       sourceMap: !minify,
       sourceMapIncludeSources: !minify,
+    }),
+    copy({
+      assets: {
+        from: ['./src/**/*.{html,json,svg,png}'],
+        to: ['.'],
+      },
     }),
   ],
   treeShaking: true,

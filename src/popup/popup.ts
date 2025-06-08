@@ -1,10 +1,10 @@
 // This script runs in the context of the extension popup.
 
-import { AutoRecord, loadRecords } from './models/auto-record.js';
-import { onStateChange } from './utils/state.js';
+import { AutoRecord, loadRecords } from '../shared/models/auto-record.js';
+import { onStateChange } from '../shared/utils/state.js';
 import { renderAutoRecordList } from './views/auto-record-list.js';
 
-import './styles/popup.scss';
+import './popup.scss';
 
 // Once the extension popup DOM is fully loaded, initialize the popup.
 document.addEventListener('DOMContentLoaded', async () => {

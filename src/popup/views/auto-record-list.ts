@@ -1,7 +1,7 @@
 import { html, render } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat.js';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
-import { type AutoRecord } from '../models/auto-record';
+import { type AutoRecord } from '../../shared/models/auto-record';
 
 /**
  * Generates the template for the list of auto-records.

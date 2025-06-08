@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Extension Settings</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+      max-width: 600px;
+    }
+    h1 {
+      font-size: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.5rem 1rem;
+    }
+    .status {
+      margin-top: 1rem;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Extension Settings</h1>
+
+  <label>
+    Enable Feature:
+    <input type="checkbox" id="featureToggle" />
+  </label>
+
+  <label>
+    Custom Message:
+    <input type="text" id="customMessage" placeholder="Enter a message" />
+  </label>
+
+  <button id="save">Save Settings</button>
+  <div class="status" id="status"></div>
+
+  <script>
+    // Load saved settings
+    document.addEventListener('DOMContentLoaded', () => {
+      chrome.storage.sync.get(['enabled', 'message'], (items) => {
+        document.getElementById('featureToggle').checked = items.enabled || false;
+        document.getElementById('customMessage').value = items.message || '';
+      });
+    });
+
+    // Save settings
+    document.getElementById('save').addEventListener('click', () => {
+      const enabled = document.getElementById('featureToggle').checked;
+      const message = document.getElementById('customMessage').value;
+
+      chrome.storage.sync.set({ enabled, message }, () => {
+        const status = document.getElementById('status');
+        status.textContent = 'Settings saved!';
+        setTimeout(() => (status.textContent = ''), 2000);
+      });
+    });
+  </script>
+</body>
+</html>

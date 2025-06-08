@@ -1,5 +1,5 @@
-@use 'field-help';
-@use 'constants';
+@use '../../shared/styles/constants';
+@use '../../shared/partials/field-help';
 
 .mn-modal-backdrop {
   position: fixed;

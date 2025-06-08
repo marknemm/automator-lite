@@ -2,7 +2,7 @@ import { html, render, type TemplateResult } from 'lit-html';
 import deferredPromise from 'p-defer';
 import type { ModalContext, ModalOptions } from './modal.interfaces';
 
-import modalCss from '../styles/modal.shadow.scss';
+import modalCss from './modal.shadow.scss';
 
 /**
  * Template for the modal popup.
