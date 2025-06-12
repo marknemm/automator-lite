@@ -31,6 +31,13 @@ async function init() {
   document.addEventListener('mouseover', async (event) => await setAddTargetElem(event.target as HTMLElement));
   document.addEventListener('mouseout', () => unsetAddTargetElem());
 
+  window.addEventListener('message', async (event) => {
+    if (event.data?.type === 'mnAddRecord') {
+      const record = await openRecordConfigModal(new AutoRecord(event.data?.payload)).onModalClose;
+      await record?.save();
+    }
+  });
+
   chrome.runtime.onMessage.addListener(async (message) => {
     addActive = (message.type === 'addActive') && message.payload;
 
@@ -83,8 +90,10 @@ async function addClickTarget(event: MouseEvent): Promise<void> {
   addActive = false;
 
   const [selector, queryIdx] = deriveElementSelector(target);
-  const autoRecord = await openRecordConfigModal(AutoRecord.create(selector, queryIdx)).onModalClose;
-  await autoRecord?.save(); // Record will be nullish if the user cancels the modal.
+  window.top?.postMessage({
+    type: 'mnAddRecord',
+    payload: AutoRecord.create(selector, queryIdx).recordState,
+  });
 }
 
 init().then().catch((error) => {
