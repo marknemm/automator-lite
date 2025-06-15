@@ -1,0 +1,25 @@
+@use "constants.scss";
+
+.mn-round-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  background-color: #fff;
+  color: var(--mn-action-blue);
+  font-size: 16px;
+}
+
+.mn-not-found {
+  text-align: center;
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 20px;
+}

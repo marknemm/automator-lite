@@ -34,12 +34,12 @@ const ctx = await esbuild.context({
     sassPlugin({
       type: 'css-text',
       filter: /\.shadow\.s?css$/,
-      loadPaths: ['./src/shared/styles', './src/shared/partials'],
+      loadPaths: ['./src/shared/styles', './src/shared/components'],
     }),
     sassPlugin({
       type: 'css',
       filter: /\.s?css$/,
-      loadPaths: ['./src/shared/styles', './src/shared/partials'],
+      loadPaths: ['./src/shared/styles', './src/shared/components'],
       sourceMap: !minify,
       sourceMapIncludeSources: !minify,
     }),
@@ -48,6 +48,7 @@ const ctx = await esbuild.context({
         from: ['./src/**/*.{html,json,svg,png,jpg,jpeg,gif,webp}'],
         to: ['.'],
       },
+      watch,
     }),
   ],
   treeShaking: true,

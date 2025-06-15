@@ -1,0 +1,26 @@
+@use "base";
+
+.mn-auto-record-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.record-name {
+  display: inline-block;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.mn-record-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 3px;
+  margin-left: 10px;
+  flex: 0 0 auto;
+}

@@ -4,7 +4,7 @@ import type { Nullish } from 'utility-types';
 import { AutoRecord } from '~shared/models/auto-record';
 import { initExecutor } from './utils/auto-record-executor';
 import { deriveElementSelector } from './utils/element-analysis';
-import { openRecordConfigModal } from './views/auto-record-config-modal';
+import { openRecordConfigModal } from './components/auto-record-config-modal';
 
 import './content.scss';
 

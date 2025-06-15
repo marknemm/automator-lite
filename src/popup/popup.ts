@@ -2,7 +2,7 @@
 
 import { AutoRecord, loadRecords } from '~shared/models/auto-record.js';
 import { onStateChange } from '~shared/utils/state.js';
-import { renderAutoRecordList } from './views/auto-record-list.js';
+import { renderAutoRecordList } from './components/auto-record-list.js';
 
 import './popup.scss';
 
