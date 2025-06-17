@@ -1,8 +1,8 @@
 import { html, type TemplateResult } from 'lit-html';
 import { createRef, ref, type Ref } from 'lit-html/directives/ref.js';
-import { AutoRecord } from '~shared/models/auto-record';
 import { fieldHelpTemplate } from '~shared/components/field-help';
-import { ModalContext, renderModal } from './modal';
+import { ModalContext, renderModal } from '~shared/components/modal';
+import { AutoRecord } from '~shared/models/auto-record';
 
 const formRef: Ref<HTMLFormElement> = createRef();
 

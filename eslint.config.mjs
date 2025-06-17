@@ -35,6 +35,7 @@ export default [
       }],
       'comma-dangle': ['warn', 'always-multiline'],
       'no-unused-vars': 'off',
+      'prefer-const': 'warn',
       'quotes': ['warn', 'single'],
       'semi': ['warn', 'always'],
     },

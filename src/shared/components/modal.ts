@@ -1,6 +1,6 @@
-import { html, render, type TemplateResult } from 'lit-html';
+import { html, type TemplateResult } from 'lit-html';
 import deferredPromise from 'p-defer';
-import { injectShadowStyles } from '~shared/utils/shadow-styles';
+import { mountShadowTemplate } from '~shared/utils/mount';
 import type { ModalContext, ModalOptions } from './modal.interfaces';
 import modalCss from './modal.shadow.scss';
 
@@ -52,42 +52,35 @@ export function renderModal<T>(
   renderContent: (modalContext: ModalContext<T>) => TemplateResult,
   options: ModalOptions = {},
 ): ModalContext<T> {
-  let hostMount: HTMLElement = document.body;
-  try { // If in same origin iframe, use the top document body.
-    hostMount = window.top?.document.body || document.body;
-  } catch { /* Ignore cross-origin iframe access error */ }
-
-  const modalHost = document.createElement('div');
-  modalHost.id = 'mn-modal-host';
-  hostMount.appendChild(modalHost);
-  const modalRoot: ShadowRoot = modalHost.attachShadow({ mode: 'open' });
-  injectShadowStyles(modalRoot, modalCss);
-
-  // Create a close function to remove the modal and execute the onClose callback.
   const { promise: onModalClose, resolve } = deferredPromise<T | undefined>();
-  const closeModal = (data?: T) => {
-    modalHost.remove();
-    resolve(data);
-  };
+  const modalCtx = { onModalClose } as ModalContext<T>; // Will init other properties below.
 
-  const onBackdropClick = () => options.closeOnBackdropClick && closeModal();
-  const onEscape = () => !options.noCloseOnEscape && closeModal();
-  const refreshModal = (content: TemplateResult, refocus = false) => {
-    render(modalTemplate(content, onBackdropClick, onEscape), modalRoot);
-    if (refocus) {
-      requestAnimationFrame(() => (modalRoot.querySelector('input, select, textarea') as HTMLElement)?.focus());
-    }
-  };
+  mountShadowTemplate(
+    document.body,
+    ({ refresh, unmount, shadowRoot }) => {
+      modalCtx.closeModal = (data?: T) => {
+        unmount();
+        resolve(data);
+      };
 
-  const modalContent: ModalContext<T> = {
-    modalRoot,
-    closeModal,
-    refreshModal,
-    onModalClose,
-  };
+      const onBackdropClick = () => options.closeOnBackdropClick && modalCtx.closeModal();
+      const onEscape = () => !options.noCloseOnEscape && modalCtx.closeModal();
 
-  refreshModal(renderContent(modalContent), !options.noFocus);
-  return modalContent;
+      modalCtx.refreshModal = (content: TemplateResult, refocus = false) => {
+        refresh(modalTemplate(content, onBackdropClick, onEscape));
+        if (refocus) {
+          requestAnimationFrame(() => {
+            (shadowRoot?.querySelector('input, select, textarea') as HTMLElement)?.focus();
+          });
+        }
+      };
+
+      return modalTemplate(renderContent(modalCtx), onBackdropClick, onEscape);
+    },
+    { mode: 'open', styles: modalCss },
+  );
+
+  return modalCtx;
 }
 
 export type * from './modal.interfaces';

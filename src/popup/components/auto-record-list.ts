@@ -4,6 +4,14 @@ import { renderButtonList } from '~shared/components/button-list';
 import { type AutoRecord } from '~shared/models/auto-record';
 import './auto-record-list.scss';
 
+/**
+ * Generates the template for a single auto-record list item.
+ *
+ * @param record - The {@link AutoRecord} object to be displayed.
+ * @param onDelete - The function to be called when the delete button is pressed.
+ * @param onTogglePause - The function to be called when the play/pause button is pressed.
+ * @returns A {@link TemplateResult} representing the list item.
+ */
 const autoRecordListItemTemplate = (
   record: AutoRecord,
   onDelete: (record: AutoRecord) => Promise<void>,
