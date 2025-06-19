@@ -5,7 +5,7 @@ import type { RenderOptions, RootPart, TemplateResult } from 'lit-html';
  * @extends RenderOptions
  * @extends ShadowRootInit
  */
-export interface MountShadowTemplateOptions extends RenderOptions, ShadowRootInit {
+export interface ShadowRenderOptions extends RenderOptions, ShadowRootInit {
 
   /**
    * An array of CSS styles to be injected into the Shadow DOM.
@@ -25,10 +25,17 @@ export interface MountShadowTemplateOptions extends RenderOptions, ShadowRootIni
    */
   rootId?: string;
 
+  /**
+   * CSS class(es) to be applied to the root element.
+   * Will be added to any existing classes on the root element.
+   * If not provided, no additional classes will be applied.
+   */
+  rootClass?: string;
+
 }
 
 /**
- * Resulting context of mounting a {@link Template}.
+ * Context for mounting a {@link Template} to a DOM element.
  */
 export interface MountContext {
 
@@ -37,12 +44,6 @@ export interface MountContext {
    * If the mount element is not a Shadow DOM host, this will be `undefined`.
    */
   shadowRoot?: ShadowRoot;
-
-  /**
-   * A top-level `ChildPart` returned from `render` that manages the connected state of
-   * `AsyncDirectives` created throughout the tree below it.
-   */
-  rootPart: RootPart;
 
   /**
    * Refreshes the template in the DOM.
@@ -58,5 +59,40 @@ export interface MountContext {
 
 }
 
+/**
+ * Result of mounting a {@link Template}.
+ *
+ * @extends MountContext
+ */
+export interface MountResult extends MountContext {
+
+  /**
+   * A top-level `ChildPart` returned from `render` that manages the connected state of
+   * `AsyncDirectives` created throughout the tree below it.
+   */
+  rootPart: RootPart;
+
+}
+
+/**
+ * The {@link MountElement} type represents an element to which a {@link Template} can be mounted.
+ *
+ * This can be a `CSS ID` ('#' prefix optional), {@link HTMLElement}, or {@link DocumentFragment}.
+ */
+export type MountElement = string | HTMLElement | DocumentFragment;
+
+/**
+ * The {@link Template} type represents a template that can be rendered in or mounted to the DOM.
+ *
+ * This can be an `HTML string`, {@link HTMLElement}, {@link DocumentFragment}, or a `lit-html` {@link TemplateResult}.
+ */
 export type Template = string | HTMLElement | DocumentFragment | TemplateResult;
-export type TemplateGenerator = (mountCtx: Omit<MountContext, 'rootPart'>) => Template;
+
+/**
+ * A function that generates a {@link Template} based on the provided {@link MountContext}.
+ * This is useful for creating dynamic templates that depend on the context in which they are mounted.
+ *
+ * @param ctx - The {@link MountContext} providing contextual data for generating the template.
+ * @returns A {@link Template} to be rendered.
+ */
+export type TemplateGenerator = (ctx: MountContext) => Template;

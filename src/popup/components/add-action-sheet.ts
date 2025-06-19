@@ -10,7 +10,7 @@ import { AutoRecord, AutoRecordAction } from '~shared/models/auto-record';
 const addActionSheetTemplate = (
   onAddActionSelect: (action: AutoRecordAction) => void,
 ): TemplateResult => html`
-  <div class="mn-bottom-sheet mn-add-action-sheet">
+  <div class="mn-action-sheet">
 
   </div>
 `;

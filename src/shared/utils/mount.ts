@@ -1,5 +1,5 @@
 import { render, RenderOptions } from 'lit-html';
-import type { MountContext, MountShadowTemplateOptions, Template, TemplateGenerator } from './mount.interfaces';
+import type { MountElement, MountResult, ShadowRenderOptions, Template, TemplateGenerator } from './mount.interfaces';
 
 /**
  * Cache for CSSStyleSheets associated with a specific document.
@@ -19,20 +19,20 @@ const documentSheets = new WeakMap<Document, Map<string, CSSStyleSheet>>();
  * @param template - The {@link Template} to be rendered to the `mount` element,
  * or a {@link TemplateGenerator} function that returns a {@link Template}.
  * @param opts - {@link RenderOptions} for the `template`.
- * @returns The {@link MountContext} of the mounted `template`.
+ * @returns The {@link MountResult} of the mounted `template`.
  */
 export function mountTemplate(
-  mountTo: string | HTMLElement | DocumentFragment,
+  mountTo: MountElement,
   template: Template | TemplateGenerator,
   opts: RenderOptions = {},
-): MountContext {
+): MountResult {
   const mountElement: HTMLElement | DocumentFragment | null = (typeof mountTo === 'string')
     ? document.getElementById(mountTo.replace('#', ''))
     : mountTo;
 
   if (!mountElement) throw new Error(`Host element with id "${mountTo}" not found`);
 
-  const mountCtx: MountContext = {
+  const mountCtx: MountResult = {
     rootPart: undefined!, // Will be initialized just below.
     shadowRoot: mountElement instanceof ShadowRoot
       ? mountElement
@@ -63,14 +63,14 @@ export function mountTemplate(
  * @param mountTo - The element to mount the shadow root host element to or its ID.
  * @param template - The {@link Template} to be rendered inside the Shadow DOM,
  * or a {@link TemplateGenerator} function that returns a {@link Template}.
- * @param opts - {@link MountShadowTemplateOptions} for the Shadow DOM. Defaults to `{ mode: 'open' }`.
- * @returns The {@link MountContext} of the mounted `template`.
+ * @param opts - {@link ShadowRenderOptions} for the Shadow DOM. Defaults to `{ mode: 'open' }`.
+ * @returns The {@link MountResult} of the mounted `template`.
  */
 export function mountShadowTemplate(
-  mountTo: string | HTMLElement | DocumentFragment,
+  mountTo: MountElement,
   template: Template | TemplateGenerator,
-  opts: MountShadowTemplateOptions = { mode: 'open' },
-): MountContext {
+  opts: ShadowRenderOptions = { mode: 'open' },
+): MountResult {
   const shadowRoot = mountShadowRoot(mountTo, opts);
   return mountTemplate(shadowRoot, template, opts);
 }
@@ -79,12 +79,12 @@ export function mountShadowTemplate(
  * Mounts a Shadow DOM root to a specified element.
  *
  * @param mountTo - The element to mount the shadow root host element to or its ID.
- * @param opts - {@link MountShadowTemplateOptions} for the Shadow DOM. Defaults to `{ mode: 'open' }`.
+ * @param opts - {@link ShadowRenderOptions} for the Shadow DOM. Defaults to `{ mode: 'open' }`.
  * @returns The {@link ShadowRoot} created for the mount element.
  */
 export function mountShadowRoot(
-  mountTo: string | HTMLElement | DocumentFragment,
-  opts: MountShadowTemplateOptions = { mode: 'open' },
+  mountTo: MountElement,
+  opts: ShadowRenderOptions = { mode: 'open' },
 ): ShadowRoot {
   const mountElement: HTMLElement | DocumentFragment | null = (typeof mountTo === 'string')
     ? document.getElementById(mountTo.replace('#', ''))
@@ -94,6 +94,7 @@ export function mountShadowRoot(
 
   const rootElement = opts.rootElement ?? document.createElement('div');
   rootElement.id = opts.rootId || rootElement.id;
+  rootElement.classList.add(...(opts.rootClass?.split(/\s*\.?/g) || []));
   mountElement.appendChild(rootElement);
 
   const shadowRoot = rootElement.attachShadow(opts);

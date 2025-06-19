@@ -1,0 +1,18 @@
+@use "base";
+
+:host(.mn-sheet) {
+  position: absolute;
+
+  &.mn-sheet-open {
+    animation: slideUp 0.3s ease-in-out forwards;
+  }
+}
+
+.mn-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background-color: var(--mn-color-primary);
+  color: var(--mn-color-text-light);
+}

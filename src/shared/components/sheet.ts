@@ -1,14 +1,14 @@
-import { html, render, type TemplateResult } from 'lit-html';
+import { html, type TemplateResult } from 'lit-html';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
-import { createRef, ref } from 'lit-html/directives/ref.js';
-
-const sheetRef = createRef<HTMLDivElement>();
+import { type MountContext, type MountElement, mountShadowTemplate } from '~shared/utils/mount';
+import sheetStyles from './sheet.scss';
 
 export const sheetTemplate = (
+  ctx: MountContext,
   content: TemplateResult,
   title: string | TemplateResult = '',
 ): TemplateResult => html`
-  <div class="mn-sheet" ${ref(sheetRef)}>
+  <div class="mn-sheet-inner">
     <div class="mn-sheet-header">
       ${title
         ? html`<h2 class="mn-sheet-title">${title}</h2>`
@@ -16,7 +16,7 @@ export const sheetTemplate = (
       <button
         class="mn-round-button mn-close-button"
         type="button"
-        @click=${() => sheetRef.value?.classList.remove('mn-sheet-open')}
+        @click=${() => ctx.shadowRoot!.host.classList.remove('mn-sheet-open')}
         title="Close"
       >
         ${unsafeHTML('&#10006;')}
@@ -29,13 +29,12 @@ export const sheetTemplate = (
 `;
 
 export function renderSheet(
-  containerId: string,
+  mountTo: MountElement,
   content: TemplateResult,
   title: string | TemplateResult = '',
 ): void {
-  const container = document.getElementById(containerId);
-  if (!container) throw new Error(`#${containerId} not found`);
-
-  const template = sheetTemplate(content, title);
-  render(template, container);
+  mountShadowTemplate(mountTo, (ctx: MountContext) => sheetTemplate(ctx, content, title), {
+    mode: 'open',
+    styles: sheetStyles,
+  });
 }

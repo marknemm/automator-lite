@@ -1,3 +1,4 @@
+import { functions } from 'lodash-es';
 import tseslint from 'typescript-eslint';
 
 export default [
@@ -33,7 +34,13 @@ export default [
         caughtErrors: 'none',
         ignoreRestSiblings: true,
       }],
-      'comma-dangle': ['warn', 'always-multiline'],
+      'comma-dangle': ['warn', {
+        arrays: 'always-multiline',
+        objects: 'always-multiline',
+        imports: 'always-multiline',
+        exports: 'always-multiline',
+        functions: 'only-multiline',
+      }],
       'no-unused-vars': 'off',
       'prefer-const': 'warn',
       'quotes': ['warn', 'single'],
