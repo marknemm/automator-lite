@@ -102,7 +102,7 @@ const contentTemplate = (
 
       <label for="mn-record-config-record-interval">
         Repeat Interval:
-        ${fieldHelpTemplate('The interval in milliseconds between each record execution.')}
+        ${fieldHelpTemplate('The record will repeat at this interval (milliseconds) if non-zero.')}
       </label>
       <input
         type="number"

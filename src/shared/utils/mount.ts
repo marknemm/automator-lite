@@ -1,105 +1,121 @@
-import { render, RenderOptions } from 'lit-html';
-import type { MountElement, MountResult, ShadowRenderOptions, Template, TemplateGenerator } from './mount.interfaces';
+import { render } from 'lit-html';
+import type { MountContext, MountOptions, MountPoint, MountResult, Template, TemplateGenerator } from './mount.interfaces';
 
 /**
- * Cache for CSSStyleSheets associated with a specific document.
- *
- * Each document key is either the root document or an iframe document.
- * Adopted stylesheets cannot be used across different documents due to security restrictions.
- *
- * Each value associated with a document contains a map of style strings to their corresponding CSSStyleSheet objects.
+ * A map of style strings to their corresponding CSSStyleSheet objects.
  * This allows for reusing styles without creating new CSSStyleSheet instances for the same styles.
  */
-const documentSheets = new WeakMap<Document, Map<string, CSSStyleSheet>>();
+const cachedStyleSheets = new Map<string, CSSStyleSheet>();
 
 /**
- * Mounts a template to a specified element.
+ * Mounts a `template` to a specified `mountPoint`.
  *
- * @param mountTo - The element to mount the `template` to or its ID.
- * @param template - The {@link Template} to be rendered to the `mount` element,
+ * @param mountPoint - The {@link MountPoint} to mount the `template` to.
+ * @param template - The {@link Template} to be rendered to the `mountPoint`,
  * or a {@link TemplateGenerator} function that returns a {@link Template}.
- * @param opts - {@link RenderOptions} for the `template`.
+ * @param opts - {@link MountOptions} for the `template`.
  * @returns The {@link MountResult} of the mounted `template`.
  */
 export function mountTemplate(
-  mountTo: MountElement,
+  mountPoint: MountPoint,
   template: Template | TemplateGenerator,
-  opts: RenderOptions = {},
+  opts: MountOptions = {},
 ): MountResult {
-  const mountElement: HTMLElement | DocumentFragment | null = (typeof mountTo === 'string')
-    ? document.getElementById(mountTo.replace('#', ''))
-    : mountTo;
+  // Derive the host element to render the template into and attach shadow DOM if configured.
+  const hostElement: HTMLElement = mountHostElement(mountPoint, opts);
+  const shadowRoot = opts.shadowRootInit
+    ? hostElement.attachShadow(opts.shadowRootInit)
+    : undefined;
 
-  if (!mountElement) throw new Error(`Host element with id "${mountTo}" not found`);
-
-  const mountCtx: MountResult = {
-    rootPart: undefined!, // Will be initialized just below.
-    shadowRoot: mountElement instanceof ShadowRoot
-      ? mountElement
-      : undefined,
+  // Build the mount context used for rendering the template.
+  const mountCtx: MountContext = {
+    hostElement,
+    shadowRoot,
     refresh: (newTemplate: Template | TemplateGenerator) => {
+      opts.beforeRender?.(mountCtx);
       if (typeof newTemplate === 'function') {
         newTemplate = newTemplate(mountCtx);
       }
-      mountCtx.rootPart = render(newTemplate, mountElement, opts);
-      return mountCtx;
+
+      const rootPart = render(newTemplate, shadowRoot ?? hostElement, opts);
+      injectStyles(shadowRoot ?? hostElement, ...(opts.styles ? [opts.styles].flat() : []));
+      const mountResult: MountResult = { ...mountCtx, rootPart };
+
+      opts.afterRender?.(mountResult);
+      return mountResult;
     },
-    unmount: () => mountElement instanceof ShadowRoot
-      ? mountElement.host.remove()
-      : render('', mountElement, opts),
+    unmount: () => (hostElement === mountPoint) // Do not remove mount point itself
+      ? render('', mountCtx.hostElement, opts) // Clear content
+      : hostElement.remove(), // Remove the host element - it was created relative to mount point
   };
 
-  if (typeof template === 'function') {
-    template = template(mountCtx);
+  // Render the initial template into the host element or shadow root.
+  return mountCtx.refresh(template);
+}
+
+/**
+ * Mounts the host {@link HTMLElement} that the {@link Template} will be rendered into.
+ *
+ * @param mountPoint - The {@link MountPoint} to mount the host element to.
+ * @param opts - The {@link MountOptions} for mounting the host element.
+ * @returns The mounted host {@link HTMLElement}.
+ */
+function mountHostElement(
+  mountPoint: MountPoint,
+  opts: MountOptions,
+): HTMLElement {
+  // Derive the mount element from the mount point.
+  const mountElement: HTMLElement | ShadowRoot | null = (typeof mountPoint === 'string')
+    ? document.getElementById(mountPoint.replace('#', ''))
+    : mountPoint;
+  if (!mountElement) throw new Error(`Mount element with id "${mountPoint}" not found`);
+
+  // If hostMode is specified, create host element to position relative to mount point.
+  const hostElement = opts.hostMode
+    ? document.createElement(opts.hostTagName || 'div')
+    : mountElement instanceof ShadowRoot
+      ? mountElement.host as HTMLElement
+      : mountElement; // Otherwise, use the mount element itself.
+  setupHostAttributes(hostElement, opts);
+
+  // Mount the host element to the specified mount point based on the hostMode.
+  switch (opts.hostMode) {
+    case 'append':  mountElement.appendChild(hostElement); break;
+    case 'prepend': mountElement.prepend(hostElement); break;
+    case 'before':  mountElement.parentElement?.insertBefore(hostElement, mountElement); break;
+    case 'after':   mountElement.parentElement?.insertBefore(hostElement, mountElement.nextSibling); break;
   }
-  mountCtx.rootPart = render(template, mountElement, opts);
 
-  return mountCtx;
+  return hostElement;
 }
 
 /**
- * Mounts a shadow DOM root to the specified element and then mounts the `template` to a Shadow DOM.
+ * Sets up the attributes of the host element.
  *
- * @param mountTo - The element to mount the shadow root host element to or its ID.
- * @param template - The {@link Template} to be rendered inside the Shadow DOM,
- * or a {@link TemplateGenerator} function that returns a {@link Template}.
- * @param opts - {@link ShadowRenderOptions} for the Shadow DOM. Defaults to `{ mode: 'open' }`.
- * @returns The {@link MountResult} of the mounted `template`.
+ * @param hostElement - The {@link HTMLElement} to set attributes on.
+ * @param opts - The {@link MountOptions} containing the attributes to set.
  */
-export function mountShadowTemplate(
-  mountTo: MountElement,
-  template: Template | TemplateGenerator,
-  opts: ShadowRenderOptions = { mode: 'open' },
-): MountResult {
-  const shadowRoot = mountShadowRoot(mountTo, opts);
-  return mountTemplate(shadowRoot, template, opts);
-}
+function setupHostAttributes(
+  hostElement: HTMLElement,
+  opts: MountOptions,
+): void {
+  if (opts.hostId) {
+    hostElement.id = opts.hostId;
+  }
 
-/**
- * Mounts a Shadow DOM root to a specified element.
- *
- * @param mountTo - The element to mount the shadow root host element to or its ID.
- * @param opts - {@link ShadowRenderOptions} for the Shadow DOM. Defaults to `{ mode: 'open' }`.
- * @returns The {@link ShadowRoot} created for the mount element.
- */
-export function mountShadowRoot(
-  mountTo: MountElement,
-  opts: ShadowRenderOptions = { mode: 'open' },
-): ShadowRoot {
-  const mountElement: HTMLElement | DocumentFragment | null = (typeof mountTo === 'string')
-    ? document.getElementById(mountTo.replace('#', ''))
-    : mountTo;
+  if (opts.hostClass?.length) {
+    hostElement.classList.add(...(
+      (typeof opts.hostClass === 'string')
+        ? opts.hostClass.split(/\s+/)
+        : opts.hostClass
+    ));
+  }
 
-  if (!mountElement) throw new Error(`Host element with id "${mountTo}" not found`);
-
-  const rootElement = opts.rootElement ?? document.createElement('div');
-  rootElement.id = opts.rootId || rootElement.id;
-  rootElement.classList.add(...(opts.rootClass?.split(/\s*\.?/g) || []));
-  mountElement.appendChild(rootElement);
-
-  const shadowRoot = rootElement.attachShadow(opts);
-  injectShadowStyles(shadowRoot, ...[opts.styles].flat().filter(Boolean) as string[]);
-  return shadowRoot;
+  if (opts.hostAttributes) {
+    for (const attr in opts.hostAttributes) {
+      hostElement.setAttribute(attr, opts.hostAttributes[attr]);
+    }
+  }
 }
 
 /**
@@ -108,31 +124,30 @@ export function mountShadowRoot(
  * @param root - {@link ShadowRoot} to inject styles into.
  * @param styles - CSS styles to be injected.
  */
-export function injectShadowStyles(root: ShadowRoot, ...styles: string[]) {
+export function injectStyles(
+  root: ShadowRoot | Element,
+  ...styles: string[]
+): void {
   for (const styleStr of styles) {
     if (!styleStr) continue; // Skip empty styles
-    try {
-      if (!('adoptedStyleSheets' in Document.prototype))
-        throw new Error('adoptedStyleSheets not supported');
 
-      const ownerDocument = root.parentElement?.ownerDocument ?? document;
-      if (!documentSheets.has(ownerDocument)) {
-        documentSheets.set(ownerDocument, new Map<string, CSSStyleSheet>());
-      }
-      const sheets = documentSheets.get(ownerDocument)!;
-
-      let sheet = sheets.get(styleStr);
+    // Check if the browser supports adoptedStyleSheets (Chromium or Safari).
+    if ('adoptedStyleSheets' in Document.prototype && root instanceof ShadowRoot) {
+      let sheet = cachedStyleSheets.get(styleStr);
       if (!sheet) {
         sheet = new CSSStyleSheet();
         sheet.replaceSync(styleStr);
-        sheets.set(styleStr, sheet);
+        cachedStyleSheets.set(styleStr, sheet);
       }
-      root.adoptedStyleSheets.push(sheet);
-    } catch (error) { // Fallback for browsers that do not support adoptedStyleSheets (Firefox) or issues with iframe security.
-      console.warn(error);
-      const style = document.createElement('style');
-      style.textContent = styleStr;
-      root.appendChild(style);
+      if (!root.adoptedStyleSheets.includes(sheet)) {
+        root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+      }
+    } else { // Light DOM or fallback for browsers that do not support adoptedStyleSheets (Firefox).
+      if (!Array.from(root.children).some(child => child.tagName === 'style' && child.textContent === styleStr)) {
+        const style = document.createElement('style');
+        style.textContent = styleStr;
+        root.prepend(style);
+      }
     }
   }
 }

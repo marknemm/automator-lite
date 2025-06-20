@@ -1,8 +1,8 @@
 import { html, type TemplateResult } from 'lit-html';
 import deferredPromise from 'p-defer';
-import { mountShadowTemplate } from '~shared/utils/mount';
+import { mountTemplate } from '~shared/utils/mount';
 import type { ModalContext, ModalOptions } from './modal.interfaces';
-import modalCss from './modal.shadow.scss';
+import modalStyles from './modal.shadow.scss';
 
 /**
  * Template for the modal popup.
@@ -55,29 +55,31 @@ export function renderModal<T>(
   const { promise: onModalClose, resolve } = deferredPromise<T | undefined>();
   const modalCtx = { onModalClose } as ModalContext<T>; // Will init other properties below.
 
-  mountShadowTemplate(
+  mountTemplate(
     document.body,
-    ({ refresh, unmount, shadowRoot }) => {
+    ({ refresh, unmount }) => {
       modalCtx.closeModal = (data?: T) => {
         unmount();
         resolve(data);
       };
+      modalCtx.refreshModal = (content: TemplateResult) => refresh(
+        modalTemplate(content, onBackdropClick, onEscape)
+      );
 
       const onBackdropClick = () => options.closeOnBackdropClick && modalCtx.closeModal();
       const onEscape = () => !options.noCloseOnEscape && modalCtx.closeModal();
 
-      modalCtx.refreshModal = (content: TemplateResult, refocus = false) => {
-        refresh(modalTemplate(content, onBackdropClick, onEscape));
-        if (refocus) {
-          requestAnimationFrame(() => {
-            (shadowRoot?.querySelector('input, select, textarea') as HTMLElement)?.focus();
-          });
-        }
-      };
-
       return modalTemplate(renderContent(modalCtx), onBackdropClick, onEscape);
     },
-    { mode: 'open', styles: modalCss },
+    {
+      hostMode: 'append',
+      hostClass: 'mn-modal-host',
+      shadowRootInit: { mode: 'open' },
+      styles: modalStyles,
+      afterRender: ({ shadowRoot }) => (!options.noFocus && !shadowRoot?.contains(document.activeElement))
+        ? (shadowRoot?.querySelector('input, select, textarea') as HTMLElement)?.focus()
+        : undefined,
+    },
   );
 
   return modalCtx;

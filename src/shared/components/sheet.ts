@@ -1,6 +1,6 @@
 import { html, type TemplateResult } from 'lit-html';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
-import { type MountContext, type MountElement, mountShadowTemplate } from '~shared/utils/mount';
+import { type MountContext, type MountPoint, mountTemplate } from '~shared/utils/mount';
 import sheetStyles from './sheet.scss';
 
 export const sheetTemplate = (
@@ -29,12 +29,12 @@ export const sheetTemplate = (
 `;
 
 export function renderSheet(
-  mountTo: MountElement,
+  mountTo: MountPoint,
   content: TemplateResult,
   title: string | TemplateResult = '',
 ): void {
-  mountShadowTemplate(mountTo, (ctx: MountContext) => sheetTemplate(ctx, content, title), {
-    mode: 'open',
+  mountTemplate(mountTo, (ctx: MountContext) => sheetTemplate(ctx, content, title), {
+    shadowRootInit: { mode: 'open' },
     styles: sheetStyles,
   });
 }

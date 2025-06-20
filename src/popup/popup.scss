@@ -5,6 +5,26 @@ body {
   font-size: 14px;
 }
 
+h1 {
+  font-size: 1.5em;
+}
+
+h2 {
+  font-size: 1.3em;
+}
+
+h3 {
+  font-size: 1.2em;
+}
+
+h4 {
+  font-size: 1.1em;
+}
+
+h5, h6 {
+  font-size: 1em;
+}
+
 button {
   border: none;
   background: none;
@@ -40,7 +60,6 @@ button {
 }
 
 .mn-main-title {
-  font-size: 2em;
   font-weight: bold;
   padding-bottom: 1px;
   margin-bottom: 10px;
