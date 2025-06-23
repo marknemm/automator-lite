@@ -5,6 +5,7 @@ import { onStateChange } from '~shared/utils/state.js';
 import { renderAutoRecordList } from './components/auto-record-list.js';
 
 import './popup.scss';
+// import { renderAddActionSheet } from './components/add-action-sheet.js';
 
 // Once the extension popup DOM is fully loaded, initialize the popup.
 document.addEventListener('DOMContentLoaded', async () => {
@@ -14,6 +15,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // When the add button is clicked, set the state to addActive and close the popup.
   const addButton = document.getElementById('mn-add-auto-record') as HTMLButtonElement;
   addButton?.addEventListener('click', () => {
+    // renderAddActionSheet((action) => {
+    //   console.log('Selected action:', action);
+    // });
     sendContentMessage({ type: 'addActive', payload: true });
     window.close();
   });

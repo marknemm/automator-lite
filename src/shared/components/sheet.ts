@@ -1,13 +1,16 @@
 import { html, type TemplateResult } from 'lit-html';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
-import { type MountContext, type MountPoint, mountTemplate } from '~shared/utils/mount';
-import sheetStyles from './sheet.scss';
+import { host, type MountContext, MountOptions, type MountPoint, mountTemplate, Template } from '~shared/utils/mount';
+
+import sheetStyles from './sheet.scss?inline';
 
 export const sheetTemplate = (
-  ctx: MountContext,
-  content: TemplateResult,
-  title: string | TemplateResult = '',
+  { hostElement }: MountContext,
+  content: Template,
+  title: Template = '',
 ): TemplateResult => html`
+  <template ${host(sheetStyles)} class="mn-sheet-host"></template>
+
   <div class="mn-sheet-inner">
     <div class="mn-sheet-header">
       ${title
@@ -16,7 +19,7 @@ export const sheetTemplate = (
       <button
         class="mn-round-button mn-close-button"
         type="button"
-        @click=${() => ctx.shadowRoot!.host.classList.remove('mn-sheet-open')}
+        @click=${() => hostElement.classList.remove('mn-sheet-open')}
         title="Close"
       >
         ${unsafeHTML('&#10006;')}
@@ -29,12 +32,14 @@ export const sheetTemplate = (
 `;
 
 export function renderSheet(
-  mountTo: MountPoint,
-  content: TemplateResult,
-  title: string | TemplateResult = '',
+  mountPoint: MountPoint,
+  title: Template = '',
+  content: Template,
+  mountOptions: MountOptions = {},
 ): void {
-  mountTemplate(mountTo, (ctx: MountContext) => sheetTemplate(ctx, content, title), {
-    shadowRootInit: { mode: 'open' },
-    styles: sheetStyles,
+  mountTemplate({
+    mountPoint,
+    template: (ctx: MountContext) => sheetTemplate(ctx, content, title),
+    ...mountOptions,
   });
 }

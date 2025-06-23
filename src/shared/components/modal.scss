@@ -1,7 +1,8 @@
 @use 'base';
 @use 'field-help';
 
-:host(.mn-model-host) {
+:host(.mn-modal-host),
+.mn-modal-host {
   position: fixed;
   top: 0;
   left: 0;

@@ -1,7 +1,9 @@
-import { html, render, type TemplateResult } from 'lit-html';
+import { html, type TemplateResult } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat.js';
+import { host, MountOptions, type MountPoint, type MountResult, mountTemplate, Template } from '~shared/utils/mount';
 import type { ButtonListItem } from './button-list.interfaces';
-import './button-list.scss';
+
+import buttonListStyles from './button-list.scss?inline';
 
 /**
  * Generates a template for a list of buttons.
@@ -14,8 +16,10 @@ import './button-list.scss';
  */
 export const buttonListTemplate = (
   items: ButtonListItem[],
-  notFoundMessage: TemplateResult | string = 'No items found.',
+  notFoundMessage: Template = 'No items found.',
 ): TemplateResult => html`
+  <template ${host(buttonListStyles)} class="mn-button-list-host"></template>
+
   <ul class="mn-button-list">
     ${items?.length
       ? repeat(items, (item) => item.uid, (item) => html`
@@ -40,15 +44,16 @@ export const buttonListTemplate = (
 `;
 
 export function renderButtonList(
-  containerId: string,
+  mountPoint: MountPoint,
   items: ButtonListItem[],
-  notFoundMessage?: TemplateResult | string,
-): void {
-  const container = document.getElementById(containerId);
-  if (!container) throw new Error(`#${containerId} not found`);
-
-  const template = buttonListTemplate(items, notFoundMessage);
-  render(template, container);
+  notFoundMessage?: Template,
+  mountOptions: MountOptions = {},
+): MountResult {
+  return mountTemplate({
+    mountPoint,
+    template: buttonListTemplate(items, notFoundMessage),
+    ...mountOptions,
+  });
 }
 
 export type * from './button-list.interfaces';

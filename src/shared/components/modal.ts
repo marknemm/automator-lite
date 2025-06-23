@@ -1,8 +1,9 @@
 import { html, type TemplateResult } from 'lit-html';
 import deferredPromise from 'p-defer';
-import { mountTemplate } from '~shared/utils/mount';
+import { host, mountTemplate, type Template } from '~shared/utils/mount';
 import type { ModalContext, ModalOptions } from './modal.interfaces';
-import modalStyles from './modal.shadow.scss';
+
+import modalStyles from './modal.scss?inline';
 
 /**
  * Template for the modal popup.
@@ -13,10 +14,12 @@ import modalStyles from './modal.shadow.scss';
  * @returns A {@link TemplateResult} representing the modal template.
  */
 const modalTemplate = (
-  content: TemplateResult,
+  content: Template,
   onBackdropClick: () => void,
   onEscape: () => void,
 ): TemplateResult => html`
+  <template ${host(modalStyles)} class="mn-modal-host"></template>
+
   <div
     class="mn-modal-backdrop"
     @click="${{ handleEvent: onBackdropClick }}"
@@ -49,15 +52,17 @@ const modalTemplate = (
  * @returns The {@link ModalContext} containing contextual data for controlling the modal.
  */
 export function renderModal<T>(
-  renderContent: (modalContext: ModalContext<T>) => TemplateResult,
+  renderContent: (modalContext: ModalContext<T>) => Template,
   options: ModalOptions = {},
 ): ModalContext<T> {
   const { promise: onModalClose, resolve } = deferredPromise<T | undefined>();
   const modalCtx = { onModalClose } as ModalContext<T>; // Will init other properties below.
 
-  mountTemplate(
-    document.body,
-    ({ refresh, unmount }) => {
+  mountTemplate({
+    mountPoint: document.body,
+    mountMode: 'append',
+    shadowRootInit: { mode: 'open' },
+    template: ({ refresh, unmount }) => {
       modalCtx.closeModal = (data?: T) => {
         unmount();
         resolve(data);
@@ -71,16 +76,10 @@ export function renderModal<T>(
 
       return modalTemplate(renderContent(modalCtx), onBackdropClick, onEscape);
     },
-    {
-      hostMode: 'append',
-      hostClass: 'mn-modal-host',
-      shadowRootInit: { mode: 'open' },
-      styles: modalStyles,
-      afterRender: ({ shadowRoot }) => (!options.noFocus && !shadowRoot?.contains(document.activeElement))
-        ? (shadowRoot?.querySelector('input, select, textarea') as HTMLElement)?.focus()
-        : undefined,
-    },
-  );
+    afterRender: ({ shadowRoot }) => (!options.noFocus && !shadowRoot?.contains(document.activeElement))
+      ? (shadowRoot?.querySelector('input, select, textarea') as HTMLElement)?.focus()
+      : undefined,
+  });
 
   return modalCtx;
 }
