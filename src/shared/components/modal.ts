@@ -1,6 +1,6 @@
 import { html, type TemplateResult } from 'lit-html';
 import deferredPromise from 'p-defer';
-import { host, mountTemplate, type Template } from '~shared/utils/mount';
+import { mountTemplate, withStyles, type Template } from '~shared/utils/mount';
 import type { ModalContext, ModalOptions } from './modal.interfaces';
 
 import modalStyles from './modal.scss?inline';
@@ -18,7 +18,7 @@ const modalTemplate = (
   onBackdropClick: () => void,
   onEscape: () => void,
 ): TemplateResult => html`
-  <template ${host(modalStyles)} class="mn-modal-host"></template>
+  ${withStyles(modalStyles)}
 
   <div
     class="mn-modal-backdrop"

@@ -1,6 +1,6 @@
 import { html, type TemplateResult } from 'lit-html';
 import { repeat } from 'lit-html/directives/repeat.js';
-import { host, MountOptions, type MountPoint, type MountResult, mountTemplate, Template } from '~shared/utils/mount';
+import { type MountOptions, type MountPoint, type MountResult, mountTemplate, type Template, withStyles } from '~shared/utils/mount';
 import type { ButtonListItem } from './button-list.interfaces';
 
 import buttonListStyles from './button-list.scss?inline';
@@ -18,7 +18,7 @@ export const buttonListTemplate = (
   items: ButtonListItem[],
   notFoundMessage: Template = 'No items found.',
 ): TemplateResult => html`
-  <template ${host(buttonListStyles)} class="mn-button-list-host"></template>
+  ${withStyles(buttonListStyles)}
 
   <ul class="mn-button-list">
     ${items?.length

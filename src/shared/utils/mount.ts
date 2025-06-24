@@ -1,5 +1,5 @@
 import { render, type ElementPart } from 'lit-html';
-import { Directive, directive, type DirectiveResult } from 'lit-html/directive.js';
+import { ChildPart, Directive, directive, Part, type DirectiveResult } from 'lit-html/directive.js';
 import type { MountArgs, MountContext, MountPoint, MountResult, Template, TemplateGenerator } from './mount.interfaces';
 
 /**
@@ -135,17 +135,13 @@ function mountHostElement(
 }
 
 /**
- * Directive to apply styles and attributes to the host element.
- * This directive injects the provided styles into the host element's Shadow DOM or Light DOM.
- * @param styles The CSS styles to apply to the host element.
+ * Directive to inject component CSS styles into the nearest root node (Shadow DOM or Light DOM).
+ * @param styles - CSS style string(s) to be injected.
  * @returns A {@link DirectiveResult} for the host element.
  * @example
  * ```typescript
  * html`
- *   <template
- *     ${host(styles)}
- *     id="component-host"
- *     class="component-container"></template>
+ *   ${withStyles(cssStyleStr)}
  *
  *   <div class="component-content">
  *     <!-- Component content goes here -->
@@ -153,76 +149,69 @@ function mountHostElement(
  * `
  * ```
  */
-export function host(...styles: string[]): DirectiveResult {
-  return directive(class extends Directive {
-    render() { return ''; }
-    update({ element }: ElementPart) {
-      // Hide all elements within the template until styles and attributes are applied.
-      for (const child of Array.from(element.parentNode?.children ?? [])) {
-        if (child instanceof HTMLElement && child !== element) {
-          child.style.display = 'none'; // Hide all sibling elements of the host element.
-        }
-      }
+export function withStyles(...styles: string[]): DirectiveResult {
+  return directive(
+    class extends Directive {
+      render() { return ''; }
+      update(part: Part) {
+        const startNode = (part as ChildPart).startNode
+                       ?? (part as ElementPart).element;
 
-      // Wait for the host template element to be rendered in the DOM so we can derive its context.
-      setTimeout(() => {
-        // Derive the root node and host element from the part element's context in the DOM.
-        const root = element.getRootNode();
-        const host = element.parentNode instanceof ShadowRoot
-          ? element.parentNode.host
-          : element.parentElement;
-
-        // If inside Shadow DOM, must inject component styles into the shadow root.
-        if (root instanceof ShadowRoot) {
-          injectStyles(root, ...styles);
-        }
-
-        // Apply attributes if the template was rendered to a mounted host element.
-        if (host && host.hasAttribute('data-host')) {
-          if (element.id) {
-            host.id = element.id;
-          }
-
-          if (element.classList.length) {
-            host.classList.add(...Array.from(element.classList));
-          }
-
-          for (const attr of element.getAttributeNames()) {
-            host.setAttribute(attr, element.getAttribute(attr)!);
-          }
-        }
-
-        // Show all elements within the rendered template.
-        for (const child of Array.from(element.parentNode?.children ?? [])) {
-          if (child instanceof HTMLElement) {
-            child.style.display = ''; // Show all sibling elements of the host element.
-            if (child.getAttribute('style')?.trim() === '') {
-              child.removeAttribute('style'); // Remove empty style attributes.
+        if (startNode?.getRootNode() instanceof DocumentFragment) {
+          // Hide all siblings until the styles are injected.
+          for (const child of Array.from(startNode.parentNode?.children ?? [])) {
+            if (child instanceof HTMLElement) {
+              child.style.display = 'none'; // Hide all sibling elements of the host element.
             }
           }
+
+          // Wait for template to render before injecting styles in nearest root node.
+          setTimeout(() => {
+            injectStyles(startNode, ...styles);
+
+            // Show all siblings after styles are injected.
+            for (const child of Array.from(startNode.parentNode?.children ?? [])) {
+              if (child instanceof HTMLElement) {
+                child.style.display = ''; // Show all sibling elements of the host element.
+                if (child.getAttribute('style')?.trim() === '') {
+                  child.removeAttribute('style'); // Remove empty style attributes.
+                }
+              }
+            }
+          });
+        } else {
+          injectStyles(startNode ?? document, ...styles);
         }
-        element.remove(); // Remove the host element after applying styles and attributes.
-      });
-      return this.render();
+
+        return this.render();
+      }
     }
-  })();
+  )();
 }
 
 /**
  * Injects CSS styles into a Shadow DOM.
  *
- * @param root - {@link ShadowRoot} to inject styles into.
+ * @param node - {@link Node} to inject styles into.
+ * If this is not a {@link Document} or {@link ShadowRoot}, it will derive the root node from the provided element.
  * @param styles - CSS styles to be injected.
  */
 export function injectStyles(
-  root: ShadowRoot | Element,
+  node: Node,
   ...styles: string[]
 ): void {
+  // Try to derive the root node from the provided element.
+  const root = (node instanceof Document || node instanceof ShadowRoot)
+    ? node
+    : node.getRootNode() instanceof ShadowRoot
+      ? node.getRootNode() as ShadowRoot
+      : document;
+
   for (const styleStr of styles) {
     if (!styleStr) continue; // Skip empty styles
 
     // Check if the browser supports adoptedStyleSheets (Chromium or Safari).
-    if ('adoptedStyleSheets' in Document.prototype && root instanceof ShadowRoot) {
+    if ('adoptedStyleSheets' in Document.prototype) {
       let sheet = cachedStyleSheets.get(styleStr);
       if (!sheet) {
         sheet = new CSSStyleSheet();
@@ -233,7 +222,7 @@ export function injectStyles(
         root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
       }
     } else { // Light DOM or fallback for browsers that do not support adoptedStyleSheets (Firefox).
-      if (!Array.from(root.children).some(child => child.tagName === 'style' && child.textContent === styleStr)) {
+      if (!Array.from(root.querySelectorAll('>style')).some(child => child.textContent === styleStr)) {
         const style = document.createElement('style');
         style.textContent = styleStr;
         root.prepend(style);
