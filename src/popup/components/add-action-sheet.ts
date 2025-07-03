@@ -1,7 +1,7 @@
-import { html, TemplateResult } from 'lit-html';
-import { buttonListTemplate } from '~shared/components/button-list';
-import { renderSheet } from '~shared/components/sheet';
-import { AutoRecordAction } from '~shared/models/auto-record';
+import { html, TemplateResult } from 'lit';
+import { buttonListTemplate } from '~shared/components/button-list.js';
+import { renderSheet } from '~shared/components/sheet.js';
+import { AutoRecordAction } from '~shared/models/auto-record.js';
 
 /**
  * Generates the template for a single auto-record list item.

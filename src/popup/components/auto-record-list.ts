@@ -1,7 +1,7 @@
-import { html } from 'lit-html';
-import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
-import { renderButtonList } from '~shared/components/button-list';
-import { type AutoRecord } from '~shared/models/auto-record';
+import { html } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { mountButtonList } from '~shared/components/button-list.js';
+import { type AutoRecord } from '~shared/models/auto-record.js';
 import './auto-record-list.scss';
 
 /**
@@ -62,7 +62,7 @@ export function renderAutoRecordList(
   onDelete: (record: AutoRecord) => Promise<void>,
   onTogglePause: (record: AutoRecord) => Promise<void>,
 ): void {
-  renderButtonList(
+  mountButtonList(
     'mn-auto-records-list-container',
     records.map((record) => ({
       uid: record.uid,

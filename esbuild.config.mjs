@@ -30,6 +30,7 @@ const ctx = await esbuild.context({
   write: true,
   logLevel: 'info',
   outdir: 'dist',
+  tsconfig: 'tsconfig.json',
   plugins: [
     TsconfigPathsPlugin({}),
     typecheckPlugin({

@@ -1,7 +1,7 @@
-import { html, type TemplateResult } from 'lit-html';
-import { repeat } from 'lit-html/directives/repeat.js';
-import { type MountOptions, type MountPoint, type MountResult, mountTemplate, type Template, withStyles } from '~shared/utils/mount';
-import type { ButtonListItem } from './button-list.interfaces';
+import { html, type TemplateResult } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
+import { type MountOptions, type MountPoint, type MountResult, mountTemplate, type Template, withStyles } from '~shared/utils/mount.js';
+import type { ButtonListItem } from './button-list.interfaces.js';
 
 import buttonListStyles from './button-list.scss?inline';
 
@@ -43,7 +43,7 @@ export const buttonListTemplate = (
   </ul>
 `;
 
-export function renderButtonList(
+export function mountButtonList(
   mountPoint: MountPoint,
   items: ButtonListItem[],
   notFoundMessage?: Template,
@@ -56,4 +56,4 @@ export function renderButtonList(
   });
 }
 
-export type * from './button-list.interfaces';
+export type * from './button-list.interfaces.js';

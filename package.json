@@ -2,6 +2,7 @@
   "name": "automator-lite",
   "version": "1.0.0",
   "description": "A Chrome extension that automates repetitive tasks in the browser.",
+  "type": "module",
   "scripts": {
     "build": "node esbuild.config.mjs -- --minify",
     "build:watch": "node esbuild.config.mjs -- --watch",
@@ -13,7 +14,8 @@
   "author": "Mark Nemmer",
   "license": "ISC",
   "dependencies": {
-    "lit-html": "^3.3.0",
+    "@webcomponents/custom-elements": "^1.6.0",
+    "lit": "^3.3.0",
     "lodash-es": "^4.17.21",
     "p-defer": "^4.0.1"
   },

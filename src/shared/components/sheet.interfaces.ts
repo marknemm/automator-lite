@@ -1,4 +1,4 @@
-import type { TemplateResult } from 'lit-html';
+import type { TemplateResult } from 'lit';
 
 /**
  * Options for configuring the sheet behavior.

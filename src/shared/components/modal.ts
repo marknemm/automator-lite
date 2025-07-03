@@ -1,87 +1,129 @@
-import { html, type TemplateResult } from 'lit-html';
+import { LitElement, unsafeCSS, type TemplateResult } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+import { html, unsafeStatic } from 'lit/static-html.js';
 import deferredPromise from 'p-defer';
-import { mountTemplate, withStyles, type Template } from '~shared/utils/mount';
-import type { ModalContext, ModalOptions } from './modal.interfaces';
+import { autoFocus } from '~shared/directives/auto-focus.js';
+import { mountTemplate, Template, type MountContext } from '~shared/utils/mount.js';
+import type { ModalContext, ModalOptions } from './modal.interfaces.js';
 
-import modalStyles from './modal.scss?inline';
+import styles from './modal.scss?inline';
 
-/**
- * Template for the modal popup.
- *
- * @param content - The {@link TemplateResult} to be rendered inside the modal.
- * @param onBackdropClick - Callback function to be called when the backdrop is clicked.
- * @param onEscape - Callback function to be called when the Escape key is pressed.
- * @returns A {@link TemplateResult} representing the modal template.
- */
-const modalTemplate = (
-  content: Template,
-  onBackdropClick: () => void,
-  onEscape: () => void,
-): TemplateResult => html`
-  ${withStyles(modalStyles)}
+@customElement('mn-modal')
+export class Modal<D = unknown, R = D> extends LitElement {
 
-  <div
-    class="mn-modal-backdrop"
-    @click="${{ handleEvent: onBackdropClick }}"
-    @keydown="${{
-      handleEvent: (event: KeyboardEvent) => {
-        if (event.key !== 'Escape') return;
-        event.stopPropagation();
-        onEscape();
+  static styles = [unsafeCSS(styles)];
+
+  @property({ type: Boolean })
+  closeOnBackdropClick = false;
+
+  @property({ type: Boolean })
+  closeOnEscape = false;
+
+  @property({ type: Boolean })
+  opened = true;
+
+  @property({ attribute: false })
+  data?: D;
+
+  @property({ attribute: false })
+  onClose?: (result?: R) => boolean | void;
+
+  static open<D = unknown, R = D>(
+    { content,
+      closeOnBackdropClick = false,
+      closeOnEscape = false,
+      data,
+      onClose,
+      mountPoint = document.body,
+    }: ModalOptions<D, R> = {}
+  ): ModalContext<R> {
+    const { promise: onModalClose, resolve } = deferredPromise<R | undefined>();
+    const modalCtx: ModalContext<R> = { onModalClose, closeModal: () => {}, refreshModal: () => {} };
+    const modalElement = new this<D, R>(); // Target subclass of Modal
+    const modalTagName = unsafeStatic(modalElement.tagName.toLowerCase());
+
+    const modalTemplate = (content?: Template) => html`
+      <${modalTagName}
+        ?closeOnBackdropClick=${closeOnBackdropClick}
+        ?closeOnEscape=${closeOnEscape}
+        .data=${data}
+        .onClose=${(result: R) => modalCtx.closeModal(result)}
+      >
+        ${content}
+      </${modalTagName}>
+    `;
+
+    mountTemplate({
+      mountPoint,
+      mountMode: 'append',
+      template: ({ refresh, unmount }: MountContext) => {
+        modalCtx.closeModal = (result?: R) => {
+          const close = onClose?.(result);
+          if (close === false) return; // Prevent unmounting if close is prevented.
+          unmount();
+          resolve(result);
+        };
+
+        modalCtx.refreshModal = (content: Template | ((ctx: ModalContext<R>) => TemplateResult)) => {
+          refresh(typeof content === 'function' ? content(modalCtx) : content);
+        };
+
+        return modalTemplate(typeof content === 'function' ? content(modalCtx) : content);
       },
-    }}"
-  >
-    <div
-      class="mn-modal"
-      role="dialog"
-      aria-modal="true"
-      tabindex="-1"
-      @click="${{ handleEvent: (event: Event) => event.stopPropagation() }}"
-    >
-      ${content}
-    </div>
-  </div>
-`;
+    });
 
-/**
- * Utility function to create and manage a modal popup.
- *
- * @param renderContent - A function that returns a {@link TemplateResult} to be rendered inside the modal.
- * The function receives a {@link ModalContext} as an argument.
- * @param options - The {@link ModalOptions} object to configure the modal behavior.
- * @returns The {@link ModalContext} containing contextual data for controlling the modal.
- */
-export function renderModal<T>(
-  renderContent: (modalContext: ModalContext<T>) => Template,
-  options: ModalOptions = {},
-): ModalContext<T> {
-  const { promise: onModalClose, resolve } = deferredPromise<T | undefined>();
-  const modalCtx = { onModalClose } as ModalContext<T>; // Will init other properties below.
+    return modalCtx;
+  }
 
-  mountTemplate({
-    mountPoint: document.body,
-    mountMode: 'append',
-    shadowRootInit: { mode: 'open' },
-    template: ({ refresh, unmount }) => {
-      modalCtx.closeModal = (data?: T) => {
-        unmount();
-        resolve(data);
-      };
-      modalCtx.refreshModal = (content: TemplateResult) => refresh(
-        modalTemplate(content, onBackdropClick, onEscape)
-      );
+  open(): void {
+    this.opened = true;
+  }
 
-      const onBackdropClick = () => options.closeOnBackdropClick && modalCtx.closeModal();
-      const onEscape = () => !options.noCloseOnEscape && modalCtx.closeModal();
+  close(data?: R): boolean {
+    const close = this.onClose?.(data);
+    if (close === false) return false; // Prevent closing the modal
 
-      return modalTemplate(renderContent(modalCtx), onBackdropClick, onEscape);
-    },
-    afterRender: ({ shadowRoot }) => (!options.noFocus && !shadowRoot?.contains(document.activeElement))
-      ? (shadowRoot?.querySelector('input, select, textarea') as HTMLElement)?.focus()
-      : undefined,
-  });
+    this.opened = false;
+    return true;
+  }
 
-  return modalCtx;
+  protected onBackdropClick(): void {
+    if (this.closeOnBackdropClick) {
+      this.close();
+    }
+  }
+
+  protected onKeydown(event: KeyboardEvent): void {
+    if (this.closeOnEscape && event.key === 'Escape') {
+      event.stopPropagation();
+      this.close();
+    }
+  }
+
+  protected render(): TemplateResult {
+    return html`
+      <div
+        class="modal-backdrop ${this.opened ? 'open' : ''}"
+        @click="${this.onBackdropClick}"
+        @keydown="${this.onKeydown}"
+      >
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          tabindex="-1"
+          @click="${(event: Event) => event.stopPropagation()}"
+          ${autoFocus()}
+        >
+          ${this.renderContent()}
+        </div>
+      </div>
+    `;
+  }
+
+  protected renderContent(): TemplateResult {
+    return html`<slot></slot>`;
+  }
 }
 
-export type * from './modal.interfaces';
+export type * from './modal.interfaces.js';

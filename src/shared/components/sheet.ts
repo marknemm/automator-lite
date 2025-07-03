@@ -1,6 +1,6 @@
-import { html, type TemplateResult } from 'lit-html';
-import { unsafeHTML } from 'lit-html/directives/unsafe-html.js';
-import { type MountContext, MountOptions, type MountPoint, mountTemplate, Template, withStyles } from '~shared/utils/mount';
+import { html, type TemplateResult } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { type MountContext, MountOptions, type MountPoint, mountTemplate, Template, withStyles } from '~shared/utils/mount.js';
 
 import sheetStyles from './sheet.scss?inline';
 
@@ -9,7 +9,7 @@ export const sheetTemplate = (
   content: Template,
   title: Template = '',
 ): TemplateResult => html`
-  <div class="mn-sheet-inner" ${withStyles(sheetStyles)}>
+  <div class="mn-sheet" ${withStyles(sheetStyles)}>
     <div class="mn-sheet-header">
       ${title
         ? html`<h2 class="mn-sheet-title">${title}</h2>`

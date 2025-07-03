@@ -1,10 +1,12 @@
 // This script runs in the context of the web page.
 
+import '@webcomponents/custom-elements';
+
 import type { Nullish } from 'utility-types';
-import { AutoRecord } from '~shared/models/auto-record';
-import { initExecutor } from './utils/auto-record-executor';
-import { deriveElementSelector } from './utils/element-analysis';
-import { openRecordConfigModal } from './components/auto-record-config-modal';
+import { AutoRecord } from '~shared/models/auto-record.js';
+import { AutoRecordConfigModal } from './components/auto-record-config-modal.js';
+import { initExecutor } from './utils/auto-record-executor.js';
+import { deriveElementSelector } from './utils/element-analysis.js';
 
 import './content.scss';
 
@@ -33,7 +35,12 @@ async function init() {
 
   window.addEventListener('message', async (event) => {
     if (event.data?.type === 'mnAddRecord') {
-      const record = await openRecordConfigModal(new AutoRecord(event.data?.payload)).onModalClose;
+      const record = await AutoRecordConfigModal.open({
+        mountPoint: document.body,
+        closeOnBackdropClick: true,
+        closeOnEscape: true,
+        data: AutoRecord.create(event.data?.payload.selector, event.data?.payload.queryIdx),
+      }).onModalClose;
       await record?.save();
     }
   });
@@ -42,7 +49,12 @@ async function init() {
     addActive = (message.type === 'addActive') && message.payload;
 
     if (message.type === 'configureRecord' && window.top === window) {
-      const record = await openRecordConfigModal(new AutoRecord(message.payload)).onModalClose;
+      const record = await AutoRecordConfigModal.open({
+        mountPoint: document.body,
+        closeOnBackdropClick: true,
+        closeOnEscape: true,
+        data: new AutoRecord(message.payload),
+      }).onModalClose;
       await record?.save();
     }
   });

@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash-es';
 import type { DeepReadonly, Nullish } from 'utility-types';
-import { loadState, saveState } from '~shared/utils/state';
-import type { AutoRecordAction, AutoRecordState, AutoRecordUid } from './auto-record.interfaces';
+import { loadState, saveState } from '~shared/utils/state.js';
+import type { AutoRecordAction, AutoRecordState, AutoRecordUid } from './auto-record.interfaces.js';
 
 /**
  * Represents a {@link AutoRecord} of a re-playable action on a webpage.
@@ -201,4 +201,4 @@ export async function loadRecords(): Promise<AutoRecord[]> {
   return records.map(recordState => new AutoRecord(recordState));
 }
 
-export type * from './auto-record.interfaces';
+export type * from './auto-record.interfaces.js';

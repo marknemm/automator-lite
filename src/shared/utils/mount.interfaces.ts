@@ -1,4 +1,4 @@
-import type { RenderOptions, RootPart, TemplateResult } from 'lit-html';
+import type { RenderOptions, RootPart, TemplateResult } from 'lit';
 
 /**
  * Arguments for mounting a {@link Template} to a DOM element.
@@ -42,8 +42,9 @@ export interface MountOptions {
 
   /**
    * Options for initializing the Shadow DOM.
-   * If set to `null`, the template will not be rendered into a Shadow DOM.
-   * @default { mode: 'open' }
+   *
+   * If specified, the template will be rendered into a Shadow DOM root.
+   * If not specified, the template will be rendered into the light DOM of the mount point.
    */
   shadowRootInit?: ShadowRootInit;
 

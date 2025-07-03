@@ -1,4 +1,4 @@
-import type { AutoRecordState } from '~shared/models/auto-record.interfaces';
+import type { AutoRecordState } from '~shared/models/auto-record.interfaces.js';
 
 /**
  * The global state of the extension.

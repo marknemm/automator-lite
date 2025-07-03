@@ -1,4 +1,4 @@
-import { html, type TemplateResult } from 'lit-html';
+import { html, type TemplateResult } from 'lit';
 
 import './field-help.scss';
 

@@ -1,12 +1,18 @@
-import { render, type ElementPart } from 'lit-html';
-import { ChildPart, Directive, directive, Part, type DirectiveResult } from 'lit-html/directive.js';
-import type { MountArgs, MountContext, MountPoint, MountResult, Template, TemplateGenerator } from './mount.interfaces';
+import { nothing, render, type ElementPart } from 'lit';
+import { ChildPart, Directive, directive, Part, type DirectiveResult } from 'lit/directive.js';
+import type { MountArgs, MountContext, MountPoint, MountResult, Template, TemplateGenerator } from './mount.interfaces.js';
 
 /**
  * A {@link Map} of style strings to their corresponding {@link CSSStyleSheet} objects.
  * This allows for reusing styles without creating new {@link CSSStyleSheet} instances for the same styles.
  */
 const cachedStyleSheets = new Map<string, CSSStyleSheet>();
+
+/**
+ * A stack of {@link MountContext} objects for tracking the nearest ancestor mount root
+ * that a template is being rendered into.
+ */
+const mountCtxStack: MountContext[] = [];
 
 /**
  * Mounts a `template` to a specified `mountPoint`.
@@ -18,7 +24,7 @@ const cachedStyleSheets = new Map<string, CSSStyleSheet>();
  * If not specified, the host element will be mounted directly to the `mountPoint`.
  * @param template - The {@link Template} to be rendered or a {@link TemplateGenerator} function that returns a {@link Template}.
  * @param shadowRootInit - Optional initialization options for the Shadow DOM.
- * If set to `null`, no Shadow DOM will be created.
+ * If `undefined`, no Shadow DOM will be created.
  * @param beforeRender - Optional callback function to be called before the template is rendered.
  * This can be used to perform any necessary setup or modifications to the context.
  * @param afterRender - Optional callback function to be called after the template is rendered.
@@ -59,15 +65,15 @@ export function mountTemplate({
   mountPoint,
   mountMode,
   template,
-  shadowRootInit = { mode: 'open' },
+  shadowRootInit,
   beforeRender,
   afterRender,
   renderOpts,
 }: MountArgs): MountResult {
   // Derive the host element to render the template into and attach shadow DOM if configured.
   const hostElement = mountHostElement(mountPoint, mountMode);
-  const shadowRoot = shadowRootInit !== null // Must set to `null` to disable Shadow DOM.
-    ? hostElement.attachShadow(shadowRootInit ?? { mode: 'open' })
+  const shadowRoot = shadowRootInit
+    ? hostElement.attachShadow(shadowRootInit)
     : undefined;
 
   // Build the mount context used for rendering the template.
@@ -80,8 +86,10 @@ export function mountTemplate({
         newTemplate = newTemplate(mountCtx);
       }
 
+      mountCtxStack.push(mountCtx); // Push the current context to the stack.
       const rootPart = render(newTemplate, shadowRoot ?? hostElement, renderOpts);
       const mountResult: MountResult = { ...mountCtx, rootPart };
+      mountCtxStack.pop(); // Pop the context from the stack after rendering.
 
       afterRender?.(mountResult);
       return mountResult;
@@ -135,7 +143,11 @@ function mountHostElement(
 }
 
 /**
- * Directive to inject component CSS styles into the nearest root node (Shadow DOM or Light DOM).
+ * Directive to inject component CSS styles into the nearest mounted root node (Shadow DOM or Light DOM).
+ *
+ * Should prefer using LitElement with static styles instead of this directive.
+ * This should only be used for raw lit-html templates that do not use LitElement.
+ *
  * @param styles - CSS style string(s) to be injected.
  * @returns A {@link DirectiveResult} for the host element.
  * @example
@@ -152,36 +164,17 @@ function mountHostElement(
 export function withStyles(...styles: string[]): DirectiveResult {
   return directive(
     class extends Directive {
-      render() { return ''; }
+      render() { return nothing; }
       update(part: Part) {
         const startNode = (part as ChildPart).startNode
                        ?? (part as ElementPart).element;
+        const currentMountCtx = mountCtxStack[mountCtxStack.length - 1];
 
-        if (startNode?.getRootNode() instanceof DocumentFragment) {
-          // Hide all siblings until the styles are injected.
-          for (const child of Array.from(startNode.parentNode?.children ?? [])) {
-            if (child instanceof HTMLElement) {
-              child.style.display = 'none'; // Hide all sibling elements of the host element.
-            }
-          }
-
-          // Wait for template to render before injecting styles in nearest root node.
-          setTimeout(() => {
-            injectStyles(startNode, ...styles);
-
-            // Show all siblings after styles are injected.
-            for (const child of Array.from(startNode.parentNode?.children ?? [])) {
-              if (child instanceof HTMLElement) {
-                child.style.display = ''; // Show all sibling elements of the host element.
-                if (child.getAttribute('style')?.trim() === '') {
-                  child.removeAttribute('style'); // Remove empty style attributes.
-                }
-              }
-            }
-          });
-        } else {
-          injectStyles(startNode ?? document, ...styles);
-        }
+        (currentMountCtx)
+          // Inject styles into mount context before rendering.
+          ? injectStyles(currentMountCtx.shadowRoot ?? currentMountCtx.hostElement, ...styles)
+          // If no mount context, need to wait for the template to render before injecting styles.
+          : setTimeout(() => injectStyles(startNode, ...styles));
 
         return this.render();
       }
@@ -231,4 +224,4 @@ export function injectStyles(
   }
 }
 
-export type * from './mount.interfaces';
+export type * from './mount.interfaces.js';
