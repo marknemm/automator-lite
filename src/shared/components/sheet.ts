@@ -9,21 +9,21 @@ export const sheetTemplate = (
   content: Template,
   title: Template = '',
 ): TemplateResult => html`
-  <div class="mn-sheet" ${withStyles(sheetStyles)}>
-    <div class="mn-sheet-header">
+  <div class="sheet" ${withStyles(sheetStyles)}>
+    <div class="sheet-header">
       ${title
-        ? html`<h2 class="mn-sheet-title">${title}</h2>`
+        ? html`<h2 class="sheet-title">${title}</h2>`
         : undefined}
       <button
-        class="mn-round-button mn-close-button"
+        class="round-button close-button"
         type="button"
-        @click=${() => hostElement.classList.remove('mn-sheet-open')}
+        @click=${() => hostElement.classList.remove('sheet-open')}
         title="Close"
       >
         ${unsafeHTML('&#10006;')}
       </button>
     </div>
-    <div class="mn-sheet-content">
+    <div class="sheet-content">
       ${content}
     </div>
   </div>

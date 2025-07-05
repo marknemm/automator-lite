@@ -1,6 +1,8 @@
 @use 'base';
 
-body {
+:host {
+  display: block;
+  position: relative;
   min-width: 300px;
   font-size: 14px;
 }
@@ -32,7 +34,7 @@ button {
   cursor: pointer;
 }
 
-.mn-loader {
+.loader {
   position: absolute;
   z-index: 1000;
   width: 100%;
@@ -59,7 +61,7 @@ button {
   }
 }
 
-.mn-main-title {
+.main-title {
   font-weight: bold;
   padding-bottom: 1px;
   margin-bottom: 10px;
@@ -72,61 +74,35 @@ button {
   }
 }
 
-.mn-description {
+.description {
   font-size: 1em;
   color: #666;
 }
 
-.mn-auto-records-list-container {
+.auto-records-list-container {
   position: relative;
 }
 
-.mn-auto-records-list-header {
+.auto-records-list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 10px;
   margin-right: 5px;
+
+  > .subtitle {
+    margin: 5px 0;
+  }
 }
 
-.mn-auto-records-list-header > .mn-subtitle {
-  margin: 5px 0;
-}
-
-.mn-add-button {
+.add-button {
   border-radius: 50%;
   border: none;
   background-color: var(--mn-action-green);
   padding: 1px 7px;
   font-size: 20px;
-}
 
-.mn-add-button:hover {
-  background-color: var(--mn-action-green-darker);
-}
-
-.mn-delete-button {
-  color: var(--mn-action-red);
-}
-
-.mn-delete-button:hover {
-  background-color: var(--mn-action-red-lightest);
-}
-
-.mn-play-button {
-  font-size: 14px;
-  color: var(--mn-action-green);
-  background-color: #fff;
-}
-
-.mn-play-button:hover {
-  background-color: var(--mn-action-green-lightest);
-}
-
-.mn-pause-button {
-  font-size: 20px;
-}
-
-.mn-pause-button:hover {
-  background-color: var(--mn-action-blue-lightest);
+  &:hover {
+    background-color: var(--mn-action-green-darker);
+  }
 }

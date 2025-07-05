@@ -2,7 +2,7 @@
 
 $offset: 7px;
 
-.mn-field-help {
+.field-help {
   position: absolute;
   right: 0;
   display: inline-block;
@@ -11,12 +11,19 @@ $offset: 7px;
   border-radius: 50%;
   padding: 1px 4px;
   font-size: 13px;
-  line-height: 100%;;
+  line-height: 100%;
   vertical-align: middle;
   cursor: pointer;
+
+  &:hover {
+    .field-description {
+      animation: fadeIn 0.3s ease-in-out forwards;
+      pointer-events: auto;
+    }
+  }
 }
 
-.mn-field-description {
+.field-description {
   position: absolute;
   background-color: #000;
   color: #fff;
@@ -44,9 +51,4 @@ $offset: 7px;
     border-right: $offset solid transparent;
     border-bottom: $offset solid #000;
   }
-}
-
-.mn-field-help:hover .mn-field-description {
-  animation: fadeIn 0.3s ease-in-out forwards;
-  pointer-events: auto;
 }

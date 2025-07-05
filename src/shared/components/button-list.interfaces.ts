@@ -1,9 +1,9 @@
-import { TemplateResult } from 'lit';
-
 /**
  * Represents an item in a button list.
+ *
+ * @param D - The type of data associated with the button item.
  */
-export interface ButtonListItem {
+export interface ButtonListItem<D = unknown> {
 
   /**
    * The unique identifier for the button item.
@@ -11,15 +11,9 @@ export interface ButtonListItem {
   uid: string;
 
   /**
-   * The template or string content to be displayed inside the button.
-   * If not provided, a default template will be used that renders the {@link uid}.
+   * The data associated with the button item.
    */
-  contents?: TemplateResult | string;
-
-  /**
-   * The action to be performed when the button is clicked.
-   */
-  action: () => void | Promise<void>;
+  data?: D;
 
   /**
    * Whether the button is disabled.

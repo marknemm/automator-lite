@@ -1,6 +1,6 @@
 import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { fieldHelpTemplate } from '~shared/components/field-help.js';
+import '~shared/components/field-help.js';
 import { Modal } from '~shared/components/modal.js';
 import { AutoRecord } from '~shared/models/auto-record.js';
 
@@ -12,7 +12,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
   static styles = [Modal.styles, unsafeCSS(styles)].flat();
 
   @state()
-  private errMsg: string = '';
+  private accessor errMsg: string = '';
 
   protected renderContent(): TemplateResult {
     return html`
@@ -21,7 +21,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
           Automator Record Configuration
         </span>
         <button
-          id="mn-record-config-modal-close"
+          id="record-config-modal-close"
           class="modal-close"
           @click="${() => this.close()}"
           title="Close"
@@ -36,25 +36,25 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
             ${this.errMsg}
           </div>
 
-          <label for="mn-record-config-record-name">
+          <label for="record-config-record-name">
             Record Name:
-            ${fieldHelpTemplate('A unique name for this record. This helps in identifying the record later.')}
+            <mn-field-help>A unique name for this record. This helps in identifying the record later.</mn-field-help>
           </label>
           <input
             type="text"
-            id="mn-record-config-record-name"
+            id="record-config-record-name"
             name="recordName"
             placeholder="${this.data!.selector}"
             value="${this.data!.name}"
           />
 
-          <label for="mn-record-config-record-selector">
+          <label for="record-config-record-selector">
             Record Selector:
-            ${fieldHelpTemplate('The CSS selector used to identify the element(s) to be recorded. This should be unique to the element you want to target.')}
+            <mn-field-help>The CSS selector used to identify the element(s) to be recorded. This should be unique to the element you want to target.</mn-field-help>
           </label>
           <input
             type="text"
-            id="mn-record-config-record-selector"
+            id="record-config-record-selector"
             name="recordSelector"
             placeholder="Enter record selector"
             readonly
@@ -62,13 +62,13 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
             value="${this.data!.selector}"
           />
 
-          <label for="mn-record-config-record-query-idx">
+          <label for="record-config-record-query-idx">
             Record Query Index:
-            ${fieldHelpTemplate('The index of the query to be recorded. This is used when the selector matches multiple elements.')}
+            <mn-field-help>The index of the query to be recorded. This is used when the selector matches multiple elements.</mn-field-help>
           </label>
           <input
             type="number"
-            id="mn-record-config-record-query-idx"
+            id="record-config-record-query-idx"
             name="recordQueryIdx"
             placeholder="Enter query index"
             min="0"
@@ -76,24 +76,24 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
             value="${this.data!.queryIdx}"
           />
 
-          <label for="mn-record-config-record-auto-run">
+          <label for="record-config-record-auto-run">
             Auto Run:
-            ${fieldHelpTemplate('Automatically run this record when the page loads.')}
+            <mn-field-help>Automatically run this record when the page loads.</mn-field-help>
           </label>
           <input
             type="checkbox"
-            id="mn-record-config-record-auto-run"
+            id="record-config-record-auto-run"
             name="autoRun"
             ?checked="${this.data!.autoRun ?? true}"
           />
 
-          <label for="mn-record-config-record-interval">
+          <label for="record-config-record-interval">
             Repeat Interval:
-            ${fieldHelpTemplate('The record will repeat at this interval (milliseconds) if non-zero.')}
+            <mn-field-help>The record will repeat at this interval (milliseconds) if non-zero.</mn-field-help>
           </label>
           <input
             type="number"
-            id="mn-record-config-record-interval"
+            id="record-config-record-interval"
             name="recordInterval"
             placeholder="Enter record interval"
             min="0"
@@ -102,7 +102,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
         </div>
         <div class="modal-footer">
           <button
-            id="mn-record-config-modal-cancel"
+            id="record-config-modal-cancel"
             class="modal-cancel"
             @click="${() => this.close()}"
             title="Cancel"
@@ -112,7 +112,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
           </button>
 
           <button
-            id="mn-record-config-modal-confirm"
+            id="record-config-modal-confirm"
             class="modal-confirm"
             title="Confirm"
             type="submit"

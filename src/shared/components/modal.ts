@@ -14,19 +14,19 @@ export class Modal<D = unknown, R = D> extends LitElement {
   static styles = [unsafeCSS(styles)];
 
   @property({ type: Boolean })
-  closeOnBackdropClick = false;
+  accessor closeOnBackdropClick = false;
 
   @property({ type: Boolean })
-  closeOnEscape = false;
+  accessor closeOnEscape = false;
 
   @property({ type: Boolean })
-  opened = true;
+  accessor opened = true;
 
   @property({ attribute: false })
-  data?: D;
+  accessor data: D | undefined = undefined;
 
   @property({ attribute: false })
-  onClose?: (result?: R) => boolean | void;
+  accessor onClose: (result?: R) => boolean | void = () => true;
 
   static open<D = unknown, R = D>(
     { content,

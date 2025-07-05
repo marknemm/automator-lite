@@ -3,41 +3,9 @@
 <html lang="en">
   <head>
     <title>Automator Lite</title>
-    <link rel="stylesheet" href="./popup.css">
     <script type="module" src="./popup.js"></script>
   </head>
   <body>
-
-    <h1 class="mn-main-title">
-      &#129302;<span>Automator Lite</span>&#129302;
-    </h1>
-
-    <div class="mn-popup-body">
-      <div class="mn-description">
-        Automate your web experience with ease. <br>
-        Record and replay actions on any webpage. <br>
-      </div>
-
-      <div class="mn-auto-records-list-container">
-        <div class="mn-auto-records-list-header">
-          <h2 class="mn-subtitle">
-            Recorded Actions
-          </h2>
-
-          <button id="mn-add-auto-record" class="mn-add-button" title="Add a new action">
-            &#43;
-          </button>
-        </div>
-
-        <div id="mn-auto-records-list-container">
-          <!-- auto-record-list.ts -->
-        </div>
-      </div>
-
-      <div id="mn-add-action-sheet-container">
-        <!-- add-action-sheet.ts -->
-      </div>
-    </div>
-
+    <mn-popup></mn-popup>
   </body>
 </html>

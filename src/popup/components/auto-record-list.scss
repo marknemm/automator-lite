@@ -1,9 +1,10 @@
 @use "base";
 
-.mn-auto-record-list-item {
+:host(mn-auto-record-list-item) {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .record-name {
@@ -16,11 +17,37 @@
   text-align: left;
 }
 
-.mn-record-controls {
+.record-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 3px;
   margin-left: 10px;
   flex: 0 0 auto;
+}
+
+.delete-button {
+  color: var(--mn-action-red);
+
+  &:hover {
+    background-color: var(--mn-action-red-lightest);
+  }
+}
+
+.play-button {
+  font-size: 14px;
+  color: var(--mn-action-green);
+  background-color: #fff;
+
+  &:hover {
+    background-color: var(--mn-action-green-lightest);
+  }
+}
+
+.pause-button {
+  font-size: 20px;
+
+  &:hover {
+    background-color: var(--mn-action-blue-lightest);
+  }
 }

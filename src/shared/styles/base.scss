@@ -1,6 +1,6 @@
 @use "constants.scss";
 
-.mn-round-button {
+.round-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,16 +14,16 @@
   cursor: pointer;
   background-color: #fff;
   color: var(--mn-action-blue);
-  font-size: 16px;
+  font-size: 1.1em;
 }
 
-.mn-not-found {
+.not-found {
   text-align: center;
-  font-size: 14px;
+  font-size: 1em;
   color: #999;
   margin-bottom: 20px;
 }
 
-.mn-bottom-sheet {
+.bottom-sheet {
   animation: slideUp 0.3s ease-out forwards;
 }

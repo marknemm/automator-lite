@@ -168,7 +168,9 @@ export function withStyles(...styles: string[]): DirectiveResult {
       update(part: Part) {
         const startNode = (part as ChildPart).startNode
                        ?? (part as ElementPart).element;
-        const currentMountCtx = mountCtxStack[mountCtxStack.length - 1];
+        const currentMountCtx = mountCtxStack.length
+          ? mountCtxStack[mountCtxStack.length - 1]
+          : null;
 
         (currentMountCtx)
           // Inject styles into mount context before rendering.

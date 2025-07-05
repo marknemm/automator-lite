@@ -1,14 +1,27 @@
-import { html, type TemplateResult } from 'lit';
+import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
+import { customElement } from 'lit/decorators.js';
 
-import './field-help.scss';
+import styles from './field-help.scss?inline';
 
-export const fieldHelpTemplate = (
-  helpText: string,
-): TemplateResult => html`
-  <span class="mn-field-help">
-    <span>&#63;</span>
-    <span class="mn-field-description">
-      ${helpText}
-    </span>
-  </span>
-`;
+/**
+ * A component that provides help text for form fields.
+ * It displays a question mark icon that, when hovered over, shows the description provided in the slot.
+ *
+ * @element mn-field-help
+ */
+@customElement('mn-field-help')
+export class FieldHelp extends LitElement {
+
+  static styles = [unsafeCSS(styles)];
+
+  protected render(): TemplateResult {
+    return html`
+      <span class="field-help">
+        <span>&#63;</span>
+        <span class="field-description">
+          <slot></slot>
+        </span>
+      </span>
+    `;
+  }
+}

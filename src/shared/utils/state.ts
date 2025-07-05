@@ -12,11 +12,10 @@ import type { State, StateChange } from './state.interfaces.js';
 export async function loadState(): Promise<State> {
   const stateUid = await getStateUid();
   const storage = await chrome.storage.local.get(stateUid) ?? {};
-  console.log(stateUid);
 
   const state = (storage[stateUid] ?? {}) as State;
-  state.addActive = state.addActive ?? false;
-  state.records = state.records ?? [];
+  state.addActive ??= false;
+  state.records ??= [];
 
   return state;
 }

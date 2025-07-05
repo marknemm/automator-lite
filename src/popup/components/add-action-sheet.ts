@@ -1,5 +1,5 @@
 import { html, TemplateResult } from 'lit';
-import { buttonListTemplate } from '~shared/components/button-list.js';
+import '~shared/components/button-list.js';
 import { renderSheet } from '~shared/components/sheet.js';
 import { AutoRecordAction } from '~shared/models/auto-record.js';
 
@@ -11,17 +11,20 @@ import { AutoRecordAction } from '~shared/models/auto-record.js';
 const addActionSheetTemplate = (
   onAddActionSelect: (action: AutoRecordAction) => void,
 ): TemplateResult => html`
-  <div class="mn-action-sheet">
-    ${buttonListTemplate([
-      {
-        uid: 'Click',
-        action: () => onAddActionSelect('Click'),
-      },
-      {
-        uid: 'Script',
-        action: () => onAddActionSelect('Script'),
-      },
-    ])}
+  <div class="action-sheet">
+    <mn-button-list
+      .items="${[
+        {
+          uid: 'Click',
+          action: () => onAddActionSelect('Click'),
+        },
+        {
+          uid: 'Script',
+          action: () => onAddActionSelect('Script'),
+        },
+      ]}"
+      notFoundMessage="No actions available."
+    ></mn-button-list>
   </div>
 `;
 

@@ -198,6 +198,7 @@ export class AutoRecord implements AutoRecordState {
  */
 export async function loadRecords(): Promise<AutoRecord[]> {
   const { records } = await loadState();
+  console.log('Loaded records:', records);
   return records.map(recordState => new AutoRecord(recordState));
 }
 

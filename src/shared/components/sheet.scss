@@ -1,7 +1,7 @@
 @use "base";
 
-:host(.mn-sheet),
-.mn-sheet {
+:host(.sheet),
+.sheet {
   position: absolute;
   top: 0;
   width: 100%;
@@ -13,12 +13,12 @@
   background-color: #fff;
 }
 
-:host(.mn-sheet.mn-sheet-open),
-.mn-sheet.mn-sheet-open {
+:host(.sheet.sheet-open),
+.sheet.sheet-open {
   animation: slideUp 0.3s ease-in-out forwards;
 }
 
-.mn-sheet-header {
+.sheet-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
