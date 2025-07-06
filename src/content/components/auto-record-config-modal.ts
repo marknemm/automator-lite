@@ -5,6 +5,7 @@ import { Modal } from '~shared/components/modal.js';
 import { AutoRecord } from '~shared/models/auto-record.js';
 
 import styles from './auto-record-config-modal.scss?inline';
+import { autoFocus } from '~shared/directives/auto-focus.js';
 
 @customElement('mn-auto-record-config-modal')
 export class AutoRecordConfigModal extends Modal<AutoRecord> {
@@ -41,6 +42,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
             <mn-field-help>A unique name for this record. This helps in identifying the record later.</mn-field-help>
           </label>
           <input
+            ${autoFocus()}
             type="text"
             id="record-config-record-name"
             name="recordName"

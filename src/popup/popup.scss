@@ -79,11 +79,11 @@ button {
   color: #666;
 }
 
-.auto-records-list-container {
+.auto-record-list-container {
   position: relative;
 }
 
-.auto-records-list-header {
+.auto-record-list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -105,4 +105,11 @@ button {
   &:hover {
     background-color: var(--mn-action-green-darker);
   }
+}
+
+mn-auto-record-list {
+  display: block;
+  margin-left: -8px;
+  margin-right: -8px;
+  margin-bottom: -8px;
 }

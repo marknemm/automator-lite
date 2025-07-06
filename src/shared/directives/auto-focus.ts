@@ -7,8 +7,11 @@ export const autoFocus = directive(class extends Directive {
     if (el && typeof el.focus === 'function') {
       // Focus only on first render
       if (!el.hasAttribute('data-autofocused')) {
-        el.focus();
-        el.setAttribute('data-autofocused', '');
+        requestAnimationFrame(() => {
+          // Focus the element
+          el.focus();
+          el.setAttribute('data-autofocused', '');
+        });
       }
     }
   }

@@ -83,8 +83,8 @@ export class Popup extends LitElement {
           Record and replay actions on any webpage. <br>
         </div>
 
-        <div class="auto-records-list-container">
-          <div class="auto-records-list-header">
+        <div class="auto-record-list-container">
+          <div class="auto-record-list-header">
             <h2 class="subtitle">
               Recorded Actions
             </h2>
