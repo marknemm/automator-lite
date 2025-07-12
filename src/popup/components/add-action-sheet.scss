@@ -1,1 +1,6 @@
 @use "base";
+@use "../../shared/components/sheet.scss";
+
+.title {
+  margin: 0;
+}

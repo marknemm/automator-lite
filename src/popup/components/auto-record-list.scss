@@ -1,11 +1,5 @@
 @use "base";
-
-:host {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
+@use "../../shared/components/data-list.scss";
 
 .record-name {
   display: inline-block;

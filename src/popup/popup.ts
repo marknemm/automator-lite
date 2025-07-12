@@ -2,24 +2,31 @@
 
 import { Task } from '@lit/task';
 import { html, LitElement, type TemplateResult, unsafeCSS } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import { AutoRecord, loadRecords } from '~shared/models/auto-record.js';
 import { onStateChange } from '~shared/utils/state.js';
+import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
-// import { renderAddActionSheet } from './components/add-action-sheet.js';
 
 import styles from './popup.scss?inline';
 
+/**
+ * The main popup component for the Automator Lite extension.
+ *
+ * @element `mn-popup`
+ * @extends LitElement
+ */
 @customElement('mn-popup')
 export class Popup extends LitElement {
 
   static styles = [unsafeCSS(styles)];
 
-  #loadRecordsTask = new Task(this, {
-    task: loadRecords,
-  });
+  #loadRecordsTask = new Task(this, { task: loadRecords });
 
-  connectedCallback(): void {
+  @state()
+  private accessor addActionSheetOpened = false;
+
+  override connectedCallback(): void {
     super.connectedCallback();
     sendContentMessage({ type: 'addActive', payload: false }); // Reset the addActive state to false.
 
@@ -34,7 +41,7 @@ export class Popup extends LitElement {
    * @param record - The {@link AutoRecord} to configure.
    */
   #configureRecord(record: AutoRecord): void {
-    sendContentMessage({ type: 'configureRecord', payload: record.recordState });
+    sendContentMessage({ type: 'configureRecord', payload: record.state() });
     window.close();
   }
 
@@ -61,17 +68,30 @@ export class Popup extends LitElement {
   }
 
   /**
-   * Starts the process of adding a new record.
+   * Opens the action sheet for adding a new action.
    */
-  #addRecord(): void {
-    // renderAddActionSheet((action) => {
-    //   console.log('Selected action:', action);
-    // });
-    sendContentMessage({ type: 'addActive', payload: true });
+  #openActionSheet(): void {
+    this.addActionSheetOpened = true;
+  }
+
+  /**
+   * Closes the action sheet.
+   */
+  #closeActionSheet(): void {
+    this.addActionSheetOpened = false;
+  }
+
+  /**
+   * Handles the selection of an action from the action sheet.
+   *
+   * @param action - The action that was selected.
+   */
+  #onAddActionSelect(action: string): void {
+    sendContentMessage({ type: 'addAction', payload: action });
     window.close();
   }
 
-  protected render(): TemplateResult {
+  protected override render(): TemplateResult {
     return html`
       <h1 class="main-title">
         &#129302;<span>Automator Lite</span>&#129302;
@@ -93,41 +113,27 @@ export class Popup extends LitElement {
               type="button"
               class="add-button"
               title="Add a new action record"
-              @click=${() => this.#addRecord()}
+              @click=${() => this.#openActionSheet()}
             >
               &#43;
             </button>
           </div>
 
-          ${this.#renderRecordsList()}
-        </div>
+          <mn-auto-record-list
+            .task=${this.#loadRecordsTask}
+            .onConfigure=${(record: AutoRecord) => this.#configureRecord(record)}
+            .onDelete=${(record: AutoRecord) => this.#deleteRecord(record)}
+            .onTogglePause=${(record: AutoRecord) => this.#toggleRecordPause(record)}
+          ></mn-auto-record-list>
 
-        <!-- add-action-sheet.ts -->
+          <mn-add-action-sheet
+            .opened=${this.addActionSheetOpened}
+            .onOpenChange=${() => this.#closeActionSheet()}
+            .onAddActionSelect=${(action: string) => this.#onAddActionSelect(action)}
+          ></mn-add-action-sheet>
+        </div>
       </div>
     `;
-  }
-
-  #renderRecordsList(): TemplateResult {
-    const autoRecordListTmpl = html`
-      <mn-auto-record-list
-        .items=${this.#loadRecordsTask.value ?? []}
-        .onConfigure=${(record: AutoRecord) => this.#configureRecord(record)}
-        .onDelete=${(record: AutoRecord) => this.#deleteRecord(record)}
-        .onTogglePause=${(record: AutoRecord) => this.#toggleRecordPause(record)}
-      ></mn-auto-record-list>
-    `;
-
-    return this.#loadRecordsTask.render({
-      initial: () => html`<div class="loading">Loading records...</div>`,
-      pending: () => this.#loadRecordsTask.value
-        ? autoRecordListTmpl
-        : html`<div class="loading">Loading records...</div>`,
-      complete: () => autoRecordListTmpl,
-      error: (error) => {
-        console.error('Error loading records:', error);
-        return html`<div class="error">Error loading records.</div>`;
-      },
-    });
   }
 
 }

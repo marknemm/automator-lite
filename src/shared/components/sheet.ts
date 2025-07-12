@@ -1,43 +1,125 @@
-import { html, type TemplateResult } from 'lit';
+import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { type MountContext, MountOptions, type MountPoint, mountTemplate, Template, withStyles } from '~shared/utils/mount.js';
 
-import sheetStyles from './sheet.scss?inline';
+import styles from './sheet.scss?inline';
 
-export const sheetTemplate = (
-  { hostElement }: MountContext,
-  content: Template,
-  title: Template = '',
-): TemplateResult => html`
-  <div class="sheet" ${withStyles(sheetStyles)}>
-    <div class="sheet-header">
-      ${title
-        ? html`<h2 class="sheet-title">${title}</h2>`
-        : undefined}
+/**
+ * A modal-like component that slides in from the edge of its container.
+ *
+ * @element `mn-sheet`
+ * @slot `title` - A named slot for inserting the title of the sheet.
+ * @slot The default slot for inserting content into the sheet.
+ * @extends LitElement
+ */
+@customElement('mn-sheet')
+export class Sheet extends LitElement {
+
+  static styles = [unsafeCSS(styles)];
+
+  /**
+   * The open state of the sheet.
+   */
+  @property({ type: Boolean, reflect: true })
+  accessor opened = false;
+
+  /**
+   * The role of the sheet, used for accessibility.
+   * @default 'dialog'
+   */
+  @property({ type: String, reflect: true })
+  accessor role = 'dialog';
+
+  /**
+   * Callback function that is called when the open state changes via
+   * the {@link open} or {@link close} methods.
+   *
+   * Will not be called when the `opened` property is changed directly.
+   *
+   * @param opened - The new open state of the sheet.
+   */
+  @property({ attribute: false })
+  accessor onOpenChange: (opened: boolean) => void = () => {};
+
+  /**
+   * The side from which the sheet will slide in.
+   * Can be `bottom`, `top`, `left`, or `right`.
+   *
+   * @default 'bottom'
+   */
+  @property({ type: String, reflect: true })
+  accessor side: 'bottom' | 'top' | 'left' | 'right' = 'bottom';
+
+  /**
+   * Opens the sheet.
+   */
+  open(): void {
+    this.opened = true;
+    this.onOpenChange(this.opened);
+  }
+
+  /**
+   * Closes the sheet.
+   */
+  close(): void {
+    this.opened = false;
+    this.onOpenChange(this.opened);
+  }
+
+  /** @final Override {@link renderHeader} and/or {@link renderContent} instead. */
+  protected override render(): TemplateResult {
+    return html`
+      <div class="panel">
+        <div class="header">
+          ${this.renderHeader()}
+        </div>
+        <div class="content">
+          ${this.renderContent()}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Renders the header of the sheet.
+   * This method can be overridden to derive a specific sheet component with a custom header.
+   *
+   * @returns The header {@link TemplateResult} to be rendered inside the sheet.
+   */
+  protected renderHeader(): TemplateResult {
+    return html`
+      <div class="title-container">
+        ${this.renderTitle()}
+      </div>
       <button
         class="round-button close-button"
         type="button"
-        @click=${() => hostElement.classList.remove('sheet-open')}
+        @click=${() => this.close()}
         title="Close"
       >
         ${unsafeHTML('&#10006;')}
       </button>
-    </div>
-    <div class="sheet-content">
-      ${content}
-    </div>
-  </div>
-`;
+    `;
+  }
 
-export function renderSheet(
-  mountPoint: MountPoint,
-  title: Template = '',
-  content: Template,
-  mountOptions: MountOptions = {},
-): void {
-  mountTemplate({
-    mountPoint,
-    template: (ctx: MountContext) => sheetTemplate(ctx, content, title),
-    ...mountOptions,
-  });
+  /**
+   * Renders the title of the sheet.
+   * This method can be overridden to derive a specific sheet component with a custom title.
+   *
+   * @returns The title {@link TemplateResult} to be rendered inside the sheet header.
+   */
+  protected renderTitle(): TemplateResult {
+    return html`<slot name="title"></slot>`;
+  }
+
+  /**
+   * Renders the content of the sheet.
+   * This method can be overridden to derive a specific sheet component with fixed content.
+   *
+   * @returns The content {@link TemplateResult} to be rendered inside the sheet.
+   */
+  protected renderContent(): TemplateResult {
+    return html`<slot></slot>`;
+  }
+
 }

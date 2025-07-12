@@ -1,0 +1,12 @@
+@use "base";
+@use "../../shared/components/list.scss";
+
+.empty {
+  text-align: center;
+  color: #666
+}
+
+.error {
+  text-align: center;
+  color: var(--mn-action-red);
+}

@@ -1,5 +1,32 @@
 @use "constants.scss";
 
+h1 {
+  font-size: 1.5em;
+}
+
+h2 {
+  font-size: 1.3em;
+}
+
+h3 {
+  font-size: 1.2em;
+}
+
+h4 {
+  font-size: 1.1em;
+}
+
+h5, h6 {
+  font-size: 1em;
+}
+
+button {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
 .round-button {
   display: flex;
   align-items: center;
@@ -10,6 +37,7 @@
   border-radius: 50%;
   border: none;
   background: none;
+  line-height: 100%;
   color: inherit;
   cursor: pointer;
   background-color: #fff;

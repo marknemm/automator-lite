@@ -1,4 +1,5 @@
 :root, :host {
+  --mn-gutter: 8px;
   --mn-action-blue: #0078d4;
   --mn-action-blue-darker: #005a9e;
   --mn-action-blue-lightest: #e4edfd;
@@ -78,5 +79,14 @@
   to {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+@keyframes grow {
+  from {
+    max-height: 100%;
+  }
+  to {
+    max-height: 300%;
   }
 }

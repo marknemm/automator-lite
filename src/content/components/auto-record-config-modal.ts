@@ -2,20 +2,26 @@ import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import '~shared/components/field-help.js';
 import { Modal } from '~shared/components/modal.js';
-import { AutoRecord } from '~shared/models/auto-record.js';
+import { autoFocus } from '~shared/directives/auto-focus.js';
+import { type AutoRecord } from '~shared/models/auto-record.js';
 
 import styles from './auto-record-config-modal.scss?inline';
-import { autoFocus } from '~shared/directives/auto-focus.js';
 
+/**
+ * A {@link Modal} component for configuring an auto-record.
+ *
+ * @element `mn-auto-record-config-modal`
+ * @extends Modal<AutoRecord>
+ */
 @customElement('mn-auto-record-config-modal')
 export class AutoRecordConfigModal extends Modal<AutoRecord> {
 
-  static styles = [Modal.styles, unsafeCSS(styles)].flat();
+  static styles = [unsafeCSS(styles)];
 
   @state()
-  private accessor errMsg: string = '';
+  private accessor errMsg = '';
 
-  protected renderContent(): TemplateResult {
+  protected override renderContent(): TemplateResult {
     return html`
       <div class="modal-header">
         <span class="modal-title">
@@ -39,43 +45,15 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
 
           <label for="record-config-record-name">
             Record Name:
-            <mn-field-help>A unique name for this record. This helps in identifying the record later.</mn-field-help>
+            <mn-field-help>A name for this record.</mn-field-help>
           </label>
           <input
             ${autoFocus()}
             type="text"
             id="record-config-record-name"
             name="recordName"
-            placeholder="${this.data!.selector}"
-            value="${this.data!.name}"
-          />
-
-          <label for="record-config-record-selector">
-            Record Selector:
-            <mn-field-help>The CSS selector used to identify the element(s) to be recorded. This should be unique to the element you want to target.</mn-field-help>
-          </label>
-          <input
-            type="text"
-            id="record-config-record-selector"
-            name="recordSelector"
-            placeholder="Enter record selector"
-            readonly
             required
-            value="${this.data!.selector}"
-          />
-
-          <label for="record-config-record-query-idx">
-            Record Query Index:
-            <mn-field-help>The index of the query to be recorded. This is used when the selector matches multiple elements.</mn-field-help>
-          </label>
-          <input
-            type="number"
-            id="record-config-record-query-idx"
-            name="recordQueryIdx"
-            placeholder="Enter query index"
-            min="0"
-            readonly
-            value="${this.data!.queryIdx}"
+            value="${this.data!.name}"
           />
 
           <label for="record-config-record-auto-run">

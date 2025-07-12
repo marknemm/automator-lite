@@ -1,4 +1,4 @@
-import { AutoRecord, loadRecords, type AutoRecordUid } from '~shared/models/auto-record.js';
+import { AutoRecord, loadRecords, type AutoRecordKeyboardAction, type AutoRecordMouseAction, type AutoRecordScriptAction, type AutoRecordUid } from '~shared/models/auto-record.js';
 import { loadState, onStateChange, type StateChange } from '~shared/utils/state.js';
 
 /**
@@ -103,38 +103,82 @@ export function unscheduleRecord(autoRecord: AutoRecord | AutoRecordUid): boolea
  * @returns A {@link Promise} that resolves when the record is executed.
  */
 export async function execRecord(record: AutoRecord): Promise<void> {
-  const queriedElements = document.querySelectorAll(record.selector);
-  const element = queriedElements[record.queryIdx ?? 0];
-
-  // Ensure we have a valid element to use as the target.
-  if (record.action !== 'Script' && (!element || !(element instanceof HTMLElement))) {
-    console.warn(
-      `Target element not found for record: ${record.name}\n`,
-      JSON.stringify(record, null, 2),
-    );
-    return; // Do NOT throw an error, just log a warning.
-  }
-
-  // Execute the action based on the record type.
-  switch (record.action) {
-    case 'Click':
-      element.dispatchEvent(new MouseEvent('click', { ...defaultDispatchOpts }));
-      break;
-    case 'Double Click':
-      element.dispatchEvent(new MouseEvent('dblclick', { ...defaultDispatchOpts }));
-      break;
-    case 'Type':
-      for (const key of record.keyStrokes) {
-        element.dispatchEvent(new KeyboardEvent('keydown', { ...defaultDispatchOpts, key }));
-        element.dispatchEvent(new KeyboardEvent('keyup', { ...defaultDispatchOpts, key }));
+  for (const action of record.actions) {
+    try {
+      switch (action.type) {
+        case 'Mouse':
+          await execMouseAction(action as AutoRecordMouseAction);
+          break;
+        case 'Keyboard':
+          await execKeyboardAction(action as AutoRecordKeyboardAction);
+          break;
+        case 'Script':
+          await execScriptAction(action as AutoRecordScriptAction);
+          break;
+        default:
+          console.error(`Unsupported action type: ${action.type}`);
       }
-      break;
-    case 'Script':
-      const script = document.createElement('script');
-      script.textContent = record.script;
-      (element ?? document.body.lastChild).insertAdjacentElement('afterend', script);
-      break;
-    default:
-      throw new Error(`Unsupported action: ${record.action}`);
+    } catch (error) {
+      console.error(`Failed to execute action: ${action.type}`, error);
+    }
   }
+}
+
+/**
+ * Executes a mouse action by dispatching a {@link MouseEvent}.
+ *
+ * @param action - The {@link AutoRecordMouseAction} to execute.
+ */
+function execMouseAction(action: AutoRecordMouseAction): void {
+  const mouseEvent = new MouseEvent(action.mode, { ...defaultDispatchOpts });
+
+  const potentialTargets = Array.from(document.querySelectorAll(action.selector)) as HTMLElement[];
+  const target = potentialTargets.length === 1
+    ? potentialTargets[0]
+    : potentialTargets.find((el) => {
+        return el.textContent?.trim() === action.textContent
+            || el.title?.trim() === action.textContent;
+      });
+
+  target
+    ? target.dispatchEvent(mouseEvent)
+    : console.warn(`Could not find Mouse Event target: ${action.selector}`);
+}
+
+/**
+ * Executes a keyboard action by dispatching a {@link KeyboardEvent}.
+ *
+ * @param action - The {@link AutoRecordKeyboardAction} to execute.
+ */
+function execKeyboardAction(action: AutoRecordKeyboardAction): void {
+  const target = document.activeElement || document.body;
+
+  for (const keyStroke of action.keyStrokes) {
+    const eventOptions: KeyboardEventInit = {
+      ...defaultDispatchOpts,
+      key: keyStroke,
+      code: keyStroke,
+      shiftKey: action.modifierKeys?.shift ?? false,
+      ctrlKey: action.modifierKeys?.ctrl ?? false,
+      altKey: action.modifierKeys?.alt ?? false,
+      metaKey: action.modifierKeys?.meta ?? false,
+    };
+
+    const keydownEvent = new KeyboardEvent('keydown', eventOptions);
+    target.dispatchEvent(keydownEvent);
+
+    const keyupEvent = new KeyboardEvent('keyup', eventOptions);
+    target.dispatchEvent(keyupEvent);
+  }
+}
+
+/**
+ * Executes a script action by injecting a script element into the DOM.
+ *
+ * @param action - The {@link AutoRecordScriptAction} to execute.
+ */
+function execScriptAction(action: AutoRecordScriptAction): void {
+  const script = document.createElement('script');
+  script.textContent = action.src;
+  document.body.appendChild(script);
 }

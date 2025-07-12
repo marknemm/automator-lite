@@ -1,5 +1,4 @@
-import { nothing, render, type ElementPart } from 'lit';
-import { ChildPart, Directive, directive, Part, type DirectiveResult } from 'lit/directive.js';
+import { render } from 'lit';
 import type { MountArgs, MountContext, MountPoint, MountResult, Template, TemplateGenerator } from './mount.interfaces.js';
 
 /**
@@ -13,6 +12,18 @@ const cachedStyleSheets = new Map<string, CSSStyleSheet>();
  * that a template is being rendered into.
  */
 const mountCtxStack: MountContext[] = [];
+
+/**
+ * Retrieves the nearest {@link MountContext} from the stack.
+ * This is useful for accessing the current rendering context, such as the host element,
+ * shadow root, and refresh/unmount methods.
+ * @returns The nearest {@link MountContext} from the stack, or `undefined` if the stack is empty.
+ */
+export function getNearestMountCtx(): MountContext | undefined {
+  return mountCtxStack.length
+    ? mountCtxStack[mountCtxStack.length - 1]
+    : undefined;
+}
 
 /**
  * Mounts a `template` to a specified `mountPoint`.
@@ -140,48 +151,6 @@ function mountHostElement(
   }
 
   return hostElement;
-}
-
-/**
- * Directive to inject component CSS styles into the nearest mounted root node (Shadow DOM or Light DOM).
- *
- * Should prefer using LitElement with static styles instead of this directive.
- * This should only be used for raw lit-html templates that do not use LitElement.
- *
- * @param styles - CSS style string(s) to be injected.
- * @returns A {@link DirectiveResult} for the host element.
- * @example
- * ```typescript
- * html`
- *   ${withStyles(cssStyleStr)}
- *
- *   <div class="component-content">
- *     <!-- Component content goes here -->
- *   </div>
- * `
- * ```
- */
-export function withStyles(...styles: string[]): DirectiveResult {
-  return directive(
-    class extends Directive {
-      render() { return nothing; }
-      update(part: Part) {
-        const startNode = (part as ChildPart).startNode
-                       ?? (part as ElementPart).element;
-        const currentMountCtx = mountCtxStack.length
-          ? mountCtxStack[mountCtxStack.length - 1]
-          : null;
-
-        (currentMountCtx)
-          // Inject styles into mount context before rendering.
-          ? injectStyles(currentMountCtx.shadowRoot ?? currentMountCtx.hostElement, ...styles)
-          // If no mount context, need to wait for the template to render before injecting styles.
-          : setTimeout(() => injectStyles(startNode, ...styles));
-
-        return this.render();
-      }
-    }
-  )();
 }
 
 /**

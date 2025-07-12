@@ -1,0 +1,2 @@
+- In modal.ts, remove content from static open method so derived classes can omit custom content without confusion.
+- Support linter @final jsdoc to finalize inherited methods like in Java/C++.

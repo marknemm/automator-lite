@@ -1,44 +1,52 @@
-import { html, TemplateResult } from 'lit';
-import '~shared/components/button-list.js';
-import { renderSheet } from '~shared/components/sheet.js';
-import { AutoRecordAction } from '~shared/models/auto-record.js';
+import { html, unsafeCSS, type TemplateResult } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+import '~shared/components/button-list-item.js';
+import '~shared/components/list.js';
+import { Sheet } from '~shared/components/sheet.js';
+import type { AutoRecordType } from '~shared/models/auto-record.interfaces.js';
+
+import styles from './add-action-sheet.scss?inline';
 
 /**
- * Generates the template for a single auto-record list item.
+ * A sheet component for adding new actions to the Automator Lite extension.
  *
- * @returns A {@link TemplateResult} representing the list item.
+ * @element `mn-add-action-sheet`
+ * @extends Sheet
  */
-const addActionSheetTemplate = (
-  onAddActionSelect: (action: AutoRecordAction) => void,
-): TemplateResult => html`
-  <div class="action-sheet">
-    <mn-button-list
-      .items="${[
-        {
-          uid: 'Click',
-          action: () => onAddActionSelect('Click'),
-        },
-        {
-          uid: 'Script',
-          action: () => onAddActionSelect('Script'),
-        },
-      ]}"
-      notFoundMessage="No actions available."
-    ></mn-button-list>
-  </div>
-`;
+@customElement('mn-add-action-sheet')
+export class AddActionSheet extends Sheet {
 
-/**
- * Renders the "Add Action" sheet with a list of available actions.
- *
- * @param onAddActionSelect - Callback function to handle action selection.
- */
-export function renderAddActionSheet(
-  onAddActionSelect: (action: AutoRecordAction) => void,
-): void {
-  renderSheet(
-    'mn-add-action-sheet-container',
-    addActionSheetTemplate(onAddActionSelect),
-    'Add Action',
-  );
+  static styles = [unsafeCSS(styles)];
+
+  /**
+   * Callback when an action is selected.
+   *
+   * @param action - The action that was selected.
+   */
+  @property({ attribute: false })
+  accessor onAddActionSelect: (action: AutoRecordType) => void = () => {};
+
+  /**
+   * @default 'right'
+   */
+  @property({ type: String, reflect: true })
+  accessor side: 'bottom' | 'top' | 'left' | 'right' = 'right';
+
+  protected override renderTitle(): TemplateResult {
+    return html`<h2 class="title">Add Action</h2>`;
+  }
+
+  protected override renderContent(): TemplateResult {
+    return html`
+      <mn-list>
+        <mn-button-list-item @click=${() => this.onAddActionSelect('Recording')}>
+          Record Mouse and Keyboard
+        </mn-button-list-item>
+        <mn-button-list-item @click=${() => this.onAddActionSelect('Script')}>
+          Manual Scripting
+        </mn-button-list-item>
+      </mn-list>
+    `;
+  }
+
 }

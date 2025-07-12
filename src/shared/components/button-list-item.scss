@@ -1,13 +1,7 @@
 @use "base";
+@use "../../shared/components/list-item.scss";
 
-.button-list {
-  list-style: none;
-  padding-left: 0;
-  margin-top: 7px;
-  margin-bottom: 0;
-}
-
-.button-list-item {
+:host {
   > button {
     display: flex;
     justify-content: space-between;
@@ -15,8 +9,7 @@
     box-sizing: border-box;
     width: 100%;
     padding: 8px 10px;
-    border: 0;
-    border-top: 1px solid #f0f0f0;
+    border: none;
     cursor: pointer;
 
     &.not-found {

@@ -7,10 +7,9 @@ import type { Nullish } from 'utility-types';
 export interface AutoRecordState {
 
   /**
-   * The action associated with the record.
-   * This can be a user interaction (e.g., click, double-click) or a script action.
+   * The actions to be performed by the record.
    */
-  action: AutoRecordAction;
+  actions: AutoRecordAction[];
 
   /**
    * Whether the action should be performed automatically.
@@ -35,12 +34,6 @@ export interface AutoRecordState {
   frequency?: number | Nullish;
 
   /**
-   * The keyboard key strokes to be executed when the action is triggered.
-   * This is used for the `Type` {@link AutoRecordAction}.
-   */
-  keyStrokes?: string[];
-
-  /**
    * The name of the record.
    * This is a user-friendly name that can be used to identify the record.
    */
@@ -52,30 +45,101 @@ export interface AutoRecordState {
   paused?: boolean;
 
   /**
-   * The index of the record in the list of query results for the selector.
-   * This is used to identify the specific instance of the element if there are multiple matches.
-   * If not specified, the first match will be used.
-   */
-  queryIdx?: number;
-
-  /**
-   * The selector used to identify the target element for the record.
-   * This is a CSS selector that can be used to select the element in the DOM.
-   */
-  selector: string;
-
-  /**
-   * The JS script to be executed when the action is triggered.
-   * This is used for the `Script` {@link AutoRecordAction}.
-   */
-  script?: string;
-
-  /**
    * The timestamp of the last update to the record.
    */
   updateTimestamp: number;
 
 }
 
-export type AutoRecordAction = 'Double Click' | 'Click' | 'Script' | 'Type';
+/**
+ * An generic action that can be performed by an {@link AutoRecord}.
+ */
+export interface AutoRecordAction {
+
+  /**
+   * The {@link AutoRecordActionType} of user interaction to perform.
+   *
+   * Can be one of:
+   * - `Mouse`: A mouse action, such as a click or hover.
+   * - `Keyboard`: A keyboard action, such as typing or pressing a key.
+   * - `Script`: A script action, such as executing a JavaScript snippet.
+   */
+  type: AutoRecordActionType;
+
+}
+
+/**
+ * An action that can be performed by an {@link AutoRecord} of type `Mouse`.
+ * @extends {AutoRecordAction}
+ */
+export interface AutoRecordMouseAction extends AutoRecordAction {
+
+  /**
+   * The mode of the mouse action.
+   *
+   * Can be one of:
+   * - `click`: A single click action.
+   * - `dblclick`: A double click action.
+   * - `contextmenu`: A right click action.
+   */
+  mode: MouseActionMode;
+
+  /**
+   * The CSS selector of the element that is targeted by the action.
+   */
+  selector: string;
+
+  /**
+   * The text content of the element that is targeted by the action.
+   * This is used to identify the element in the DOM if the selector is non-unique.
+   */
+  textContent?: string;
+
+  type: 'Mouse'; // Ensures the type is always 'Mouse' for this interface
+
+}
+
+/**
+ * An action that can be performed by an {@link AutoRecord} of type `Keyboard`.
+ * @extends {AutoRecordAction}
+ */
+export interface AutoRecordKeyboardAction extends AutoRecordAction {
+
+  /**
+   * The key stroke(s) to be executed when the action is triggered.
+   */
+  keyStrokes: string[];
+
+  /**
+   * The modifier keys to be used when executing the key stroke(s).
+   */
+  modifierKeys?: {
+    shift?: boolean;
+    ctrl?: boolean;
+    alt?: boolean;
+    meta?: boolean;
+  };
+
+  type: 'Keyboard'; // Ensures the type is always 'Keyboard' for this interface
+
+}
+
+/**
+ * An action that can be performed by an {@link AutoRecord} of type `Script`.
+ * @extends {AutoRecordAction}
+ */
+export interface AutoRecordScriptAction extends AutoRecordAction {
+
+  /**
+   * The JS script source to be executed when the action is triggered.
+   */
+  src: string;
+
+  type: 'Script'; // Ensures the type is always 'Script' for this interface
+
+}
+
+export type AutoRecordType = 'Recording' | 'Script';
+export type AutoRecordActionType = 'Mouse' | 'Keyboard' | 'Script';
 export type AutoRecordUid = string;
+export type MouseActionMode = 'click' | 'dblclick' | 'contextmenu';

@@ -1,0 +1,12 @@
+@use "base";
+
+:host {
+  position: relative;
+  display: flex;
+  border: 0;
+  border-top: 1px solid #f0f0f0;
+
+  :last-child {
+    border-bottom: 1px solid #f0f0f0;
+  }
+}

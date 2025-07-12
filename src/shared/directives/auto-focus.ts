@@ -1,5 +1,8 @@
 import { directive, Directive, type ElementPart } from 'lit/directive.js';
 
+/**
+ * Directive to automatically focus an element when it is first rendered.
+ */
 export const autoFocus = directive(class extends Directive {
   render() {}
   update(part: ElementPart) {

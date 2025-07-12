@@ -4,53 +4,41 @@ import { loadState, saveState } from '~shared/utils/state.js';
 import type { AutoRecordAction, AutoRecordState, AutoRecordUid } from './auto-record.interfaces.js';
 
 /**
- * Represents a {@link AutoRecord} of a re-playable action on a webpage.
+ * Represents an {@link AutoRecord} that contains actions that are replayable on a webpage.
  * @implements {AutoRecordState}
  */
 export class AutoRecord implements AutoRecordState {
 
   readonly createTimestamp: number;
-  readonly queryIdx: number;
-  readonly selector: string;
 
-  #action: AutoRecordAction = 'Click';
+  #actions: AutoRecordAction[] = [];
   #autoRun = false;
   #frequency: number | Nullish;
-  #keyStrokes: string[] = [];
   #name = '';
   #paused: boolean | Nullish;
-  #recordState: Partial<AutoRecordState>;
-  #script = '';
+  #state: Partial<AutoRecordState>;
   #updateTimestamp: number;
 
   /**
-   * Creates a new {@link AutoRecord} instance.
+   * Creates a new {@link AutoRecord} instance from raw {@link AutoRecordState} data.
    *
-   * @param recordState The raw {@link AutoRecordState} data.
+   * @param state The raw {@link AutoRecordState} data.
    */
-  constructor(recordState: Partial<AutoRecordState>) {
-    if (!recordState.selector) {
-      throw new Error('Selector is required');
-    }
+  constructor(state: Partial<AutoRecordState>) {
+    this.#state = state;
 
-    this.#recordState = recordState;
+    this.createTimestamp = state.createTimestamp ?? Date.now();
 
-    this.selector = recordState.selector.trim();
-    this.queryIdx = Math.max(recordState.queryIdx ?? 0, 0);
-    this.createTimestamp = recordState.createTimestamp ?? Date.now();
-
-    this.action = recordState.action;
-    this.autoRun = recordState.autoRun;
-    this.frequency = recordState.frequency;
-    this.keyStrokes = recordState.keyStrokes;
-    this.name = recordState.name;
-    this.paused = recordState.paused;
-    this.script = recordState.script;
-    this.#updateTimestamp = recordState.updateTimestamp ?? this.createTimestamp;
+    this.actions = state.actions;
+    this.autoRun = state.autoRun;
+    this.frequency = state.frequency;
+    this.name = state.name;
+    this.paused = state.paused;
+    this.#updateTimestamp = state.updateTimestamp ?? this.createTimestamp;
   }
 
-  get action(): AutoRecordAction { return this.#action; }
-  set action(action: AutoRecordAction | Nullish) { this.#action = action?.trim() as AutoRecordAction ?? 'Click'; }
+  get actions(): AutoRecordAction[] { return this.#actions; }
+  set actions(actions: AutoRecordAction[] | Nullish) { this.#actions = actions ?? []; }
 
   get autoRun(): boolean { return this.#autoRun; }
   set autoRun(autoRun: boolean | Nullish) { this.#autoRun = autoRun ?? false; }
@@ -62,9 +50,6 @@ export class AutoRecord implements AutoRecordState {
       : frequency;
   }
 
-  get keyStrokes(): string[] { return this.#keyStrokes; }
-  set keyStrokes(keyStrokes: string[] | Nullish) { this.#keyStrokes = keyStrokes ?? []; }
-
   get name(): string { return this.#name; }
   set name(name: string | Nullish) { this.#name = name?.trim() ?? ''; }
 
@@ -72,40 +57,22 @@ export class AutoRecord implements AutoRecordState {
   set paused(paused: boolean | Nullish) { this.#paused = paused ?? false; }
 
   /**
-   * The raw {@link AutoRecordState} data.
-   *
-   * Will become desynchronized from any unsaved changes to this {@link AutoRecord}'s properties.
-   * This is by design, since the state data is meant to reflect the saved state of the record.
-   */
-  get recordState(): DeepReadonly<Partial<AutoRecordState>> {
-    return cloneDeep(this.#recordState);
-  }
-
-  get script(): string { return this.#script; }
-  set script(script: string | Nullish) { this.#script = script ?? ''; }
-
-  /**
    * The unique identifier for this {@link AutoRecord}.
-   *
-   * Format is: `<selector>::<createTimestamp>`.
    */
-  get uid(): AutoRecordUid { return `${this.selector}::${this.createTimestamp}`; }
+  get uid(): AutoRecordUid { return `${this.createTimestamp}`; }
 
   get updateTimestamp(): number { return this.#updateTimestamp; }
 
   /**
-   * Creates a brand-new {@link AutoRecord} instance with the given selector.
-   * Populates the record with default values.
+   * The raw {@link AutoRecordState} data.
    *
-   * Note that this does not save the record to state storage.
-   * You must call {@link AutoRecord.save} to save the record.
+   * Will become desynchronized from any unsaved changes to this {@link AutoRecord}'s properties.
+   * This is by design, since the state data is meant to reflect the saved state of the record.
    *
-   * @param selector The CSS selector of the {@link HTMLElement} targeted by the new record.
-   * @param queryIdx The index of the record in the list of query results for the selector.
-   * @returns A new {@link AutoRecord} instance.
+   * @return The raw {@link AutoRecordState} data.
    */
-  static create(selector: string, queryIdx: number): AutoRecord {
-    return new AutoRecord({ selector, queryIdx });
+  state(): DeepReadonly<Partial<AutoRecordState>> {
+    return cloneDeep(this.#state);
   }
 
   /**
@@ -117,8 +84,7 @@ export class AutoRecord implements AutoRecordState {
   async save(): Promise<void> {
     const { records } = await loadState();
     const recordStateIdx = records.findIndex(record =>
-      record.selector === this.selector
-      && record.createTimestamp === this.createTimestamp,
+      record.createTimestamp === this.createTimestamp
     );
 
     this.#updateTimestamp = Date.now();
@@ -133,9 +99,8 @@ export class AutoRecord implements AutoRecordState {
     });
 
     // Update the local copy of the record state save data.
-    this.#recordState = state.records.find(record =>
-      record.selector === this.selector
-      && record.createTimestamp === this.createTimestamp,
+    this.#state = state.records.find(record =>
+      record.createTimestamp === this.createTimestamp
     ) as AutoRecordState;
   }
 
@@ -149,8 +114,7 @@ export class AutoRecord implements AutoRecordState {
   async delete(): Promise<boolean> {
     const { records } = await loadState();
     const recordStateIdx = records.findIndex(record =>
-      record.selector === this.selector
-      && record.createTimestamp === this.createTimestamp,
+      record.createTimestamp === this.createTimestamp
     );
 
     if (recordStateIdx === -1) {

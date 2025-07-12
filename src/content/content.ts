@@ -3,7 +3,7 @@
 import '@webcomponents/custom-elements';
 
 import type { Nullish } from 'utility-types';
-import { AutoRecord } from '~shared/models/auto-record.js';
+import { AutoRecord, AutoRecordMouseAction, AutoRecordType } from '~shared/models/auto-record.js';
 import { AutoRecordConfigModal } from './components/auto-record-config-modal.js';
 import { initExecutor } from './utils/auto-record-executor.js';
 import { deriveElementSelector } from './utils/element-analysis.js';
@@ -11,9 +11,10 @@ import { deriveElementSelector } from './utils/element-analysis.js';
 import './content.scss';
 
 /**
- * Whether the add functionality is active.
+ * The active {@link AutoRecordType}.
+ * If {@link Nullish}, no action is currently being added.
  */
-let addActive = false;
+let addAction: AutoRecordType | Nullish;
 
 /**
  * This is the {@link HTMLElement} that will be highlighted when the user hovers over.
@@ -32,32 +33,45 @@ async function init() {
   // Bind event listeners to the document for adding a new record.
   document.addEventListener('mouseover', async (event) => await setAddTargetElem(event.target as HTMLElement));
   document.addEventListener('mouseout', () => unsetAddTargetElem());
+  document.addEventListener('keypress', (event) => {
+    console.log('Key pressed:', event.key);
+    if (event.key === 'Escape') {
+      deactivateAdd();
+    }
+  });
 
   window.addEventListener('message', async (event) => {
     if (event.data?.type === 'mnAddRecord') {
-      const record = await AutoRecordConfigModal.open({
-        mountPoint: document.body,
-        closeOnBackdropClick: true,
-        closeOnEscape: true,
-        data: AutoRecord.create(event.data?.payload.selector, event.data?.payload.queryIdx),
-      }).onModalClose;
-      await record?.save();
+      await configAndSaveRecord(new AutoRecord(event.data.payload));
     }
   });
 
   chrome.runtime.onMessage.addListener(async (message) => {
-    addActive = (message.type === 'addActive') && message.payload;
+    if (message.type === 'addAction') {
+      addAction = message.payload;
+    }
 
     if (message.type === 'configureRecord' && window.top === window) {
-      const record = await AutoRecordConfigModal.open({
-        mountPoint: document.body,
-        closeOnBackdropClick: true,
-        closeOnEscape: true,
-        data: new AutoRecord(message.payload),
-      }).onModalClose;
-      await record?.save();
+      await configAndSaveRecord(new AutoRecord(message.payload));
     }
   });
+}
+
+/**
+ * Saves the given {@link AutoRecord} by opening the configuration modal.
+ *
+ * @param record - The {@link AutoRecord} to save.
+ * @returns A {@link Promise} that resolves when the record is saved.
+ */
+async function configAndSaveRecord(record: AutoRecord): Promise<void> {
+  return (
+    await AutoRecordConfigModal.open({
+      mountPoint: document.body,
+      closeOnBackdropClick: true,
+      closeOnEscape: true,
+      data: record,
+    }).onModalClose
+  )?.save();
 }
 
 /**
@@ -68,7 +82,7 @@ async function init() {
  * @returns A {@link Promise} that resolves when the target element is set.
  */
 function setAddTargetElem(target: HTMLElement): void {
-  if (!addActive || !target?.classList) return;
+  if (addAction !== 'Recording' || !target?.classList) return;
   unsetAddTargetElem(); // Unset the previous target element if it exists.
 
   target.classList.add('mn-highlight');
@@ -88,6 +102,15 @@ function unsetAddTargetElem() {
 }
 
 /**
+ * Deactivates the add functionality.
+ * Unsets the current target element and resets the addActive state.
+ */
+function deactivateAdd() {
+  unsetAddTargetElem();
+  addAction = null;
+}
+
+/**
  * Adds a click target to the state.
  *
  * @param event - The {@link MouseEvent} that triggered the function.
@@ -95,16 +118,22 @@ function unsetAddTargetElem() {
  */
 async function addClickTarget(event: MouseEvent): Promise<void> {
   const target = event?.target as HTMLElement;
-  if (!addActive || !target?.id && !target?.className) return;
+  if (!addAction || !target?.id && !target?.className) return;
 
   event.preventDefault();
-  unsetAddTargetElem();
-  addActive = false;
+  deactivateAdd();
 
-  const [selector, queryIdx] = deriveElementSelector(target);
+  const [selector] = deriveElementSelector(target);
+  const clickAction = {
+    type: 'Mouse',
+    mode: 'click',
+    selector,
+    textContent: target.textContent?.trim() || target.title.trim(),
+  } as AutoRecordMouseAction;
+
   window.top?.postMessage({
     type: 'mnAddRecord',
-    payload: AutoRecord.create(selector, queryIdx).recordState,
+    payload: new AutoRecord({ actions: [clickAction] }).state(),
   });
 }
 
