@@ -3,8 +3,8 @@
 
 .empty {
   text-align: center;
-  color: #666;
-  text-decoration: italic;
+  color: var(--mn-foreground-fainter);
+  font-style: italic;
   margin-bottom: 28px;
 }
 

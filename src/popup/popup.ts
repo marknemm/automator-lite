@@ -8,6 +8,7 @@ import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
 
+import './global.scss';
 import styles from './popup.scss?inline';
 
 /**
@@ -96,7 +97,7 @@ export class Popup extends LitElement {
   protected override render(): TemplateResult {
     return html`
       <h1 class="main-title">
-        &#129302;<span>Automator Lite</span>&#129302;
+        <span>Autom&#129302;tor L<span class="lightbulb-i">i</span>te</span>
       </h1>
 
       <div class="popup-body">

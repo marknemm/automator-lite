@@ -1,0 +1,14 @@
+@use "constants";
+@use "fonts";
+
+html, body {
+  background-color: var(--mn-background);
+  color: var(--mn-foreground);
+}
+
+body {
+  padding: var(--mn-gutter);
+  margin: 0;
+  font-family: var(--mn-font-family);
+  font-size: 14px;
+}

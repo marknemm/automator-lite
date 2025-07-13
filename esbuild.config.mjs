@@ -26,6 +26,7 @@ const ctx = await esbuild.context({
     'src/content/content.ts',
     'src/popup/popup.ts',
   ],
+  external: ['*.woff2', '*.woff', '*.ttf'], // Exclude font files from the bundle.
   bundle: true,
   write: true,
   logLevel: 'info',
@@ -58,6 +59,13 @@ const ctx = await esbuild.context({
       assets: {
         from: ['./src/**/*.{html,json,svg,png,jpg,jpeg,gif,webp}'],
         to: ['.'],
+      },
+      watch,
+    }),
+    copy({
+      assets: {
+        from: ['./src/shared/fonts/*.{woff2,woff,ttf}'],
+        to: ['./fonts'],
       },
       watch,
     }),

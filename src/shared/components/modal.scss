@@ -22,8 +22,8 @@
 }
 
 .modal {
-  background-color: #222;
-  color: #fff;
+  background-color: var(--mn-background);
+  color: var(--mn-foreground);
   border-radius: 8px;
   width: 400px;
   max-width: 90%;

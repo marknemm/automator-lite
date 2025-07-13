@@ -6,7 +6,7 @@ $offset: 7px;
   position: absolute;
   right: 0;
   display: inline-block;
-  background-color: #aaa;
+  background-color: var(--mn-foreground-faintest);
   color: #fff;
   border-radius: 50%;
   padding: 1px 4px;
@@ -25,8 +25,8 @@ $offset: 7px;
 
 .field-description {
   position: absolute;
-  background-color: #000;
-  color: #fff;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #eee;
   padding: 8px;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -35,7 +35,6 @@ $offset: 7px;
   top: calc(100% + #{$offset + 1px});
   right: -#{$offset - 1px};
   font-size: 12px;
-  color: #aaa;
   opacity: 0;
   pointer-events: none;
   cursor: default;
@@ -49,6 +48,6 @@ $offset: 7px;
     height: 0;
     border-left: $offset solid transparent;
     border-right: $offset solid transparent;
-    border-bottom: $offset solid #000;
+    border-bottom: $offset solid rgba(0, 0, 0, 0.7);
   }
 }

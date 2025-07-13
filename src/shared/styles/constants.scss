@@ -1,14 +1,96 @@
+@use "sass:color";
+
 :root, :host {
   --mn-gutter: 8px;
-  --mn-action-blue: #0078d4;
+  --mn-font-family: 'Roboto', sans-serif;
+  --mn-font-family-serif: 'Merriweather', serif;
+
+  // Light Theme Colors
+  $mn-background: #fff;
+  --mn-background: #{$mn-background};
+  --mn-background-fainter: #f0f0f0;
+  --mn-background-faintest: #e0e0e0;
+
+  $mn-foreground: #000;
+  --mn-foreground: #{$mn-foreground};
+  --mn-foreground-fainter: #666;
+  --mn-foreground-faintest: #999;
+
+  --mn-input-background: var(--mn-background);
+  --mn-input-foreground: var(--mn-foreground);
+  --mn-input-disabled: var(--mn-background-faintest);
+
+  $mn-border-color: #ccc;
+  --mn-border-color: #{$mn-border-color};
+
+  $mn-action-blue: #0078d4;
+  --mn-action-blue: #{$mn-action-blue};
   --mn-action-blue-darker: #005a9e;
   --mn-action-blue-lightest: #e4edfd;
-  --mn-action-green: #70b770;
+  --mn-action-blue-faint: #{rgba($mn-action-blue, 0.7)};
+  --mn-action-blue-fainter: #{rgba($mn-action-blue, 0.5)};
+  --mn-action-blue-faintest: #{rgba($mn-action-blue, 0.2)};
+
+  $mn-action-green: #70b770;
+  --mn-action-green: #{$mn-action-green};
   --mn-action-green-darker: #5a9f5a;
   --mn-action-green-lightest: #defdeb;
-  --mn-action-red: #d83b01;
+  --mn-action-green-faint: #{rgba($mn-action-green, 0.7)};
+  --mn-action-green-fainter: #{rgba($mn-action-green, 0.5)};
+  --mn-action-green-faintest: #{rgba($mn-action-green, 0.2)};
+
+  $mn-action-red: #d83b01;
+  --mn-action-red: #{$mn-action-red};
   --mn-action-red-darker: #532b20;
   --mn-action-red-lightest: #fce2e2;
+  --mn-action-red-faint: #{rgba($mn-action-red, 0.7)};
+  --mn-action-red-fainter: #{rgba($mn-action-red, 0.5)};
+  --mn-action-red-faintest: #{rgba($mn-action-red, 0.2)};
+}
+
+@media (prefers-color-scheme: dark) {
+  :root, :host {
+    $mn-background: #222;
+    --mn-background: #{$mn-background};
+    --mn-background-fainter: #{color.adjust($mn-background, $lightness: 6%)};
+    --mn-background-faintest: #{color.adjust($mn-background, $lightness: 12%)};
+
+    $mn-foreground: #e0e0e0;
+    --mn-foreground: #{$mn-foreground};
+    --mn-foreground-fainter: #{color.adjust($mn-foreground, $lightness: -6%)};
+    --mn-foreground-faintest: #{color.adjust($mn-foreground, $lightness: -12%)};
+
+    $mn-border-color: #333;
+    --mn-border-color: #{$mn-border-color};
+
+    --mn-input-background: var(--mn-background-faintest);
+    --mn-input-foreground: var(--mn-foreground);
+    --mn-input-disabled: var(--mn-background);
+
+    $mn-action-blue: #1a73e8;
+    --mn-action-blue: #{$mn-action-blue};
+    --mn-action-blue-darker: #0f5bb5;
+    --mn-action-blue-lightest: #d2e3fc;
+    --mn-action-blue-faint: #{rgba($mn-action-blue, 0.7)};
+    --mn-action-blue-fainter: #{rgba($mn-action-blue, 0.5)};
+    --mn-action-blue-faintest: #{rgba($mn-action-blue, 0.2)};
+
+    $mn-action-green: #34a853;
+    --mn-action-green: #{$mn-action-green};
+    --mn-action-green-darker: #2c7a42;
+    --mn-action-green-lightest: #e6f4ea;
+    --mn-action-green-faint: #{rgba($mn-action-green, 0.7)};
+    --mn-action-green-fainter: #{rgba($mn-action-green, 0.5)};
+    --mn-action-green-faintest: #{rgba($mn-action-green, 0.2)};
+
+    $mn-action-red: #ea4335;
+    --mn-action-red: #{$mn-action-red};
+    --mn-action-red-darker: #8b1c1b;
+    --mn-action-red-lightest: #fce8e6;
+    --mn-action-red-faint: #{rgba($mn-action-red, 0.7)};
+    --mn-action-red-fainter: #{rgba($mn-action-red, 0.5)};
+    --mn-action-red-faintest: #{rgba($mn-action-red, 0.2)};
+  }
 }
 
 @keyframes fadeIn {
@@ -79,6 +161,27 @@
   to {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+@keyframes shadowIn {
+  from {
+    box-shadow: none;
+  }
+  to {
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1),   // bottom
+                0 -2px 2px rgba(0, 0, 0, 0.1),  // top
+                2px 0 2px rgba(0, 0, 0, 0.1),   // right
+                -2px 0 2px rgba(0, 0, 0, 0.1);  // left
+  }
+}
+
+@keyframes borderIn {
+  from {
+    border-color: transparent;
+  }
+  to {
+    border-color: #666;
   }
 }
 

@@ -24,24 +24,23 @@
   color: var(--mn-action-red);
 
   &:hover {
-    background-color: var(--mn-action-red-lightest);
+    background-color: var(--mn-action-red-faintest);
   }
 }
 
 .play-button {
-  font-size: 14px;
   color: var(--mn-action-green);
-  background-color: #fff;
+  background-color: var(--mn-background);
 
   &:hover {
-    background-color: var(--mn-action-green-lightest);
+    background-color: var(--mn-action-green-faintest);
   }
 }
 
 .pause-button {
-  font-size: 20px;
+  font-size: 1.5em;
 
   &:hover {
-    background-color: var(--mn-action-blue-lightest);
+    background-color: var(--mn-action-blue-faintest);
   }
 }

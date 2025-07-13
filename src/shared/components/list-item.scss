@@ -4,9 +4,9 @@
   position: relative;
   display: flex;
   border: 0;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--mn-border-color);
+}
 
-  :last-child {
-    border-bottom: 1px solid #f0f0f0;
-  }
+:host(:last-child) {
+  border-bottom: 1px solid var(--mn-border-color);
 }

@@ -29,7 +29,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
         </span>
         <button
           id="record-config-modal-close"
-          class="modal-close"
+          class="round-button modal-close"
           @click="${() => this.close()}"
           title="Close"
           type="button"
