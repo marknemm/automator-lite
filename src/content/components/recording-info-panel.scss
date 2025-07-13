@@ -1,0 +1,42 @@
+@use "base";
+
+:host {
+  position: fixed;
+  display: block;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  top: 0;
+  left: 0;
+}
+
+:host([side="right"]) {
+  right: 0;
+  left: auto;
+}
+
+.content {
+  padding: calc(var(--mn-gutter) * 2);
+  text-align: center;
+  color: #fff;
+  /* Crisp outline fallback for browsers without text-stroke */
+  text-shadow:
+    1px 1px 5px rgba(0, 0, 0, 0.5),
+    -1px -1px 5px rgba(0, 0, 0, 0.5),
+    -1px 1px 5px rgba(0, 0, 0, 0.5),
+    1px -1px 5px rgba(0, 0, 0, 0.5);
+}
+
+h2 {
+  font-size: 1em;
+  font-weight: 500;
+}
+
+p {
+  font-size: 0.8em;
+  margin: 0.5em 0;
+}
+
+kbd {
+  font-weight: bold;
+  text-decoration: underline;
+}

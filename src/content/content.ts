@@ -3,24 +3,30 @@
 import '@webcomponents/custom-elements';
 
 import type { Nullish } from 'utility-types';
-import { AutoRecord, AutoRecordMouseAction, AutoRecordType } from '~shared/models/auto-record.js';
+import { AutoRecord, type AutoRecordMouseAction } from '~shared/models/auto-record.js';
+import { type MountContext } from '~shared/utils/mount.js';
 import { AutoRecordConfigModal } from './components/auto-record-config-modal.js';
+import { RecordingInfoPanel } from './components/recording-info-panel.js';
 import { initExecutor } from './utils/auto-record-executor.js';
 import { deriveElementSelector } from './utils/element-analysis.js';
 
 import './content.scss';
 
 /**
- * The active {@link AutoRecordType}.
- * If {@link Nullish}, no action is currently being added.
- */
-let addAction: AutoRecordType | Nullish;
-
-/**
  * This is the {@link HTMLElement} that will be highlighted when the user hovers over.
  * If the user clicks on it, it will have a {@link AutoRecord} created for it.
  */
 let addTargetElem: HTMLElement | Nullish;
+
+/**
+ * The mount context for the {@link RecordingInfoPanel}.
+ * This is used to control the panel's lifecycle and interactions.
+ *
+ * Also tracks the active recording state.
+ * If the panel is mounted, it indicates that a recording is active.
+ * If {@link Nullish}, the panel is not currently mounted, and no recording is active.
+ */
+let recordingCtx: MountContext | Nullish;
 
 /**
  * Initializes the content script.
@@ -31,12 +37,11 @@ async function init() {
   await initExecutor();
 
   // Bind event listeners to the document for adding a new record.
-  document.addEventListener('mouseover', async (event) => await setAddTargetElem(event.target as HTMLElement));
-  document.addEventListener('mouseout', () => unsetAddTargetElem());
-  document.addEventListener('keypress', (event) => {
-    console.log('Key pressed:', event.key);
-    if (event.key === 'Escape') {
-      deactivateAdd();
+  document.addEventListener('mouseover', async (event) => await setTargetHighlight(event.target as HTMLElement));
+  document.addEventListener('mouseout', () => unsetTargetHighlight());
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.key === 'Escape') {
+      stopRecording();
     }
   });
 
@@ -47,8 +52,12 @@ async function init() {
   });
 
   chrome.runtime.onMessage.addListener(async (message) => {
-    if (message.type === 'addAction') {
-      addAction = message.payload;
+    if (message.type === 'startRecording') {
+      startRecording();
+    }
+
+    if (message.type === 'stopRecording') {
+      stopRecording();
     }
 
     if (message.type === 'configureRecord' && window.top === window) {
@@ -81,9 +90,9 @@ async function configAndSaveRecord(record: AutoRecord): Promise<void> {
  * @param target - The target {@link HTMLElement} to set as the add target.
  * @returns A {@link Promise} that resolves when the target element is set.
  */
-function setAddTargetElem(target: HTMLElement): void {
-  if (addAction !== 'Recording' || !target?.classList) return;
-  unsetAddTargetElem(); // Unset the previous target element if it exists.
+function setTargetHighlight(target: HTMLElement): void {
+  if (!recordingCtx || !target?.classList) return;
+  unsetTargetHighlight(); // Unset the previous target element if it exists.
 
   target.classList.add('mn-highlight');
   target.addEventListener('click', addClickTarget);
@@ -93,7 +102,7 @@ function setAddTargetElem(target: HTMLElement): void {
 /**
  * Unsets the currently highlighted target element.
  */
-function unsetAddTargetElem() {
+function unsetTargetHighlight() {
   if (addTargetElem) {
     addTargetElem.removeEventListener('click', addClickTarget);
     addTargetElem.classList.remove('mn-highlight');
@@ -102,12 +111,26 @@ function unsetAddTargetElem() {
 }
 
 /**
+ * Starts the recording by mounting the {@link RecordingInfoPanel}.
+ * If the panel is already mounted, it will not remount it.
+ */
+function startRecording() {
+  if (!recordingCtx) {
+    recordingCtx = RecordingInfoPanel.mount();
+    if (!document.activeElement) {
+      document.body.focus(); // Ensure the body is focused to capture key events.
+    }
+  }
+}
+
+/**
  * Deactivates the add functionality.
  * Unsets the current target element and resets the addActive state.
  */
-function deactivateAdd() {
-  unsetAddTargetElem();
-  addAction = null;
+function stopRecording() {
+  unsetTargetHighlight();
+  recordingCtx?.unmount();
+  recordingCtx = null;
 }
 
 /**
@@ -118,10 +141,10 @@ function deactivateAdd() {
  */
 async function addClickTarget(event: MouseEvent): Promise<void> {
   const target = event?.target as HTMLElement;
-  if (!addAction || !target?.id && !target?.className) return;
+  if (!recordingCtx || !target?.id && !target?.className) return;
 
   event.preventDefault();
-  deactivateAdd();
+  stopRecording();
 
   const [selector] = deriveElementSelector(target);
   const clickAction = {

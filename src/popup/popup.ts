@@ -3,7 +3,7 @@
 import { Task } from '@lit/task';
 import { html, LitElement, type TemplateResult, unsafeCSS } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { AutoRecord, loadRecords } from '~shared/models/auto-record.js';
+import { AutoRecord, type AutoRecordType, loadRecords } from '~shared/models/auto-record.js';
 import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
@@ -28,7 +28,7 @@ export class Popup extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    sendContentMessage({ type: 'addActive', payload: false }); // Reset the addActive state to false.
+    sendContentMessage({ type: 'stopRecording', payload: false }); // Stop any ongoing recording.
 
     // Initialize the auto-record list, and refresh upon changes in the records state.
     this.#loadRecordsTask.run();
@@ -86,8 +86,10 @@ export class Popup extends LitElement {
    *
    * @param action - The action that was selected.
    */
-  #onAddActionSelect(action: string): void {
-    sendContentMessage({ type: 'addAction', payload: action });
+  #onAddActionSelect(action: AutoRecordType): void {
+    if (action === 'Recording') {
+      sendContentMessage({ type: 'startRecording' });
+    }
     window.close();
   }
 
@@ -129,7 +131,7 @@ export class Popup extends LitElement {
           <mn-add-action-sheet
             .opened=${this.addActionSheetOpened}
             .onOpenChange=${() => this.#closeActionSheet()}
-            .onAddActionSelect=${(action: string) => this.#onAddActionSelect(action)}
+            .onAddActionSelect=${(action: AutoRecordType) => this.#onAddActionSelect(action)}
           ></mn-add-action-sheet>
         </div>
       </div>
