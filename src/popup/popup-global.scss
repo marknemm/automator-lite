@@ -7,8 +7,9 @@ html, body {
 }
 
 body {
-  padding: var(--mn-gutter);
   margin: 0;
+  padding: var(--mn-gutter);
   font-family: var(--mn-font-family);
-  font-size: 14px;
+  font-size: var(--mn-font-size);
+  line-height: var(--mn-line-height);
 }

@@ -8,7 +8,7 @@ import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
 
-import './global.scss';
+import './popup-global.scss';
 import styles from './popup.scss?inline';
 
 /**

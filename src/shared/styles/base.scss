@@ -1,5 +1,10 @@
 @use "constants.scss";
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--mn-font-family-serif);
+  letter-spacing: 1.5px;
+}
+
 h1 {
   font-size: 1.5em;
 }
@@ -27,6 +32,7 @@ button {
   cursor: pointer;
 }
 
+.close-button,
 .round-button {
   display: flex;
   align-items: center;
@@ -38,13 +44,21 @@ button {
   border-radius: 50%;
   border: none;
   background: none;
-  line-height: 100%;
+  line-height: 1;
   color: inherit;
   cursor: pointer;
   background-color: var(--mn-background);
   color: var(--mn-action-blue);
   transition: color 0.2s, background-color 0.2s;
   font-size: 1.1em;
+}
+
+.close-button {
+  color: var(--mn-action-red);
+
+  &:hover {
+    background: var(--mn-action-red-faintest);
+  }
 }
 
 label {

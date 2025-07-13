@@ -11,6 +11,7 @@ import { initExecutor } from './utils/auto-record-executor.js';
 import { deriveElementSelector } from './utils/element-analysis.js';
 
 import './content.scss';
+import fontStyles from '../shared/styles/fonts.scss?inline';
 
 /**
  * This is the {@link HTMLElement} that will be highlighted when the user hovers over.
@@ -34,6 +35,13 @@ let recordingCtx: MountContext | Nullish;
  * @returns A {@link Promise} that resolves when the initialization is complete.
  */
 async function init() {
+  // Inject the font styles into the document head.
+  document.head.insertAdjacentHTML('beforeend', `
+    <style>
+      ${fontStyles.replaceAll('../fonts/', `chrome-extension://${chrome.runtime.id}/dist/fonts/`)}
+    </style>
+  `);
+
   await initExecutor();
 
   // Bind event listeners to the document for adding a new record.

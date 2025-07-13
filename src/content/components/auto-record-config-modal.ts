@@ -24,12 +24,11 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
   protected override renderContent(): TemplateResult {
     return html`
       <div class="modal-header">
-        <span class="modal-title">
-          Automator Record Configuration
-        </span>
+        <h2 class="modal-title">
+          Automator Lite<br>Record Configuration
+        </h2>
         <button
-          id="record-config-modal-close"
-          class="round-button modal-close"
+          class="close-button"
           @click="${() => this.close()}"
           title="Close"
           type="button"

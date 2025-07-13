@@ -2,6 +2,10 @@
 
 :host {
   display: none;
+  margin: 0;
+  font-family: var(--mn-font-family);
+  font-size: var(--mn-font-size);
+  line-height: var(--mn-line-height);
 }
 
 :host([opened]) {

@@ -92,7 +92,7 @@ export class Sheet extends LitElement {
         ${this.renderTitle()}
       </div>
       <button
-        class="round-button close-button"
+        class="close-button"
         type="button"
         @click=${() => this.close()}
         title="Close"
