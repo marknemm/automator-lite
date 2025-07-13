@@ -83,7 +83,7 @@ export class AutoRecordList extends DataListBase<AutoRecord> {
     return html`
       <div class="empty">
         <p>
-          No recorded actions found. <br>
+          No automation records found. <br>
           Start by recording your first action!
         </p>
       </div>

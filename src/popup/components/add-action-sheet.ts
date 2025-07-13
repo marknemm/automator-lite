@@ -33,14 +33,14 @@ export class AddActionSheet extends Sheet {
   accessor side: 'bottom' | 'top' | 'left' | 'right' = 'right';
 
   protected override renderTitle(): TemplateResult {
-    return html`<h2 class="title">Add Action</h2>`;
+    return html`<h2 class="title">Add Record</h2>`;
   }
 
   protected override renderContent(): TemplateResult {
     return html`
       <mn-list>
         <mn-button-list-item @click=${() => this.onAddActionSelect('Recording')}>
-          Record Mouse and Keyboard
+          Mouse and Keyboard Recording
         </mn-button-list-item>
         <mn-button-list-item @click=${() => this.onAddActionSelect('Script')}>
           Manual Scripting

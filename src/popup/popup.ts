@@ -108,13 +108,13 @@ export class Popup extends LitElement {
         <div class="auto-record-list-container">
           <div class="auto-record-list-header">
             <h2 class="subtitle">
-              Recorded Actions
+              Automation Records
             </h2>
 
             <button
               type="button"
               class="add-button"
-              title="Add a new action record"
+              title="Add a new automation record"
               @click=${() => this.#openActionSheet()}
             >
               &#43;
