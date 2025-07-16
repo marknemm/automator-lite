@@ -1,3 +1,5 @@
+import { deepQuerySelector } from '~shared/utils/deep-query.js';
+
 const identifyingAttributes = [
   'aria-label',
   'aria-labelledby',
@@ -50,10 +52,9 @@ const interactiveSelector = [
  * Derives a CSS selector for the given {@link HTMLElement}.
  *
  * @param element - The {@link HTMLElement} to derive the selector for.
- * @returns A tuple containing the derived selector as a string and an index number.
- * The index number is the position of the element when queried from the DOM.
+ * @returns A tuple containing the derived selector as a string and the content of the element.
  */
-export function deriveElementSelector(element: Element): [string, number] {
+export function deriveElementSelector(element: Element): [string, string] {
   // Scan hierarchy for best interactive element candidate.
   const interactiveElement = scanHierarchyForInteractiveElement(element);
 
@@ -71,12 +72,9 @@ export function deriveElementSelector(element: Element): [string, number] {
     : identifyingSelector;
 
   // Include query index in the result in case of multiple matches.
-  const queryResult = document.querySelectorAll(selector);
   return [
     selector,
-    Array.from(queryResult).findIndex(
-      (el) => el === interactiveElement || el === identifyingElement,
-    ),
+    interactiveElement.textContent || interactiveElement.innerHTML,
   ];
 }
 
@@ -94,7 +92,7 @@ function scanHierarchyForInteractiveElement(element: Element): Element {
     return interactiveAncestor;
   }
 
-  const interactiveChild = element.querySelector(interactiveSelector);
+  const interactiveChild = deepQuerySelector(interactiveSelector, element);
   if (interactiveChild && elementBounded(element, interactiveChild)) {
     return interactiveChild;
   }
@@ -121,7 +119,7 @@ function scanHierarchyForIdentifyingElement(element: Element): [Element, 'ancest
       : [identifyingAncestor, 'ancestor'];
   }
 
-  const identifyingChild = element.querySelector(identifyingSelector);
+  const identifyingChild = deepQuerySelector(identifyingSelector, element);
   if (identifyingChild) return [identifyingChild, 'child'];
 
   return [element, 'self'];

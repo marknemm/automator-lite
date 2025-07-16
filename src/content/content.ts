@@ -22,12 +22,14 @@ let addTargetElem: HTMLElement | Nullish;
 /**
  * The mount context for the {@link RecordingInfoPanel}.
  * This is used to control the panel's lifecycle and interactions.
- *
- * Also tracks the active recording state.
- * If the panel is mounted, it indicates that a recording is active.
- * If {@link Nullish}, the panel is not currently mounted, and no recording is active.
+ * Will only be initialized for the top-level window to avoid duplicate mounts in iframes.
  */
 let recordingCtx: MountContext | Nullish;
+
+/**
+ * Indicates whether the recording is currently active.
+ */
+let recordingActive = false;
 
 /**
  * Initializes the content script.
@@ -36,13 +38,14 @@ let recordingCtx: MountContext | Nullish;
  */
 async function init() {
   // Inject the font styles into the document head - must use chrome extension ID to reference font files.
+  // Unlike popup, content scripts cannot directly access the extension's resources.
   document.head.insertAdjacentHTML('beforeend', `
     <style>
       ${fontStyles.replaceAll('../fonts/', `chrome-extension://${chrome.runtime.id}/dist/fonts/`)}
     </style>
   `);
 
-  await initExecutor();
+  await initExecutor(); // Initialize the auto-record executor to handle existing records.
 
   // Bind event listeners to the document for adding a new record.
   document.addEventListener('mouseover', async (event) => await setTargetHighlight(event.target as HTMLElement));
@@ -53,12 +56,14 @@ async function init() {
     }
   });
 
+  // Listen for messages from embedded iframes (only open config modal in top window).
   window.addEventListener('message', async (event) => {
     if (event.data?.type === 'mnAddRecord') {
       await configAndSaveRecord(new AutoRecord(event.data.payload));
     }
   });
 
+  // Listen for messages from popup or background script.
   chrome.runtime.onMessage.addListener(async (message) => {
     if (message.type === 'startRecording') {
       startRecording();
@@ -99,7 +104,7 @@ async function configAndSaveRecord(record: AutoRecord): Promise<void> {
  * @returns A {@link Promise} that resolves when the target element is set.
  */
 function setTargetHighlight(target: HTMLElement): void {
-  if (!recordingCtx || !target?.classList) return;
+  if (!recordingActive || !target?.classList) return;
   unsetTargetHighlight(); // Unset the previous target element if it exists.
 
   target.classList.add('mn-highlight');
@@ -123,10 +128,11 @@ function unsetTargetHighlight() {
  * If the panel is already mounted, it will not remount it.
  */
 function startRecording() {
-  if (!recordingCtx) {
-    if (window.top === window) { // Prevent duplicate mounts from iframes.
-      recordingCtx = RecordingInfoPanel.mount();
-    }
+  if (recordingActive) return; // If already recording, do nothing.
+  recordingActive = true;
+  
+  if (window.top === window) { // Prevent duplicate mounts from iframes.
+    recordingCtx = RecordingInfoPanel.mount();
     if (!document.activeElement) {
       document.body.focus(); // Ensure the body is focused to capture key events.
     }
@@ -141,6 +147,7 @@ function stopRecording() {
   unsetTargetHighlight();
   recordingCtx?.unmount();
   recordingCtx = null;
+  recordingActive = false;
 }
 
 /**
@@ -151,7 +158,7 @@ function stopRecording() {
  */
 async function addClickTarget(event: MouseEvent): Promise<void> {
   const target = event?.target as HTMLElement;
-  if (!recordingCtx || !target?.id && !target?.className) return;
+  if (!recordingActive || !target?.id && !target?.className) return;
 
   event.preventDefault();
   stopRecording();
@@ -167,7 +174,7 @@ async function addClickTarget(event: MouseEvent): Promise<void> {
   window.top?.postMessage({
     type: 'mnAddRecord',
     payload: new AutoRecord({ actions: [clickAction] }).state(),
-  });
+  }, '*');
 }
 
 init().then().catch((error) => {

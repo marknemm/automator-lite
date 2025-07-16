@@ -1,4 +1,5 @@
 import { AutoRecord, loadRecords, type AutoRecordKeyboardAction, type AutoRecordMouseAction, type AutoRecordScriptAction, type AutoRecordUid } from '~shared/models/auto-record.js';
+import { deepQuerySelectorAll } from '~shared/utils/deep-query.js';
 import { loadState, onStateChange, type StateChange } from '~shared/utils/state.js';
 
 /**
@@ -132,7 +133,7 @@ export async function execRecord(record: AutoRecord): Promise<void> {
 function execMouseAction(action: AutoRecordMouseAction): void {
   const mouseEvent = new MouseEvent(action.mode, { ...defaultDispatchOpts });
 
-  const potentialTargets = Array.from(document.querySelectorAll(action.selector)) as HTMLElement[];
+  const potentialTargets = deepQuerySelectorAll(action.selector);
   const target = potentialTargets.length === 1
     ? potentialTargets[0]
     : potentialTargets.find((el) => {

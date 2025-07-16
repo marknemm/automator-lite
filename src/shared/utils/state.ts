@@ -2,6 +2,7 @@
 
 import { isEqual } from 'lodash-es';
 import type { State, StateChange } from './state.interfaces.js';
+import { getTopWindow } from './window.js';
 
 /**
  * Retrieves the {@link State} of the current page from Chrome storage.
@@ -64,7 +65,7 @@ export async function onStateChange(callback: (change: StateChange) => void, ...
  */
 async function getStateUid(): Promise<string> {
   return new Promise((resolve) => {
-    const topWindow = window.top ?? window;
+    const topWindow = getTopWindow();
     (chrome.tabs) // Is script running in extension popup or content ctx.
       ? chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           const url = new URL(tabs[0].url ?? '');
@@ -75,3 +76,4 @@ async function getStateUid(): Promise<string> {
 }
 
 export type * from './state.interfaces.js';
+
