@@ -35,7 +35,7 @@ let recordingCtx: MountContext | Nullish;
  * @returns A {@link Promise} that resolves when the initialization is complete.
  */
 async function init() {
-  // Inject the font styles into the document head.
+  // Inject the font styles into the document head - must use chrome extension ID to reference font files.
   document.head.insertAdjacentHTML('beforeend', `
     <style>
       ${fontStyles.replaceAll('../fonts/', `chrome-extension://${chrome.runtime.id}/dist/fonts/`)}
@@ -124,7 +124,9 @@ function unsetTargetHighlight() {
  */
 function startRecording() {
   if (!recordingCtx) {
-    recordingCtx = RecordingInfoPanel.mount();
+    if (window.top === window) { // Prevent duplicate mounts from iframes.
+      recordingCtx = RecordingInfoPanel.mount();
+    }
     if (!document.activeElement) {
       document.body.focus(); // Ensure the body is focused to capture key events.
     }

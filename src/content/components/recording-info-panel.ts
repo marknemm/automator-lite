@@ -77,3 +77,5 @@ export class RecordingInfoPanel extends LitElement {
   }
 
 }
+
+export type * from './record-info-panel.interfaces.js';

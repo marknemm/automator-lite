@@ -48,7 +48,7 @@ const interactiveSelector = [
 
 /**
  * Derives a CSS selector for the given {@link HTMLElement}.
- *Í
+ *
  * @param element - The {@link HTMLElement} to derive the selector for.
  * @returns A tuple containing the derived selector as a string and an index number.
  * The index number is the position of the element when queried from the DOM.
