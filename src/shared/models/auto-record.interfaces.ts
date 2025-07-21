@@ -66,6 +66,20 @@ export interface AutoRecordAction {
    */
   type: AutoRecordActionType;
 
+  /**
+   * The URL of the window where the action was recorded, and determines the context in which the action will be replayed.
+   * 
+   * This can be a top-level window or an embedded iframe.
+   */
+  windowUrl: string;
+
+  /**
+   * The selectors of Shadow DOM elements that are ancestors of the target element.
+   *
+   * An empty array indicates that there are no Shadow DOM ancestors.
+   */
+  shadowAncestors: string[];
+
 }
 
 /**
@@ -136,6 +150,31 @@ export interface AutoRecordScriptAction extends AutoRecordAction {
   src: string;
 
   type: 'Script'; // Ensures the type is always 'Script' for this interface
+
+}
+
+/**
+ * Options for loading an {@link AutoRecord}.
+ */
+export interface LoadRecordOptions {
+
+  /**
+   * A filter function to determine which records to load.
+   * 
+   * @param record The record to load.
+   * @returns `true` if the record should be loaded, `false` otherwise.
+   */
+  filter?: (record: AutoRecordState) => boolean;
+
+  /**
+   * A function to sort the loaded records.
+   * 
+   * @param a The first record to compare.
+   * @param b The second record to compare.
+   * @returns A negative number if `a` should come before `b`, a positive number if `a` should come after `b`, or `0` if they are equal.
+   * @default `(a, b) => a.name.localeCompare(b.name)`.
+   */
+  sort?: (a: AutoRecordState, b: AutoRecordState) => number;
 
 }
 

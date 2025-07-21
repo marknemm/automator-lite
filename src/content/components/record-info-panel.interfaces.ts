@@ -6,10 +6,9 @@ import type { Template } from '~shared/utils/mount.interfaces.js';
 export interface RecordInfoPanelOptions {
 
   /**
-   * The key that stops the recording when pressed in combination with `Ctrl`.
-   * @default 'Esc'
+   * The key(s) that stops the recording.
    */
-  stopRecordingKey?: string;
+  stopRecordingKeys: string[];
 
   /**
    * The custom contents to be displayed inside the panel.

@@ -3,33 +3,21 @@
 import '@webcomponents/custom-elements';
 
 import type { Nullish } from 'utility-types';
-import { AutoRecord, type AutoRecordMouseAction } from '~shared/models/auto-record.js';
-import { type MountContext } from '~shared/utils/mount.js';
+import { AutoRecord, AutoRecordAction, AutoRecordState } from '~shared/models/auto-record.js';
+import { type Message, onMessage } from '~shared/utils/messaging.js';
 import { AutoRecordConfigModal } from './components/auto-record-config-modal.js';
-import { RecordingInfoPanel } from './components/recording-info-panel.js';
 import { initExecutor } from './utils/auto-record-executor.js';
-import { deriveElementSelector } from './utils/element-analysis.js';
+import { RecordingContext } from './utils/recording-context.js';
 
-import './content.scss';
 import fontStyles from '../shared/styles/fonts.scss?inline';
-
-/**
- * This is the {@link HTMLElement} that will be highlighted when the user hovers over.
- * If the user clicks on it, it will have a {@link AutoRecord} created for it.
- */
-let addTargetElem: HTMLElement | Nullish;
+import './content.scss';
 
 /**
  * The mount context for the {@link RecordingInfoPanel}.
  * This is used to control the panel's lifecycle and interactions.
  * Will only be initialized for the top-level window to avoid duplicate mounts in iframes.
  */
-let recordingCtx: MountContext | Nullish;
-
-/**
- * Indicates whether the recording is currently active.
- */
-let recordingActive = false;
+const recordingCtx = new RecordingContext(configAndSaveRecord);
 
 /**
  * Initializes the content script.
@@ -47,36 +35,10 @@ async function init() {
 
   await initExecutor(); // Initialize the auto-record executor to handle existing records.
 
-  // Bind event listeners to the document for adding a new record.
-  document.addEventListener('mouseover', async (event) => await setTargetHighlight(event.target as HTMLElement));
-  document.addEventListener('mouseout', () => unsetTargetHighlight());
-  document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey && event.key === 'Escape') {
-      stopRecording();
-    }
-  });
-
-  // Listen for messages from embedded iframes (only open config modal in top window).
-  window.addEventListener('message', async (event) => {
-    if (event.data?.type === 'mnAddRecord') {
-      await configAndSaveRecord(new AutoRecord(event.data.payload));
-    }
-  });
-
   // Listen for messages from popup or background script.
-  chrome.runtime.onMessage.addListener(async (message) => {
-    if (message.type === 'startRecording') {
-      startRecording();
-    }
-
-    if (message.type === 'stopRecording') {
-      stopRecording();
-    }
-
-    if (message.type === 'configureRecord' && window.top === window) {
-      await configAndSaveRecord(new AutoRecord(message.payload));
-    }
-  });
+  onMessage('startRecording', () => recordingCtx.start());
+  onMessage('stopRecording', () => recordingCtx.stop());
+  onMessage('configureRecord', (message: Message<AutoRecordState>) => configAndSaveRecord(message.payload));
 }
 
 /**
@@ -85,96 +47,21 @@ async function init() {
  * @param record - The {@link AutoRecord} to save.
  * @returns A {@link Promise} that resolves when the record is saved.
  */
-async function configAndSaveRecord(record: AutoRecord): Promise<void> {
+async function configAndSaveRecord(
+  recordState: AutoRecord | AutoRecordState | AutoRecordAction[] | Nullish
+): Promise<AutoRecord | undefined> {
+  const record = (recordState instanceof AutoRecord)
+    ? recordState
+    : new AutoRecord(recordState ?? []);
+
   return (
     await AutoRecordConfigModal.open({
       mountPoint: document.body,
       closeOnBackdropClick: true,
       closeOnEscape: true,
-      data: record,
+      data: record as AutoRecord,
     }).onModalClose
   )?.save();
-}
-
-/**
- * Sets the target element for adding a click target.
- * Highlights the target element and stores it for later use.
- *
- * @param target - The target {@link HTMLElement} to set as the add target.
- * @returns A {@link Promise} that resolves when the target element is set.
- */
-function setTargetHighlight(target: HTMLElement): void {
-  if (!recordingActive || !target?.classList) return;
-  unsetTargetHighlight(); // Unset the previous target element if it exists.
-
-  target.classList.add('mn-highlight');
-  target.addEventListener('click', addClickTarget);
-  addTargetElem = target;
-}
-
-/**
- * Unsets the currently highlighted target element.
- */
-function unsetTargetHighlight() {
-  if (addTargetElem) {
-    addTargetElem.removeEventListener('click', addClickTarget);
-    addTargetElem.classList.remove('mn-highlight');
-    addTargetElem = null;
-  }
-}
-
-/**
- * Starts the recording by mounting the {@link RecordingInfoPanel}.
- * If the panel is already mounted, it will not remount it.
- */
-function startRecording() {
-  if (recordingActive) return; // If already recording, do nothing.
-  recordingActive = true;
-  
-  if (window.top === window) { // Prevent duplicate mounts from iframes.
-    recordingCtx = RecordingInfoPanel.mount();
-    if (!document.activeElement) {
-      document.body.focus(); // Ensure the body is focused to capture key events.
-    }
-  }
-}
-
-/**
- * Deactivates the add functionality.
- * Unsets the current target element and resets the addActive state.
- */
-function stopRecording() {
-  unsetTargetHighlight();
-  recordingCtx?.unmount();
-  recordingCtx = null;
-  recordingActive = false;
-}
-
-/**
- * Adds a click target to the state.
- *
- * @param event - The {@link MouseEvent} that triggered the function.
- * @returns A {@link Promise} that resolves when the click target is added.
- */
-async function addClickTarget(event: MouseEvent): Promise<void> {
-  const target = event?.target as HTMLElement;
-  if (!recordingActive || !target?.id && !target?.className) return;
-
-  event.preventDefault();
-  stopRecording();
-
-  const [selector] = deriveElementSelector(target);
-  const clickAction = {
-    type: 'Mouse',
-    mode: 'click',
-    selector,
-    textContent: target.textContent?.trim() || target.title.trim(),
-  } as AutoRecordMouseAction;
-
-  window.top?.postMessage({
-    type: 'mnAddRecord',
-    payload: new AutoRecord({ actions: [clickAction] }).state(),
-  }, '*');
 }
 
 init().then().catch((error) => {

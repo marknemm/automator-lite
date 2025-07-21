@@ -4,6 +4,7 @@ import { Task } from '@lit/task';
 import { html, LitElement, type TemplateResult, unsafeCSS } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { AutoRecord, type AutoRecordType, loadRecords } from '~shared/models/auto-record.js';
+import { sendMessage } from '~shared/utils/messaging.js';
 import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
@@ -22,14 +23,17 @@ export class Popup extends LitElement {
 
   static styles = [unsafeCSS(styles)];
 
-  #loadRecordsTask = new Task(this, { task: loadRecords });
+  #loadRecordsTask = new Task(this, { task: () => loadRecords() });
 
   @state()
   private accessor addActionSheetOpened = false;
 
   override connectedCallback(): void {
     super.connectedCallback();
-    sendContentMessage({ type: 'stopRecording', payload: false }); // Stop any ongoing recording.
+    sendMessage({
+      route: 'stopRecording',
+      contexts: ['content'],
+    });
 
     // Initialize the auto-record list, and refresh upon changes in the records state.
     this.#loadRecordsTask.run();
@@ -42,7 +46,12 @@ export class Popup extends LitElement {
    * @param record - The {@link AutoRecord} to configure.
    */
   #configureRecord(record: AutoRecord): void {
-    sendContentMessage({ type: 'configureRecord', payload: record.state() });
+    sendMessage({
+      route: 'configureRecord',
+      contexts: ['content'],
+      topFrameOnly: true, // Only show config dialog in the top content window.
+      payload: record.state(),
+    });
     window.close();
   }
 
@@ -89,7 +98,10 @@ export class Popup extends LitElement {
    */
   #onAddActionSelect(action: AutoRecordType): void {
     if (action === 'Recording') {
-      sendContentMessage({ type: 'startRecording' });
+      sendMessage({
+        route: 'startRecording',
+        contexts: ['content'],
+      });
     }
     window.close();
   }
@@ -139,17 +151,4 @@ export class Popup extends LitElement {
     `;
   }
 
-}
-
-/**
- * Sends a message to the content script.
- *
- * @param message The message to send to the content script.
- */
-function sendContentMessage(message: any): void {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]?.id) {
-      chrome.tabs.sendMessage(tabs[0].id, message);
-    }
-  });
 }

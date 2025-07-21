@@ -6,7 +6,8 @@ My List of needed bug fixes and potential features that shall be completed at so
 
 ### Important
 * [x] Fix duplicate Recording Panel on pages with iframes.
-* [ ] Fix issue in SPA where auto/repeat record is not finding element on page back.
+* [ ] Fix issue in SPA where auto/repeat record is not finding element on page back because iframe is dynamically added.
+* [ ] Fix issue where cross-origin iframe records are not working.
 
 ### Easy
 * [ ] Vertically align the pause button; it is off by a pixel or two in Edge.
@@ -31,3 +32,4 @@ My List of needed bug fixes and potential features that shall be completed at so
 
 ### Hard
 - [ ] Support linter @final jsdoc to finalize inherited methods like in Java/C++; can possibly make a separate npm module.
+- [ ] Improve `deepQuerySelector` logic to support splitting a selector across shadow boundaries. 

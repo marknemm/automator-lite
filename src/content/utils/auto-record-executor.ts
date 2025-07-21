@@ -1,5 +1,5 @@
 import { AutoRecord, loadRecords, type AutoRecordKeyboardAction, type AutoRecordMouseAction, type AutoRecordScriptAction, type AutoRecordUid } from '~shared/models/auto-record.js';
-import { deepQuerySelectorAll } from '~shared/utils/deep-query.js';
+import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
 import { loadState, onStateChange, type StateChange } from '~shared/utils/state.js';
 
 /**

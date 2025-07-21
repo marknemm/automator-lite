@@ -1,3 +1,5 @@
+import type { DeepQueryOptions } from './deep-query.interfaces.js';
+
 /**
  * Performs a deep query for an element matching the given selector within the document, including iframes and shadow DOMs.
  * Will search through the entire page, including iframes and shadow DOMs, returning the first match found.
@@ -7,21 +9,26 @@
  * until the full containing document has been searched. Performs more of a layered depth-first search.
  *
  * @param selector The selector to match elements against. Cannot cross shadow DOM or iframe boundaries.
- * @param root The root element to start the search from. Defaults to `document`.
+ * @param opts {@link DeepQueryOptions} to customize the deep query behavior.
  * @returns The first matching element or `null` if no match is found.
  */
 export function deepQuerySelector<T extends HTMLElement>(
   selector: string,
-  root: Document | Element | ShadowRoot = document
+  opts: DeepQueryOptions = {}
 ): T | null {
+  const root = opts.root ?? document;
   const result = root.querySelector<T>(selector);
   if (result) return result;
 
-  const iframeResults = deepQueryIFrames<T>(selector, root);
-  if (iframeResults.length > 0) return iframeResults[0];
+  if (!opts.omitShadows) {
+    const shadowResults = deepQueryShadows<T>(selector, opts);
+    if (shadowResults.length > 0) return shadowResults[0];
+  }
 
-  const shadowResults = deepQueryShadows<T>(selector, root);
-  if (shadowResults.length > 0) return shadowResults[0];
+  if (opts.includeIFrames) {
+    const iframeResults = deepQueryIFrames<T>(selector, opts);
+    if (iframeResults.length > 0) return iframeResults[0];
+  }
 
   return null; // Return null if no results found in the root, iframes, or shadows.
 }
@@ -34,49 +41,21 @@ export function deepQuerySelector<T extends HTMLElement>(
  * until the full containing document has been searched. Performs more of a layered depth-first search.
  *
  * @param selector The selector to match elements against. Cannot cross shadow DOM or iframe boundaries.
- * @param root The root element to start the search from. Defaults to `document`.
+ * @param opts {@link DeepQueryOptions} to customize the deep query behavior.
  * @returns An array of matching elements or an empty array if no matches are found.
  */
 export function deepQuerySelectorAll<T extends HTMLElement>(
   selector: string,
-  root: Document | Element | ShadowRoot = document
+  opts: DeepQueryOptions = {}
 ): T[] {
+  const root = opts.root ?? document;
   const results = Array.from(root.querySelectorAll<T>(selector));
-  results.push(...deepQueryIFrames<T>(selector, root, true));
-  results.push(...deepQueryShadows<T>(selector, root, true));
-  return results;
-}
-
-/**
- * Performs a deep query for all elements matching the given selector within iframes.
- *
- * @param selector The selector to match elements against. Cannot cross shadow DOM or iframe boundaries.
- * @param root The root element to start the search from. Defaults to `document`.
- * @param findAll Whether to find all matching elements or just the first one. Defaults to `false`.
- * @returns An array of matching elements or an empty array if no matches are found.
- */
-function deepQueryIFrames<T extends HTMLElement>(
-  selector: string,
-  root: Document | Element | ShadowRoot,
-  findAll = false
-): T[] {
-  const results: T[] = [];
-  const iframes = Array.from(root.querySelectorAll('iframe'));
-
-  for (const iframe of iframes) {
-    try {
-      if (iframe.contentWindow?.location.origin === window.location.origin && iframe.contentDocument) {
-        if (findAll) {
-          const iframeResults = deepQuerySelectorAll<T>(selector, iframe.contentDocument);
-          results.push(...iframeResults);
-        } else {
-          const singleResult = deepQuerySelector<T>(selector, iframe.contentDocument);
-          if (singleResult) return [singleResult]; // Return immediately if a single result is found
-        }
-      }
-    } catch (error) {} // Ignore cross-origin iframe access errors
+  if (!opts.omitShadows) {
+    results.push(...deepQueryShadows<T>(selector, opts, true));
   }
-
+  if (opts.includeIFrames) {
+    results.push(...deepQueryIFrames<T>(selector, opts, true));
+  }
   return results;
 }
 
@@ -84,16 +63,17 @@ function deepQueryIFrames<T extends HTMLElement>(
  * Performs a deep query for all elements matching the given selector within shadow DOMs.
  *
  * @param selector The selector to match elements against. Cannot cross shadow DOM or iframe boundaries.
- * @param root The root element to start the search from. Defaults to `document`.
+ * @param opts {@link DeepQueryOptions} for configuring the deep query behavior.
  * @param findAll Whether to find all matching elements or just the first one. Defaults to `false`.
  * @returns An array of matching elements or an empty array if no matches are found.
  */
 function deepQueryShadows<T extends HTMLElement>(
   selector: string,
-  root: Document | Element | ShadowRoot,
+  opts: DeepQueryOptions,
   findAll = false
 ): T[] {
   const results: T[] = [];
+  const root = opts.root ?? document;
   const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, (node: Node) =>
     openOrClosedShadowRoot(node as HTMLElement)
       ? NodeFilter.FILTER_ACCEPT
@@ -104,10 +84,10 @@ function deepQueryShadows<T extends HTMLElement>(
     const element = treeWalker.currentNode as HTMLElement;
     const shadowRoot = openOrClosedShadowRoot(element)!; // Tree walker filter will ensure not null
     if (findAll) {
-      const shadowResults = deepQuerySelectorAll<T>(selector, shadowRoot);
+      const shadowResults = deepQuerySelectorAll<T>(selector, { ...opts, root: shadowRoot });
       results.push(...shadowResults);
     } else {
-      const singleResult = deepQuerySelector<T>(selector, shadowRoot);
+      const singleResult = deepQuerySelector<T>(selector, { ...opts, root: shadowRoot });
       if (singleResult) return [singleResult]; // Return immediately if a single result is found
     }
   }
@@ -127,3 +107,39 @@ function openOrClosedShadowRoot(element: HTMLElement): ShadowRoot | null {
     ? chrome.dom.openOrClosedShadowRoot(element) // Chrome
     : (element as any).openOrClosedShadowRoot(); // Firefox
 }
+
+/**
+ * Performs a deep query for all elements matching the given selector within iframes.
+ *
+ * @param selector The selector to match elements against. Cannot cross shadow DOM or iframe boundaries.
+ * @param opts {@link DeepQueryOptions} to customize the query behavior.
+ * @param findAll Whether to find all matching elements or just the first one. Defaults to `false`.
+ * @returns An array of matching elements or an empty array if no matches are found.
+ */
+function deepQueryIFrames<T extends HTMLElement>(
+  selector: string,
+  opts: DeepQueryOptions,
+  findAll = false
+): T[] {
+  const results: T[] = [];
+  const root = opts.root ?? document;
+  const iframes = Array.from(root.querySelectorAll('iframe'));
+
+  for (const iframe of iframes) {
+    try {
+      if (iframe.contentWindow?.location.origin === window.location.origin && iframe.contentDocument) {
+        if (findAll) {
+          const iframeResults = deepQuerySelectorAll<T>(selector, { ...opts, root: iframe.contentDocument });
+          results.push(...iframeResults);
+        } else {
+          const singleResult = deepQuerySelector<T>(selector, { ...opts, root: iframe.contentDocument });
+          if (singleResult) return [singleResult]; // Return immediately if a single result is found
+        }
+      }
+    } catch (error) {} // Ignore cross-origin iframe access errors
+  }
+
+  return results;
+}
+
+export type * from './deep-query.interfaces.js';

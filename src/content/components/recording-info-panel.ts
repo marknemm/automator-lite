@@ -1,8 +1,9 @@
 import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { mountTemplate, type MountContext } from '~shared/utils/mount.js';
+import type { RecordInfoPanelOptions } from './record-info-panel.interfaces.js';
 
-import { RecordInfoPanelOptions } from './record-info-panel.interfaces.js';
 import styles from './recording-info-panel.scss?inline';
 
 /**
@@ -26,11 +27,13 @@ export class RecordingInfoPanel extends LitElement {
   accessor side: 'left' | 'right' = 'left';
 
   /**
-   * The key that stops the recording when pressed in combination with `Ctrl`.
-   * @default 'Esc'
+   * The key(s) that stops the recording when pressed in combination.
+   * Will be displayed in the panel.
+   * 
+   * @default ['Ctrl', 'Shift', '.']
    */
-  @property({ type: String })
-  accessor stopRecordingKey = 'Esc';
+  @property({ type: Array })
+  accessor stopRecordingKeys = [];
 
   /**
    * Switches the side of the screen where the recording info panel is displayed.
@@ -42,13 +45,17 @@ export class RecordingInfoPanel extends LitElement {
   }
 
   protected override render(): TemplateResult {
+    const stopRecordingKeysHtml = unsafeHTML(this.stopRecordingKeys
+      .map((mod) => `<kbd>${mod}</kbd>`)
+      .join(' + '));
+
     return html`
       <div
         class="content"
         @mouseenter=${() => this.#switchSide()}
       >
         <h2>Recording in Progress</h2>
-        <p>Press <kbd>Ctrl</kbd> + <kbd>${this.stopRecordingKey}</kbd> to stop recording.</p>
+        <p>Press ${stopRecordingKeysHtml} to stop recording.</p>
         <slot></slot>
       </div>
     `;
@@ -63,13 +70,13 @@ export class RecordingInfoPanel extends LitElement {
    * @returns The {@link MountContext} for the panel.
    */
   static mount({
-    stopRecordingKey = 'Esc',
+    stopRecordingKeys,
     contents,
-  }: RecordInfoPanelOptions = {}) : MountContext {
+  }: RecordInfoPanelOptions) : MountContext {
     return mountTemplate({
       mountPoint: document.body,
       template: html`
-        <mn-recording-info-panel stopRecordingKey=${stopRecordingKey}>
+        <mn-recording-info-panel .stopRecordingKeys=${stopRecordingKeys}>
           ${contents}
         </mn-recording-info-panel>
       `,
@@ -79,3 +86,4 @@ export class RecordingInfoPanel extends LitElement {
 }
 
 export type * from './record-info-panel.interfaces.js';
+

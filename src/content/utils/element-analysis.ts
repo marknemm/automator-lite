@@ -1,4 +1,5 @@
-import { deepQuerySelector } from '~shared/utils/deep-query.js';
+import { deepQuerySelector } from '~content/utils/deep-query.js';
+import type { DeriveSelectorOptions } from './element-analysis.interfaces.js';
 
 const identifyingAttributes = [
   'aria-label',
@@ -6,11 +7,8 @@ const identifyingAttributes = [
   'href',
   'id',
   'name',
+  'title',
 ];
-
-const identifyingSelector = [
-  ...identifyingAttributes.map(attr => `[${attr}]`),
-].join(', ');
 
 const interactiveAttributes = [
   'aria-haspopup',
@@ -42,39 +40,36 @@ const interactiveTags = [
   'textarea',
 ];
 
-const interactiveSelector = [
-  ...interactiveTags,
-  ...interactiveRoles.map(role => `[role="${role}"]`),
-  ...interactiveAttributes.map(attr => `[${attr}]`),
-].join(', ');
-
 /**
- * Derives a CSS selector for the given {@link HTMLElement}.
- *
- * @param element - The {@link HTMLElement} to derive the selector for.
- * @returns A tuple containing the derived selector as a string and the content of the element.
+ * Derives a unique identifying CSS selector for a given {@link element} based on its hierarchy.
+ * 
+ * @param element - The {@link Element} to derive the selector for.
+ * @param options - {@link DeriveSelectorOptions} to customize the selector derivation.
+ * @returns A tuple containing the derived selector as a string and the content of the {@link }.
  */
-export function deriveElementSelector(element: Element): [string, string] {
+export function deriveElementSelector(element: Element, options: DeriveSelectorOptions = {}): [string, string] {
   // Scan hierarchy for best interactive element candidate.
-  const interactiveElement = scanHierarchyForInteractiveElement(element);
+  const targetElement = options.interactiveElement
+    ? scanHierarchyForInteractiveElement(element, options)
+    : element;
 
   // Scan hierarchy for best identifying element candidate.
   const [
     identifyingElement,
     identifyingRelationship,
-  ] = scanHierarchyForIdentifyingElement(interactiveElement);
+  ] = scanHierarchyForIdentifyingElement(targetElement, options);
 
   const identifyingSelector = deriveSingularSelector(identifyingElement);
 
   // Generate the best selector based on the relationship between both elements.
   const selector = (identifyingRelationship === 'ancestor')
-    ? `${identifyingSelector} ${deriveSingularSelector(interactiveElement)}`
+    ? `${identifyingSelector} ${deriveSingularSelector(targetElement)}`
     : identifyingSelector;
 
   // Include query index in the result in case of multiple matches.
   return [
     selector,
-    interactiveElement.textContent || interactiveElement.innerHTML,
+    targetElement.textContent || targetElement.innerHTML,
   ];
 }
 
@@ -86,13 +81,23 @@ export function deriveElementSelector(element: Element): [string, string] {
  * @returns The first ancestor or child element with an ID, aria-label, or interactive role.
  * If no such element is found, returns the original element.
  */
-function scanHierarchyForInteractiveElement(element: Element): Element {
-  const interactiveAncestor = element.closest(interactiveSelector);
+function scanHierarchyForInteractiveElement(
+  element: Element,
+  options: DeriveSelectorOptions
+): Element {
+  const interactiveLookupSel = [
+    ...interactiveTags,
+    ...interactiveRoles.map(role => `[role="${role}"]`),
+    ...interactiveAttributes.map(attr => `[${attr}]`),
+    ...(options.interactiveSelectors || []),
+  ].join(', ');
+
+  const interactiveAncestor = element.closest(interactiveLookupSel);
   if (interactiveAncestor && elementBounded(interactiveAncestor, element)) {
     return interactiveAncestor;
   }
 
-  const interactiveChild = deepQuerySelector(interactiveSelector, element);
+  const interactiveChild = deepQuerySelector(interactiveLookupSel, { root: element });
   if (interactiveChild && elementBounded(element, interactiveChild)) {
     return interactiveChild;
   }
@@ -111,15 +116,23 @@ function scanHierarchyForInteractiveElement(element: Element): Element {
  *
  * If no such element is found, returns the original element and 'self'.
  */
-function scanHierarchyForIdentifyingElement(element: Element): [Element, 'ancestor' | 'child' | 'self'] {
-  const identifyingAncestor = element.closest(identifyingSelector);
+function scanHierarchyForIdentifyingElement(
+  element: Element,
+  options: DeriveSelectorOptions
+): [Element, 'ancestor' | 'child' | 'self'] {
+  const identifyingLookSel = [
+    ...identifyingAttributes,
+    ...(options.identifyingAttributes || []),
+  ].join(', ');
+
+  const identifyingAncestor = element.closest(identifyingLookSel);
   if (identifyingAncestor) {
     return (element === identifyingAncestor)
       ? [identifyingAncestor, 'self']
       : [identifyingAncestor, 'ancestor'];
   }
 
-  const identifyingChild = deepQuerySelector(identifyingSelector, element);
+  const identifyingChild = element.querySelector(identifyingLookSel);
   if (identifyingChild) return [identifyingChild, 'child'];
 
   return [element, 'self'];
@@ -178,3 +191,5 @@ function elementBounded(element: Element, target: Element): boolean {
       && targetBounds.x + targetBounds.width <= elementBounds.x + elementBounds.width
       && targetBounds.y + targetBounds.height <= elementBounds.y + elementBounds.height;
 }
+
+export type * from './element-analysis.interfaces.js';

@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash-es';
 import type { DeepReadonly, Nullish } from 'utility-types';
 import { loadState, saveState } from '~shared/utils/state.js';
-import type { AutoRecordAction, AutoRecordState, AutoRecordUid } from './auto-record.interfaces.js';
+import type { AutoRecordAction, AutoRecordState, AutoRecordUid, LoadRecordOptions } from './auto-record.interfaces.js';
 
 /**
  * Represents an {@link AutoRecord} that contains actions that are replayable on a webpage.
@@ -24,7 +24,10 @@ export class AutoRecord implements AutoRecordState {
    *
    * @param state The raw {@link AutoRecordState} data.
    */
-  constructor(state: Partial<AutoRecordState>) {
+  constructor(state: Partial<AutoRecordState> | AutoRecordAction[]) {
+    state = state instanceof Array
+      ? { actions: state }
+      : state;
     this.#state = state;
 
     this.createTimestamp = state.createTimestamp ?? Date.now();
@@ -81,7 +84,7 @@ export class AutoRecord implements AutoRecordState {
    *
    * @returns A {@link Promise} that resolves when the record is saved.
    */
-  async save(): Promise<void> {
+  async save(): Promise<this> {
     const { records } = await loadState();
     const recordStateIdx = records.findIndex(record =>
       record.createTimestamp === this.createTimestamp
@@ -102,6 +105,8 @@ export class AutoRecord implements AutoRecordState {
     this.#state = state.records.find(record =>
       record.createTimestamp === this.createTimestamp
     ) as AutoRecordState;
+
+    return this;
   }
 
   /**
@@ -158,12 +163,20 @@ export class AutoRecord implements AutoRecordState {
 /**
  * Loads all {@link AutoRecord} instances from the state storage.
  *
+ * @param options - {@link LoadRecordOptions} for configuring how to load records.
+ * @param options.filter - A filter function to apply to the records. Defaults to no filtering.
+ * @param options.sort - A sort function to apply to the records. Defaults to sorting by name.
  * @returns A promise that resolves to an array of loaded {@link AutoRecord} instances.
  */
-export async function loadRecords(): Promise<AutoRecord[]> {
-  const { records } = await loadState();
-  console.log('Loaded records:', records);
-  return records.map(recordState => new AutoRecord(recordState));
+export async function loadRecords({
+  filter,
+  sort = (a, b) => a.name.localeCompare(b.name),
+}: LoadRecordOptions = {}): Promise<AutoRecord[]> {
+  let { records } = await loadState();
+  if (filter) records = records.filter(filter);
+  return records
+    .sort(sort)
+    .map(recordState => new AutoRecord(recordState));
 }
 
 export type * from './auto-record.interfaces.js';

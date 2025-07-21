@@ -1,8 +1,9 @@
-// This is a shared state management module for the MN Auto Click extension.
+// This is a shared state management module for the Automator Lite extension.
 
 import { isEqual } from 'lodash-es';
+import { isContent } from './extension.js';
 import type { State, StateChange } from './state.interfaces.js';
-import { getTopWindow } from './window.js';
+import { bindTopWindow, isTopWindow, requestTopWindow } from './window.js';
 
 /**
  * Retrieves the {@link State} of the current page from Chrome storage.
@@ -59,19 +60,26 @@ export async function onStateChange(callback: (change: StateChange) => void, ...
   });
 }
 
+if (isContent()) { // Top Window can only generate the UID for all state on the content page.
+  bindTopWindow('mnGetStateUid', getStateUid);
+}
+
 /**
  * Gets the {@link State} UID associated with the current tab.
  * @returns A {@link Promise} that resolves to the {@link State} UID for the current tab.
  */
 async function getStateUid(): Promise<string> {
   return new Promise((resolve) => {
-    const topWindow = getTopWindow();
-    (chrome.tabs) // Is script running in extension popup or content ctx.
-      ? chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          const url = new URL(tabs[0].url ?? '');
-          resolve(url.hostname + url.pathname);
-        })
-      : resolve(topWindow.location.hostname + topWindow.location.pathname);
+    if (isContent()) {
+      isTopWindow() // Top Window can only generate the UID for all state on the content page.
+        ? resolve(window.location.hostname + window.location.pathname)
+        : resolve(requestTopWindow('mnGetStateUid'));
+    } else {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const url = new URL(tabs[0].url ?? '');
+        resolve(url.hostname + url.pathname);
+      });
+    }
   });
 }
 
