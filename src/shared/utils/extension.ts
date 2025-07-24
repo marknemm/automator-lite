@@ -1,4 +1,5 @@
 import { ExtensionContext } from './extension.interfaces.js';
+import { isWindowDefined } from './window.js';
 
 /**
  * Gets the current {@link ExtensionContext} that this script is running in.
@@ -37,7 +38,7 @@ export function isContent(): boolean {
  * @returns `true` if running in the options context, otherwise `false`.
  */
 export function isOptions(): boolean {
-  return chrome.tabs && window.location.href.includes('options.html');
+  return chrome.tabs && isWindowDefined() && window.location.href.includes('options.html');
 }
 
 /**
@@ -46,7 +47,7 @@ export function isOptions(): boolean {
  * @returns `true` if running in the popup context, otherwise `false`.
  */
 export function isPopup(): boolean {
-  return chrome.tabs && window.location.href.includes('popup.html');
+  return chrome.tabs && isWindowDefined() && window.location.href.includes('popup.html');
 }
 
 /**

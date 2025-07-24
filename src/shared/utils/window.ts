@@ -6,9 +6,8 @@ import type { Nullish } from 'utility-types';
  * @param win The {@link Window} to start from. Defaults to the current {@link window}.
  * @return The topmost {@link Window} with the same origin as the given {@link Window}.
  */
-export function getTopmostWindow(win: Window | Nullish = window): Window | null {
-  if (!win) win = window;
-  if (isSameOrigin(window.top)) { // If the top window is the same origin, return it.
+export function getTopmostWindow(win: Window | Nullish = getWindow()): Window | Nullish {
+  if (isSameOrigin(getWindow()?.top)) { // If the top window is the same origin, return it.
     return window.top!;
   }
 
@@ -23,23 +22,44 @@ export function getTopmostWindow(win: Window | Nullish = window): Window | null 
 }
 
 /**
- * Checks if the given {@link Window} is the top window for the entire page.
- * @param win The {@link Window} to check. Defaults to the current {@link window}.
- * @returns `true` if the given {@link Window} is the top window, otherwise `false`.
- */
-export function isTopWindow(win: Window | Nullish = window): boolean {
-  return win === window.top;
-}
-
-/**
  * Get the parent {@link Window} of a given {@link Window}.
  * @param win The {@link Window} to get the parent of. Defaults to the current {@link window}.
  * @returns The parent {@link Window} if it exists and is the same origin, otherwise `null`.
  */
-export function getParentWindow(win: Window | Nullish = window): Window | null {
-  return win !== null && isSameOrigin(win.parent) && win.parent !== win
+export function getParentWindow(win: Window | Nullish = getWindow()): Window | null {
+  return win && isSameOrigin(win.parent) && win.parent !== win
     ? win.parent
     : null;
+}
+
+/**
+ * Gets the current {@link window} object if it is defined.
+ * This is a safe way to access the {@link window} object,
+ * as it checks if the {@link window} object is defined before accessing it.
+ * 
+ * @returns The current {@link window} object if it is defined, otherwise `undefined`.
+ */
+export function getWindow(): Window | undefined {
+  return isWindowDefined() ? window : undefined;
+}
+
+/**
+ * Checks if the {@link window} object is defined.
+ * The {@link window} object will not be defined in background scripts or service workers.
+ * 
+ * @returns `true` if the {@link window} object is defined, otherwise `false`.
+ */
+export function isWindowDefined(): boolean {
+  return typeof window !== 'undefined';
+}
+
+/**
+ * Checks if the given {@link Window} is the top window for the entire page.
+ * @param win The {@link Window} to check. Defaults to the current {@link window}.
+ * @returns `true` if the given {@link Window} is the top window, otherwise `false`.
+ */
+export function isTopWindow(win: Window | Nullish = getWindow()): boolean {
+  return !!win && win === window.top;
 }
 
 /**
@@ -67,8 +87,8 @@ export function bindTopWindow<T>(
   type: string,
   callback: (event: MessageEvent<{ type: string; payload: any }>) => Promise<T> | T
 ): () => void {
-  if (window !== window.top) return () => {}; // Only listen if this is the top window.
-  return bindWindow(type, callback, window.top);
+  if (!isTopWindow()) return () => {}; // Only listen if this is the top window.
+  return bindWindow(type, callback, getWindow()?.top);
 }
 
 /**
@@ -83,7 +103,7 @@ export function bindTopWindow<T>(
 export function bindWindow(
   type: string,
   callback: (event: MessageEvent<{ type: string; payload: any }>) => void,
-  win: Window | Nullish = window
+  win: Window | Nullish = getWindow()
 ): () => void {
   if (!win) return () => {}; // If win is explicitly null, do nothing.
 
@@ -114,7 +134,7 @@ export async function requestTopWindow<T>(
   type: string,
   payload?: any,
 ): Promise<T> {
-  return requestWindow<T>(type, payload, window.top!) as Promise<T>;
+  return requestWindow<T>(type, payload, getWindow()?.top) as Promise<T>;
 }
 
 /**
@@ -128,11 +148,13 @@ export async function requestTopWindow<T>(
 export async function requestWindow<T>(
   type: string,
   payload?: any,
-  win: Window | Nullish = window
+  win: Window | Nullish = getWindow()
 ): Promise<T | undefined> {
   if (!win) return Promise.resolve(undefined); // If win is explicitly null, return undefined.
+
   const result = (await requestWindows<T>(type, payload, win))[0];
   if (result.error) throw result.error;
+
   return result.result;
 }
 
