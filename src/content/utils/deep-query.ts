@@ -1,9 +1,10 @@
-import type { DeepQueryOptions } from './deep-query.interfaces.js';
+import { isSameOrigin } from '~shared/utils/window.js';
+import type { DeepQueryOptions, DeepTreeWalkerOptions } from './deep-query.interfaces.js';
 
 /**
  * Performs a deep query for an element matching the given selector within the document, including iframes and shadow DOMs.
  * Will search through the entire page, including iframes and shadow DOMs, returning the first match found.
- * 
+ *
  * NOTE: This does not preserve the order of elements in the DOM.
  * It performs a depth-first search in each document, but does not access any nested iframes or shadow DOMs
  * until the full containing document has been searched. Performs more of a layered depth-first search.
@@ -35,7 +36,7 @@ export function deepQuerySelector<T extends HTMLElement>(
 
 /**
  * Performs a deep query for all elements matching the given selector within the document, including iframes and shadow DOMs.
- * 
+ *
  * NOTE: This does not preserve the order of elements in the DOM.
  * It performs a depth-first search in each document, but does not access any nested iframes or shadow DOMs
  * until the full containing document has been searched. Performs more of a layered depth-first search.
@@ -74,11 +75,7 @@ function deepQueryShadows<T extends HTMLElement>(
 ): T[] {
   const results: T[] = [];
   const root = opts.root ?? document;
-  const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, (node: Node) =>
-    openOrClosedShadowRoot(node as HTMLElement)
-      ? NodeFilter.FILTER_ACCEPT
-      : NodeFilter.FILTER_SKIP
-  );
+  const treeWalker = genShadowWalker(root);
 
   while (treeWalker.nextNode()) {
     const element = treeWalker.currentNode as HTMLElement;
@@ -96,13 +93,29 @@ function deepQueryShadows<T extends HTMLElement>(
 }
 
 /**
+ * Generates a {@link TreeWalker} for visiting top-level shadow DOMs.
+ *
+ * @param root The root element to start the search from. Defaults to {@link document}.
+ * @returns A {@link TreeWalker} instance for visiting top-level shadow DOMs.
+ */
+function genShadowWalker(
+  root: Document | Element | ShadowRoot = document
+): TreeWalker {
+  return document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, (node: Node) =>
+    openOrClosedShadowRoot(node as HTMLElement)
+      ? NodeFilter.FILTER_ACCEPT
+      : NodeFilter.FILTER_SKIP
+  );
+}
+
+/**
  * Returns the open or closed {@link ShadowRoot} of an element, if it exists.
  * This is a cross-browser compatible way to access shadow roots.
  *
  * @param element The element to check for a shadow root.
  * @returns The {@link ShadowRoot} if it exists, otherwise `null`.
  */
-function openOrClosedShadowRoot(element: HTMLElement): ShadowRoot | null {
+export function openOrClosedShadowRoot(element: HTMLElement): ShadowRoot | null {
   return chrome.dom
     ? chrome.dom.openOrClosedShadowRoot(element) // Chrome
     : (element as any).openOrClosedShadowRoot(); // Firefox
@@ -140,6 +153,71 @@ function deepQueryIFrames<T extends HTMLElement>(
   }
 
   return results;
+}
+
+/**
+ * Creates a deep tree walker which yields nodes that match the specified filter.
+ * Will traverse the boundaries of shadow DOMs and iframes based on the provided options.
+ *
+ * `Note`: This performs a depth-first search and will preserve the order of elements in the DOM.
+ *
+ * @param opts {@link DeepTreeWalkerOptions} for configuring the deep tree walker.
+ * @param opts.root The root element to start the search from. Defaults to {@link document}.
+ * @param opts.whatToShow The type of nodes or elements to appear in the node list. Defaults to `NodeFilter.SHOW_ELEMENT`.
+ * @param opts.filter A custom filter predicate function to use.
+ * @param opts.includeIFrames Whether to include iframes in the search. Defaults to `false`.
+ * @param opts.omitShadows Whether to omit shadow DOMs from the search. Defaults to `false`.
+ * @returns A generator that yields nodes matching the specified filter and options.
+ */
+export function *createDeepTreeWalker({
+  root = document,
+  whatToShow = NodeFilter.SHOW_ELEMENT,
+  filter = () => true,
+  includeIFrames = false,
+  omitShadows = false,
+}: DeepTreeWalkerOptions = {}): Generator<Node> {
+  const internalFilter = (node: Node): number => {
+    return (
+      filter(node)
+      || (!omitShadows && openOrClosedShadowRoot(node as HTMLElement)) // Shadow DOMs
+      || (includeIFrames && node instanceof HTMLIFrameElement && isSameOrigin(node)) // IFrames
+    )
+      ? NodeFilter.FILTER_ACCEPT
+      : NodeFilter.FILTER_SKIP;
+  };
+
+  const walker = document.createTreeWalker(root, whatToShow, internalFilter);
+
+  while (walker.nextNode()) {
+    const { currentNode } = walker;
+
+    if (filter(currentNode)) {
+      yield currentNode; // Yield nodes that pass the supplied filter
+    }
+
+    // Dig into shadow DOM and yield internal nodes
+    const shadowRoot = openOrClosedShadowRoot(currentNode as HTMLElement);
+    if (!omitShadows && shadowRoot) {
+      yield* createDeepTreeWalker({
+        root: shadowRoot,
+        whatToShow,
+        filter,
+        includeIFrames,
+        omitShadows,
+      });
+    }
+
+    // Dig into iframes and yield internal nodes
+    if (includeIFrames && currentNode instanceof HTMLIFrameElement && isSameOrigin(currentNode)) {
+      yield* createDeepTreeWalker({
+        root: (currentNode as HTMLIFrameElement).contentDocument!,
+        whatToShow,
+        filter,
+        includeIFrames,
+        omitShadows,
+      });
+    }
+  }
 }
 
 export type * from './deep-query.interfaces.js';

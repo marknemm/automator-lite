@@ -1,5 +1,6 @@
 import { deriveElementSelector } from './element-analysis.js';
 import { getParentWindow, isSameOrigin } from '../../shared/utils/window.js';
+import { createDeepTreeWalker, deepQuerySelectorAll, openOrClosedShadowRoot } from './deep-query.js';
 
 /**
  * Gets the selector chain for the iframe containing the current window.
@@ -55,4 +56,42 @@ export function getEmbeddedWindow(iframeSelectorChain: string[], win: Window = w
   }
 
   return win; // Found the embedded iframe window.
+}
+
+/**
+ * Observes the document for added iframes and invokes a callback for each new iframe.
+ *
+ * @param callback A callback function that is invoked whenever a new iframe is added to the DOM.
+ * @param root The root element to start observing for added iframes. Defaults to the {@link document}.
+ * @returns The {@link MutationObserver} that has been initialized to observe added iframes.
+ */
+export function observeIframeAdditions(
+  callback: (iframe: HTMLIFrameElement) => void,
+  root: Document | Element = document
+): MutationObserver {
+  // Create a MutationObserver to watch for added iframes.
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      mutation.addedNodes.forEach((node) => {
+        if (node instanceof HTMLIFrameElement) {
+          callback(node);
+        } else if (node instanceof Element) { // Check inside added subtrees.
+          deepQuerySelectorAll<HTMLIFrameElement>('iframe', { root: node })
+            .forEach((iframe) => callback(iframe));
+        }
+      });
+    }
+  });
+
+  // Observe light DOM and all shadow DOMs.
+  observer.observe(root, { childList: true, subtree: true });
+  const deepTreeWalker = createDeepTreeWalker({
+    root,
+    filter: (node) => openOrClosedShadowRoot(node as HTMLElement) !== null,
+  });
+  for (const shadowRoot of deepTreeWalker) {
+    observer.observe(shadowRoot, { childList: true, subtree: true });
+  }
+
+  return observer;
 }

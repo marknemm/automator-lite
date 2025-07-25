@@ -1,10 +1,11 @@
-import { cloneDeep } from 'lodash-es';
+import deepFreeze from 'deep-freeze';
 import type { DeepReadonly, Nullish } from 'utility-types';
 import { loadState, saveState } from '~shared/utils/state.js';
 import type { AutoRecordAction, AutoRecordState, AutoRecordUid, LoadRecordOptions } from './auto-record.interfaces.js';
 
 /**
  * Represents an {@link AutoRecord} that contains actions that are replayable on a webpage.
+ *
  * @implements {AutoRecordState}
  */
 export class AutoRecord implements AutoRecordState {
@@ -15,8 +16,8 @@ export class AutoRecord implements AutoRecordState {
   #autoRun = false;
   #frequency: number | Nullish;
   #name = '';
-  #paused: boolean | Nullish;
-  #state: Partial<AutoRecordState>;
+  #paused = false;
+  #state: DeepReadonly<Partial<AutoRecordState>>;
   #updateTimestamp: number;
 
   /**
@@ -28,7 +29,7 @@ export class AutoRecord implements AutoRecordState {
     state = state instanceof Array
       ? { actions: state }
       : state;
-    this.#state = state;
+    this.#state = deepFreeze(state);
 
     this.createTimestamp = state.createTimestamp ?? Date.now();
 
@@ -60,13 +61,6 @@ export class AutoRecord implements AutoRecordState {
   set paused(paused: boolean | Nullish) { this.#paused = paused ?? false; }
 
   /**
-   * The unique identifier for this {@link AutoRecord}.
-   */
-  get uid(): AutoRecordUid { return `${this.createTimestamp}`; }
-
-  get updateTimestamp(): number { return this.#updateTimestamp; }
-
-  /**
    * The raw {@link AutoRecordState} data.
    *
    * Will become desynchronized from any unsaved changes to this {@link AutoRecord}'s properties.
@@ -74,9 +68,16 @@ export class AutoRecord implements AutoRecordState {
    *
    * @return The raw {@link AutoRecordState} data.
    */
-  state(): DeepReadonly<Partial<AutoRecordState>> {
-    return cloneDeep(this.#state);
+  get state(): DeepReadonly<Partial<AutoRecordState>> {
+    return this.#state;
   }
+
+  /**
+   * The unique identifier for this {@link AutoRecord}.
+   */
+  get uid(): AutoRecordUid { return `${this.createTimestamp}`; }
+
+  get updateTimestamp(): number { return this.#updateTimestamp; }
 
   /**
    * Saves the current state of this {@link AutoRecord} to state storage.
@@ -102,9 +103,9 @@ export class AutoRecord implements AutoRecordState {
     });
 
     // Update the local copy of the record state save data.
-    this.#state = state.records.find(record =>
+    this.#state = deepFreeze(state.records.find(record =>
       record.createTimestamp === this.createTimestamp
-    ) as AutoRecordState;
+    ) as AutoRecordState);
 
     return this;
   }

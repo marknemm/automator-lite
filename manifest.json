@@ -37,7 +37,8 @@
       "matches": ["<all_urls>"],
       "js": ["dist/content/content.js"],
       "css": ["dist/content/content.css"],
-      "all_frames": true
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "options_page": "dist/options/options.html"

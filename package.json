@@ -16,6 +16,7 @@
   "dependencies": {
     "@lit/task": "^1.0.2",
     "@webcomponents/custom-elements": "^1.6.0",
+    "deep-freeze": "^0.0.1",
     "lit": "^3.3.0",
     "lodash-es": "^4.17.21",
     "p-defer": "^4.0.1"
@@ -24,6 +25,7 @@
     "@esbuild-plugins/tsconfig-paths": "^0.1.2",
     "@jgoz/esbuild-plugin-typecheck": "^4.0.3",
     "@types/chrome": "^0.0.313",
+    "@types/deep-freeze": "^0.1.5",
     "@types/lodash-es": "^4.17.12",
     "esbuild": "^0.25.5",
     "esbuild-plugin-copy": "^2.1.1",

@@ -50,7 +50,7 @@ export class Popup extends LitElement {
       route: 'configureRecord',
       contexts: ['content'],
       topFrameOnly: true, // Only show config dialog in the top content window.
-      payload: record.state(),
+      payload: record.state,
     });
     window.close();
   }
