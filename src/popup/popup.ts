@@ -3,7 +3,7 @@
 import { Task } from '@lit/task';
 import { html, LitElement, type TemplateResult, unsafeCSS } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { AutoRecord, type AutoRecordType, loadRecords } from '~shared/models/auto-record.js';
+import { AutoRecord, type AutoRecordType } from '~shared/models/auto-record.js';
 import { sendMessage } from '~shared/utils/messaging.js';
 import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
@@ -23,7 +23,7 @@ export class Popup extends LitElement {
 
   static styles = [unsafeCSS(styles)];
 
-  #loadRecordsTask = new Task(this, { task: () => loadRecords() });
+  #loadRecordsTask = new Task(this, { task: () => AutoRecord.loadMany() });
 
   @state()
   private accessor addActionSheetOpened = false;

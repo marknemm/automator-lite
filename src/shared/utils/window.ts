@@ -76,6 +76,31 @@ export function isSameOrigin(frame: Window | HTMLIFrameElement | Nullish): boole
 }
 
 /**
+ * Checks if the given {@link location} has the same pathname as a given {@link frame}.
+ * 
+ * @param location The {@link Location} or pathname to check.
+ * @param frame The {@link Window} or {@link HTMLIFrameElement} to check against.
+ * @returns `true` if the pathnames match, otherwise `false`.
+ */
+export function isSamePathname(
+  location: Location | string | Nullish,
+  frame: Window | HTMLIFrameElement | Nullish = getWindow(),
+): boolean {
+  // If window is not defined (background script or service worker), return false.
+  if (typeof window === 'undefined' || !frame || !location) return false;
+
+  const framePathname = (frame instanceof HTMLIFrameElement)
+    ? frame.contentWindow?.location.pathname
+    : frame.location.pathname;
+
+  const pathname = (typeof location === 'string')
+    ? location
+    : location.pathname;
+
+  return !!framePathname && framePathname === pathname;
+}
+
+/**
  * Binds a listener for messages sent to the top window.
  *
  * @param type The type of message to listen for.
@@ -143,16 +168,18 @@ export async function requestTopWindow<T>(
  * @param type The type of the message to request.
  * @param payload The payload to send with the request.
  * @param win The {@link Window} to send the request to. Defaults to the current {@link window}.
+ * @param targetOrigin The origin of windows to send the request to. Defaults to `'*'` for all origins.
  * @returns A {@link Promise} that resolves with the response payload.
  */
 export async function requestWindow<T>(
   type: string,
   payload?: any,
-  win: Window | Nullish = getWindow()
+  win: Window | Nullish = getWindow(),
+  targetOrigin = '*'
 ): Promise<T | undefined> {
   if (!win) return Promise.resolve(undefined); // If win is explicitly null, return undefined.
 
-  const result = (await requestWindows<T>(type, payload, win))[0];
+  const result = (await requestWindows<T>(type, payload, [win], targetOrigin))[0];
   if (result.error) throw result.error;
 
   return result.result;
@@ -165,12 +192,14 @@ export async function requestWindow<T>(
  * @param payload The payload to send with the request.
  * @param windows The {@link Window}(s) to send the request to.
  * If no windows are provided, it defaults to the current document's iframes.
+ * @param targetOrigin The origin to send the request to. Defaults to `'*'` for all origins.
  * @returns A {@link Promise} that resolves with the response payload from each {@link Window}.
  */
 export async function requestWindows<T>(
   type: string,
   payload?: any,
-  ...windows: Window[]
+  windows: Window[] = [],
+  targetOrigin = '*',
 ): Promise<{ result?: T, error?: Error }[]> {
   // If no windows are provided, use the current document's iframes.
   if (windows.length === 0) {
@@ -200,7 +229,7 @@ export async function requestWindows<T>(
     }));
 
     // Send the request message to the window.
-    win.postMessage({ type, payload }, '*');
+    win.postMessage({ type, payload }, targetOrigin);
   }
 
   return Promise.all(results);

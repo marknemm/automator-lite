@@ -1,6 +1,6 @@
 import { getExtensionContext, isBackground, isContent, queryTabs } from './extension.js';
 import type { ExtensionContext, Message } from './messaging.interfaces.js';
-import { isTopWindow } from './window.js';
+import { isSamePathname, isTopWindow } from './window.js';
 
 /**
  * Broadcasts a {@link message} to all frames in the current {@link chrome.tabs.Tab Tab}.
@@ -96,23 +96,13 @@ export function onMessage<T, R = unknown>(
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ) => {
-    // Normalize contexts to an array.
-    const contexts = message.contexts?.length
-      ? [message.contexts].flat()
-      : [];
-
     // Does message route match this listener's route?
     const routeMatch = message.route && ((typeof route === 'string')
       ? ['*', message.route.trim()].includes(route.trim())
       : route.test(message.route.trim()));
 
-    // If message is only for top content frame, ensure this is the top window.
-    if (isContent() && message.topFrameOnly && !isTopWindow()) {
-      return;
-    }
-
     // Should listener handle the message based on route and context match?
-    if (routeMatch && contexts.includes(getExtensionContext())) {
+    if (routeMatch && testContextMatch(message)) {
       const result = await callback(message, sender);
       sendResponse(result);
     }
@@ -120,6 +110,28 @@ export function onMessage<T, R = unknown>(
 
   chrome.runtime.onMessage.addListener(listener);
   return () => chrome.runtime.onMessage.removeListener(listener);
+}
+
+/**
+ * Tests if the message should be handled by the current context.
+ *
+ * @param message The {@link Message} to test.
+ * @returns `true` if the message should be handled by the current context, otherwise `false`.
+ */
+function testContextMatch(message: Message): boolean {
+  // Normalize contexts to an array.
+    const contexts = message.contexts?.length
+      ? [message.contexts].flat()
+      : [];
+
+  // Check if the message is designated for the current context.
+  if (!contexts.includes(getExtensionContext())) {
+    return false; // Context does not match.
+  }
+
+  return !isContent()
+      || ((!message.topFrameOnly || isTopWindow())
+      && (!message.frameLocation || isSamePathname(message.frameLocation)));
 }
 
 /**

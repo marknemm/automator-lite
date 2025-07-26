@@ -64,14 +64,25 @@ export interface AutoRecordAction {
    * - `Keyboard`: A keyboard action, such as typing or pressing a key.
    * - `Script`: A script action, such as executing a JavaScript snippet.
    */
-  type: AutoRecordActionType;
+  actionType: AutoRecordActionType;
 
   /**
-   * The URL of the window where the action was recorded, and determines the context in which the action will be replayed.
-   * 
-   * This can be a top-level window or an embedded iframe.
+   * The {@link Location} of the {@link Window} where the action was recorded.
+   * Determines the context in which the action will be replayed.
+   *
+   * This can be from a top-level {@link Window} or an embedded {@link HTMLIFrameElement}.
    */
-  windowUrl: string;
+  frameLocation: Location;
+
+  /**
+   * The modifier keys to be used when executing the action.
+   */
+  modifierKeys?: {
+    shift?: boolean;
+    ctrl?: boolean;
+    alt?: boolean;
+    meta?: boolean;
+  };
 
   /**
    * The selectors of Shadow DOM elements that are ancestors of the target element.
@@ -79,24 +90,6 @@ export interface AutoRecordAction {
    * An empty array indicates that there are no Shadow DOM ancestors.
    */
   shadowAncestors: string[];
-
-}
-
-/**
- * An action that can be performed by an {@link AutoRecord} of type `Mouse`.
- * @extends {AutoRecordAction}
- */
-export interface AutoRecordMouseAction extends AutoRecordAction {
-
-  /**
-   * The mode of the mouse action.
-   *
-   * Can be one of:
-   * - `click`: A single click action.
-   * - `dblclick`: A double click action.
-   * - `contextmenu`: A right click action.
-   */
-  mode: MouseActionMode;
 
   /**
    * The CSS selector of the element that is targeted by the action.
@@ -109,32 +102,73 @@ export interface AutoRecordMouseAction extends AutoRecordAction {
    */
   textContent?: string;
 
-  type: 'Mouse'; // Ensures the type is always 'Mouse' for this interface
+  /**
+   * The timestamp (ms since epoch) of when the action was recorded.
+   */
+  timestamp: number;
+
+}
+
+/**
+ * An action that can be performed by an {@link AutoRecord} of type `Mouse`.
+ *
+ * @extends {AutoRecordAction}
+ */
+export interface AutoRecordMouseAction extends AutoRecordAction {
+
+  actionType: 'Mouse'; // Ensures the type is always 'Mouse' for this interface
+
+  coordinates: {
+
+    /**
+     * The x coordinate of the mouse event relative to the entire page.
+     */
+    pageX: number;
+
+    /**
+     * The y coordinate of the mouse event relative to the entire page.
+     */
+    pageY: number;
+
+    /**
+     * The x coordinate of the mouse event relative to the viewport screen.
+     */
+    x: number;
+
+    /**
+     * The y coordinate of the mouse event relative to the viewport screen.
+     */
+    y: number;
+
+  };
+
+  /**
+   * The mode of the mouse action.
+   *
+   * Can be one of:
+   * - `click`: A single click action.
+   * - `dblclick`: A double click action.
+   * - `contextmenu`: A right click action.
+   */
+  mouseEventType: MouseEventType;
 
 }
 
 /**
  * An action that can be performed by an {@link AutoRecord} of type `Keyboard`.
+ *
  * @extends {AutoRecordAction}
  */
 export interface AutoRecordKeyboardAction extends AutoRecordAction {
+
+  actionType: 'Keyboard'; // Ensures the type is always 'Keyboard' for this interface
+
+  keyboardEventType: KeyboardEventType; // The type of keyboard event (e.g., 'keydown', 'keyup')
 
   /**
    * The key stroke(s) to be executed when the action is triggered.
    */
   keyStrokes: string[];
-
-  /**
-   * The modifier keys to be used when executing the key stroke(s).
-   */
-  modifierKeys?: {
-    shift?: boolean;
-    ctrl?: boolean;
-    alt?: boolean;
-    meta?: boolean;
-  };
-
-  type: 'Keyboard'; // Ensures the type is always 'Keyboard' for this interface
 
 }
 
@@ -144,12 +178,12 @@ export interface AutoRecordKeyboardAction extends AutoRecordAction {
  */
 export interface AutoRecordScriptAction extends AutoRecordAction {
 
+  actionType: 'Script'; // Ensures the type is always 'Script' for this interface
+
   /**
    * The JS script source to be executed when the action is triggered.
    */
   src: string;
-
-  type: 'Script'; // Ensures the type is always 'Script' for this interface
 
 }
 
@@ -160,7 +194,7 @@ export interface LoadRecordOptions {
 
   /**
    * A filter function to determine which records to load.
-   * 
+   *
    * @param record The record to load.
    * @returns `true` if the record should be loaded, `false` otherwise.
    */
@@ -168,7 +202,7 @@ export interface LoadRecordOptions {
 
   /**
    * A function to sort the loaded records.
-   * 
+   *
    * @param a The first record to compare.
    * @param b The second record to compare.
    * @returns A negative number if `a` should come before `b`, a positive number if `a` should come after `b`, or `0` if they are equal.
@@ -178,7 +212,19 @@ export interface LoadRecordOptions {
 
 }
 
+export interface ConfigureRecordOptions {
+
+  /**
+   * If `true`, the record will not be saved after configuration.
+   *
+   * @default `false`
+   */
+  omitSave?: boolean;
+
+}
+
 export type AutoRecordType = 'Recording' | 'Script';
 export type AutoRecordActionType = 'Mouse' | 'Keyboard' | 'Script';
 export type AutoRecordUid = string;
-export type MouseActionMode = 'click' | 'dblclick' | 'contextmenu';
+export type KeyboardEventType = 'keydown' | 'keyup' | 'keypress';
+export type MouseEventType = 'click' | 'dblclick' | 'contextmenu';

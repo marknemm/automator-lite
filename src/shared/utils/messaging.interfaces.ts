@@ -67,6 +67,15 @@ export interface Message<T = unknown> {
    */
   topFrameOnly?: boolean;
 
+  /**
+   * Indicates that the message should be sent only to the frame with the specified {@link Location}.
+   * 
+   * This is used to filter messages to a specific content frame.
+   * 
+   * If not specified, the message will be sent to all frames in the content tab.
+   */
+  frameLocation?: Location | string;
+
 }
 
 export type { ExtensionContext };

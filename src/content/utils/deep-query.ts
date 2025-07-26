@@ -1,5 +1,6 @@
 import { isSameOrigin } from '~shared/utils/window.js';
 import type { DeepQueryOptions, DeepTreeWalkerOptions } from './deep-query.interfaces.js';
+import { Nullish } from 'utility-types';
 
 /**
  * Performs a deep query for an element matching the given selector within the document, including iframes and shadow DOMs.
@@ -109,16 +110,22 @@ function genShadowWalker(
 }
 
 /**
- * Returns the open or closed {@link ShadowRoot} of an element, if it exists.
+ * Returns the open or closed {@link ShadowRoot} of a node, if it exists.
  * This is a cross-browser compatible way to access shadow roots.
  *
- * @param element The element to check for a shadow root.
+ * @param node The {@link Node} to check for a shadow root. Will ignore non-{@link HTMLElement} nodes.
  * @returns The {@link ShadowRoot} if it exists, otherwise `null`.
  */
-export function openOrClosedShadowRoot(element: HTMLElement): ShadowRoot | null {
-  return chrome.dom
-    ? chrome.dom.openOrClosedShadowRoot(element) // Chrome
-    : (element as any).openOrClosedShadowRoot(); // Firefox
+export function openOrClosedShadowRoot(node: Node | Nullish): ShadowRoot | null {
+  try {
+    if (node instanceof HTMLElement) { // Roots can only be attached to HTMLElements
+      return (chrome.dom && node instanceof HTMLElement)
+        ? chrome.dom.openOrClosedShadowRoot(node) // Chrome
+        : (node as any).openOrClosedShadowRoot(); // Firefox
+    }
+  } catch {} // Ignore errors related to accessing nodes that are technically HTMLElements but not supported
+
+  return null; // Shadow root does not exist on this node
 }
 
 /**

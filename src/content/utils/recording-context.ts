@@ -1,6 +1,7 @@
 import type { Nullish } from 'utility-types';
 import { RecordingInfoPanel } from '~content/components/recording-info-panel.js';
-import { AutoRecordAction, AutoRecordKeyboardAction, AutoRecordMouseAction } from '~shared/models/auto-record.interfaces.js';
+import type { AutoRecordAction, AutoRecordKeyboardAction, AutoRecordMouseAction, KeyboardEventType, MouseEventType } from '~shared/models/auto-record.interfaces.js';
+import { AutoRecord } from '~shared/models/auto-record.js';
 import { sendMessage } from '~shared/utils/messaging.js';
 import { type MountContext } from '~shared/utils/mount.js';
 import { bindTopWindow, isTopWindow, requestTopWindow } from '~shared/utils/window.js';
@@ -30,6 +31,12 @@ export class RecordingContext {
   static readonly #STAGE_RECORD_ACTION = 'mnStageRecordAction';
 
   /**
+   * The singleton instance of the {@link RecordingContext}.
+   * This is initialized by {@link RecordingContext.init}.
+   */
+  static #instance: RecordingContext | undefined;
+
+  /**
    * Indicates whether the recording is currently active.
    */
   #active = false;
@@ -51,19 +58,27 @@ export class RecordingContext {
    */
   #recordingInfoMountCtx: MountContext | Nullish;
 
-  constructor(
-    /**
-     * A callback function that is invoked whenever a recording session is completed via {@link RecordingContext.stop stop}.
-     * {@link RecordingContext.stop stop} is invoked internally in response to the user finishing the recording session.
-     *
-     * @param actions - The list of {@link AutoRecordMouseAction}s that were recorded.
-     */
-    private onRecordingComplete: (actions: AutoRecordAction[]) => void,
-  ) {
+  /**
+   * Constructs a new {@link RecordingContext} instance.
+   * This should only be called by {@link RecordingContext.init}.
+   */
+  protected constructor() {
     // Only top window should be building the auto record.
     bindTopWindow(RecordingContext.#STAGE_RECORD_ACTION, (event) =>
       this.#stageAction(event.data.payload)
     );
+  }
+
+  /**
+   * Initializes the per-frame singleton recording context.
+   *
+   * Call {@link RecordingContext.start} on the result to begin recording actions.
+   *
+   * @return A new instance of {@link RecordingContext}.
+   */
+  static init(): RecordingContext {
+    RecordingContext.#instance ??= new RecordingContext();
+    return RecordingContext.#instance;
   }
 
   /**
@@ -94,9 +109,12 @@ export class RecordingContext {
   }
 
   /**
-   * Stops the recording process.
+   * Stops the recording process and commits the staged actions as a new {@link AutoRecord}.
+   *
+   * @returns A {@link Promise} that resolves to a newly saved {@link AutoRecord} if the
+   * recording was successful, or `undefined` if record configuration is cancelled.
    */
-  stop(): void {
+  async stop(): Promise<AutoRecord | undefined> {
     if (!this.active) return; // Prevent stopping if not active.
     this.#active = false;
     this.#unsetHoverHighlight();
@@ -108,17 +126,35 @@ export class RecordingContext {
     if (isTopWindow()) {
       this.#recordingInfoMountCtx?.unmount();
       this.#recordingInfoMountCtx = null;
-
-      this.onRecordingComplete(this.#stagedActions);
-      this.#stagedActions = []; // Clear actions after recording is complete.
+      return this.#commitStagedActions(); // Commit the staged actions to an AutoRecord.
     }
   }
 
+  /**
+   * Stages an action collected during an active recording session
+   * for later committing to an {@link AutoRecord}.
+   *
+   * @param action The {@link AutoRecordAction} to stage.
+   * @returns A {@link Promise} that resolves when the action is staged.
+   */
   async #stageAction(action: AutoRecordAction): Promise<void> {
     if (!this.active) return; // Ignore actions if not active.
+
     isTopWindow() // Only stage actions in the top window.
       ? this.#stagedActions.push(action)
       : await requestTopWindow(RecordingContext.#STAGE_RECORD_ACTION, action);
+  }
+
+  async #commitStagedActions(): Promise<AutoRecord | undefined> {
+    const commitActions = this.#stagedActions;
+    this.#stagedActions = [];
+
+    // Trim off the set of actions used to stop the recording.
+    const stopActionsCnt = RecordingContext.DEFAULT_STOP_MODIFIERS.length + 1;
+    commitActions.splice(commitActions.length - stopActionsCnt, stopActionsCnt);
+    if (commitActions.length === 0) return; // No actions to commit.
+
+    return new AutoRecord(commitActions).configure();
   }
 
   /**
@@ -156,15 +192,29 @@ export class RecordingContext {
    */
   #mouseEventHandler = async (event: MouseEvent): Promise<void> => {
     const target = event.target as HTMLElement;
-
     const [selector, textContent] = deriveElementSelector(target, { interactiveElement: true });
-    const clickAction = {
-      type: 'Mouse',
-      mode: 'click',
+
+    const clickAction: AutoRecordMouseAction = {
+      actionType: 'Mouse',
+      coordinates: {
+        pageX: event.pageX,
+        pageY: event.pageY,
+        x: event.x,
+        y: event.y,
+      },
+      frameLocation: JSON.parse(JSON.stringify(window.location)),
+      modifierKeys: {
+        alt: event.altKey,
+        ctrl: event.ctrlKey,
+        meta: event.metaKey,
+        shift: event.shiftKey,
+      },
+      mouseEventType: event.type as MouseEventType,
       selector,
+      shadowAncestors: [],
       textContent,
-      windowUrl: window.location.href,
-    } as AutoRecordMouseAction;
+      timestamp: event.timeStamp,
+    };
 
     await this.#stageAction(clickAction);
   };
@@ -184,19 +234,28 @@ export class RecordingContext {
       });
     }
 
-    const keyAction = {
-      type: 'Keyboard',
+    const target = event.target as HTMLElement;
+    const [selector, textContent] = deriveElementSelector(target, { interactiveElement: true });
+    const keyAction: AutoRecordKeyboardAction = {
+      actionType: 'Keyboard',
+      frameLocation: JSON.parse(JSON.stringify(window.location)),
+      keyboardEventType: event.type as KeyboardEventType,
       keyStrokes: [event.key],
       modifierKeys: {
-        shift: event.shiftKey,
-        ctrl: event.ctrlKey,
         alt: event.altKey,
+        ctrl: event.ctrlKey,
         meta: event.metaKey,
+        shift: event.shiftKey,
       },
-      windowUrl: window.location.href,
-    } as AutoRecordKeyboardAction;
+      selector,
+      shadowAncestors: [],
+      textContent,
+      timestamp: event.timeStamp,
+    };
 
     await this.#stageAction(keyAction);
   };
 
 }
+
+export default RecordingContext;

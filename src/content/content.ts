@@ -1,23 +1,14 @@
-// This script runs in the context of the web page.
+// Main script that runs in the context of the web page.
 
 import '@webcomponents/custom-elements';
 
-import type { Nullish } from 'utility-types';
-import { AutoRecord, AutoRecordAction, AutoRecordState } from '~shared/models/auto-record.js';
-import { type Message, onMessage } from '~shared/utils/messaging.js';
-import { AutoRecordConfigModal } from './components/auto-record-config-modal.js';
-import { initExecutor } from './utils/auto-record-executor.js';
-import { RecordingContext } from './utils/recording-context.js';
+import { AutoRecord, type AutoRecordAction, type AutoRecordState } from '~shared/models/auto-record.js';
+import { onMessage, type Message } from '~shared/utils/messaging.js';
+import AutoRecordExecutor from './utils/auto-record-executor.js';
+import RecordingContext from './utils/recording-context.js';
 
 import fontStyles from '../shared/styles/fonts.scss?inline';
 import './content.scss';
-
-/**
- * The mount context for the {@link RecordingInfoPanel}.
- * This is used to control the panel's lifecycle and interactions.
- * Will only be initialized for the top-level window to avoid duplicate mounts in iframes.
- */
-const recordingCtx = new RecordingContext(configAndSaveRecord);
 
 /**
  * Initializes the content script.
@@ -33,35 +24,18 @@ async function init() {
     </style>
   `);
 
-  await initExecutor(); // Initialize the auto-record executor to handle existing records.
+  /** Per-frame singleton auto-record executor for scheduling and executing records. */
+  const recordExecutor = await AutoRecordExecutor.init();
+
+  /** Per-frame singleton recording context for recording new records. */
+  const recordingCtx = RecordingContext.init();
 
   // Listen for messages from popup or background script.
+  onMessage('configureRecord', (message: Message<AutoRecordState>) => AutoRecord.configure(message.payload));
+  onMessage('executeRecord', (message: Message<AutoRecordState>) => recordExecutor.execRecord(message.payload));
+  onMessage('executeRecordAction', (message: Message<AutoRecordAction>) => recordExecutor.execAction(message.payload));
   onMessage('startRecording', () => recordingCtx.start());
   onMessage('stopRecording', () => recordingCtx.stop());
-  onMessage('configureRecord', (message: Message<AutoRecordState>) => configAndSaveRecord(message.payload));
-}
-
-/**
- * Saves the given {@link AutoRecord} by opening the configuration modal.
- *
- * @param record - The {@link AutoRecord} to save.
- * @returns A {@link Promise} that resolves when the record is saved.
- */
-async function configAndSaveRecord(
-  recordState: AutoRecord | AutoRecordState | AutoRecordAction[] | Nullish
-): Promise<AutoRecord | undefined> {
-  const record = (recordState instanceof AutoRecord)
-    ? recordState
-    : new AutoRecord(recordState ?? []);
-
-  return (
-    await AutoRecordConfigModal.open({
-      mountPoint: document.body,
-      closeOnBackdropClick: true,
-      closeOnEscape: true,
-      data: record as AutoRecord,
-    }).onModalClose
-  )?.save();
 }
 
 init().then().catch((error) => {

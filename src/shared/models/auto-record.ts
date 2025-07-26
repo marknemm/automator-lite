@@ -1,7 +1,8 @@
 import deepFreeze from 'deep-freeze';
 import type { DeepReadonly, Nullish } from 'utility-types';
+import { AutoRecordConfigModal } from '~content/components/auto-record-config-modal.js';
 import { loadState, saveState } from '~shared/utils/state.js';
-import type { AutoRecordAction, AutoRecordState, AutoRecordUid, LoadRecordOptions } from './auto-record.interfaces.js';
+import type { AutoRecordAction, AutoRecordState, AutoRecordUid, ConfigureRecordOptions, LoadRecordOptions } from './auto-record.interfaces.js';
 
 /**
  * Represents an {@link AutoRecord} that contains actions that are replayable on a webpage.
@@ -80,10 +81,100 @@ export class AutoRecord implements AutoRecordState {
   get updateTimestamp(): number { return this.#updateTimestamp; }
 
   /**
+   * Loads an {@link AutoRecord} instance from the state storage by its unique identifier.
+   * 
+   * @param uid The unique identifier of the {@link AutoRecord} to load.
+   * Can be a string representing the timestamp or a partial {@link AutoRecordState}.
+   * If `null` or `undefined`, no action is taken.
+   * @returns A promise that resolves to the loaded {@link AutoRecord} instance, or `undefined` if not found.
+   */
+  static async load(
+    uid: AutoRecordUid | Partial<AutoRecordState> | Nullish,
+  ): Promise<AutoRecord | undefined> {
+    if (!uid) return undefined; // No-op if no uid is provided.
+
+    // If uid is a string, treat it as a timestamp.
+    const createTimestamp = (typeof uid === 'string')
+      ? parseInt(uid, 10)
+      : uid.createTimestamp;
+
+    return (await this.loadMany({
+      filter: record => record.createTimestamp === createTimestamp,
+    }))[0];
+  }
+
+  /**
+   * Loads many {@link AutoRecord} instances from the state storage.
+   *
+   * @param options - {@link LoadRecordOptions} for configuring how to load records.
+   * @param options.filter - A filter function to apply to the records. Defaults to no filtering.
+   * @param options.sort - A sort function to apply to the records. Defaults to sorting by name.
+   * @returns A promise that resolves to an array of loaded {@link AutoRecord} instances.
+   */
+  static async loadMany({
+    filter,
+    sort = (a, b) => a.name.localeCompare(b.name),
+  }: LoadRecordOptions = {}): Promise<AutoRecord[]> {
+    let { records } = await loadState();
+    if (filter) records = records.filter(filter);
+    return records
+      .sort(sort)
+      .map(recordState => new AutoRecord(recordState));
+  }
+
+  /**
+   * Configures and saves a given new or existing {@link AutoRecord} instance.
+   *
+   * @param recordState The state of the {@link AutoRecord} to configure.
+   * If `null` or `undefined`, will perform no action.
+   * @param options - Options for configuring the record.
+   * @param options.omitSave - If `true`, the record will not be saved after configuration. Defaults to `false`.
+   * @returns A {@link Promise} that resolves to the configured and saved {@link AutoRecord} instance.
+   * If the user cancels the configuration, it resolves to `undefined`.
+   */
+  static async configure(
+    recordState: Partial<AutoRecordState> | AutoRecordAction[] | Nullish,
+    { omitSave = false }: ConfigureRecordOptions = {},
+  ): Promise<AutoRecord | undefined> {
+    if (!recordState) return; // No-op if no record state is provided.
+
+    // Ensure the recordState is an instance of AutoRecord for better type safety.
+    const record = (recordState instanceof AutoRecord)
+      ? recordState
+      : new AutoRecord(recordState);
+
+    return record.configure({ omitSave });
+  }
+
+  /**
+   * Configures and saves the given {@link AutoRecord} by opening the configuration modal.
+   *
+   * @param record - The {@link AutoRecord} to save.
+   * @param options - Options for configuring the record.
+   * @param options.omitSave - If `true`, the record will not be saved after configuration. Defaults to `false`.
+   * @returns A {@link Promise} that resolves to this {@link AutoRecord} instance after configuration.
+   * If the user cancels the configuration, it resolves to `undefined`.
+   */
+  async configure(
+    { omitSave = false }: ConfigureRecordOptions = {}
+  ): Promise<AutoRecord | undefined> {
+    const configResult = await AutoRecordConfigModal.open({
+      mountPoint: document.body,
+      closeOnBackdropClick: true,
+      closeOnEscape: true,
+      data: this,
+    }).onModalClose;
+
+    return (!omitSave && configResult)
+      ? await this.save() // Save the record if the user confirmed the configuration.
+      : configResult;
+  }
+
+  /**
    * Saves the current state of this {@link AutoRecord} to state storage.
    * This will update the record in the state storage, or create a new one if it doesn't exist.
    *
-   * @returns A {@link Promise} that resolves when the record is saved.
+   * @returns A {@link Promise} that resolves to this {@link AutoRecord} instance after saving.
    */
   async save(): Promise<this> {
     const { records } = await loadState();
@@ -159,25 +250,6 @@ export class AutoRecord implements AutoRecordState {
     return saveData;
   }
 
-}
-
-/**
- * Loads all {@link AutoRecord} instances from the state storage.
- *
- * @param options - {@link LoadRecordOptions} for configuring how to load records.
- * @param options.filter - A filter function to apply to the records. Defaults to no filtering.
- * @param options.sort - A sort function to apply to the records. Defaults to sorting by name.
- * @returns A promise that resolves to an array of loaded {@link AutoRecord} instances.
- */
-export async function loadRecords({
-  filter,
-  sort = (a, b) => a.name.localeCompare(b.name),
-}: LoadRecordOptions = {}): Promise<AutoRecord[]> {
-  let { records } = await loadState();
-  if (filter) records = records.filter(filter);
-  return records
-    .sort(sort)
-    .map(recordState => new AutoRecord(recordState));
 }
 
 export type * from './auto-record.interfaces.js';
