@@ -28,7 +28,7 @@ $offset: 7px;
   background-color: rgba(0, 0, 0, 0.7);
   color: #eee;
   padding: 8px;
-  border-radius: 4px;
+  border-radius: var(--mn-field-border-radius);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   width: 200px;
   z-index: 1001;

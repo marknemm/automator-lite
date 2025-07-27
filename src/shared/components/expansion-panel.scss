@@ -1,0 +1,62 @@
+@use "base";
+
+:host {
+  position: relative;
+  display: block;
+  border-radius: var(--mn-field-border-radius);
+  overflow: hidden; // Ensure content does not overflow the panel
+}
+
+:host([expanded]) {
+  .toggle {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .content {
+    border-top: 1px solid var(--mn-border-color);
+    opacity: 1;
+  }
+
+  .arrow {
+    transform: rotate(90deg);
+  }
+}
+
+.toggle {
+  position: relative;
+  width: 100%;
+  background: var(--mn-accent-background, var(--mn-background-faintest));
+  border: none;
+  outline-offset: -2px; // Prevent overlap from adjacent elements (accordion).
+  padding: 0.75em 1em;
+  font-size: 1em;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.arrow {
+  font-size: 1em;
+  margin-left: 0.5em;
+  transition: transform 0.2s;
+}
+
+.content {
+  position: relative;
+  max-height: 0;
+  opacity: 0;
+  box-sizing: border-box;
+  border-top: none;
+  background: inherit;
+  background: var(--mn-primary-background, var(--mn-background-fainter));
+  overflow: hidden;
+  transition: max-height .3s ease-in-out,
+              opacity .3s ease-in-out;
+
+  > .content-inner {
+    padding: 1em;
+  }
+}

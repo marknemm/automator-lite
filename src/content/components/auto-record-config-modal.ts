@@ -4,6 +4,7 @@ import '~shared/components/field-help.js';
 import { Modal } from '~shared/components/modal.js';
 import { autoFocus } from '~shared/directives/auto-focus.js';
 import { type AutoRecord } from '~shared/models/auto-record.js';
+import './actions-config-menu.js';
 
 import styles from './auto-record-config-modal.scss?inline';
 
@@ -78,6 +79,14 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
             min="0"
             value="${this.data!.frequency ?? 0}"
           />
+
+          <label>
+            Actions:
+            <mn-field-help>The playback actions for this record.</mn-field-help>
+          </label>
+          <mn-actions-config-menu
+            .actions="${this.data!.actions}"
+          ></mn-actions-config-menu>
         </div>
         <div class="modal-footer">
           <button

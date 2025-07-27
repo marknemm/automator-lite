@@ -10,6 +10,7 @@
     width: 100%;
     padding: 8px 10px;
     border: none;
+    outline-offset: -2px; // Prevent overlap from adjacent elements
     cursor: pointer;
 
     &.not-found {

@@ -1,0 +1,17 @@
+@use "base";
+@use "list";
+
+:host {
+  position: relative;
+  display: block;
+  border-radius: var(--mn-field-border-radius);
+  overflow: hidden;
+}
+
+::slotted(mn-expansion-panel) {
+  border-radius: 0; // Use accordion's border radius
+}
+
+::slotted(mn-expansion-panel:not(:first-child)) {
+  border-top: 1px solid var(--mn-border-color);
+}

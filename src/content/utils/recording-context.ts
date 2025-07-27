@@ -150,6 +150,7 @@ export class RecordingContext {
     this.#stagedActions = [];
 
     // Trim off the set of actions used to stop the recording.
+    console.log('Committing staged actions:', commitActions);
     const stopActionsCnt = RecordingContext.DEFAULT_STOP_MODIFIERS.length + 1;
     commitActions.splice(commitActions.length - stopActionsCnt, stopActionsCnt);
     if (commitActions.length === 0) return; // No actions to commit.
@@ -213,7 +214,7 @@ export class RecordingContext {
       selector,
       shadowAncestors: [],
       textContent,
-      timestamp: event.timeStamp,
+      timestamp: Date.now(),
     };
 
     await this.#stageAction(clickAction);
@@ -225,15 +226,6 @@ export class RecordingContext {
    * @param event The {@link KeyboardEvent} that triggered the function.
    */
   #keyDownListener = async (event: KeyboardEvent) => {
-    if (event.ctrlKey && event.shiftKey && event.key === RecordingContext.DEFAULT_STOP_KEY) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      return sendMessage({ // Notify all content scripts to stop recording.
-        route: 'stopRecording',
-        contexts: ['content'],
-      });
-    }
-
     const target = event.target as HTMLElement;
     const [selector, textContent] = deriveElementSelector(target, { interactiveElement: true });
     const keyAction: AutoRecordKeyboardAction = {
@@ -250,10 +242,20 @@ export class RecordingContext {
       selector,
       shadowAncestors: [],
       textContent,
-      timestamp: event.timeStamp,
+      timestamp: Date.now(),
     };
 
     await this.#stageAction(keyAction);
+
+    // Check to see if the user is trying to stop the recording.
+    if (event.ctrlKey && event.shiftKey && event.key === RecordingContext.DEFAULT_STOP_KEY) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      await sendMessage({ // Notify all content scripts to stop recording.
+        route: 'stopRecording',
+        contexts: ['content'],
+      });
+    }
   };
 
 }
