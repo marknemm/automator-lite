@@ -1,36 +1,26 @@
 @use 'base';
 
 :host {
-  display: none;
-  margin: 0;
+  z-index: 9999;
   font-family: var(--mn-font-family);
   font-size: var(--mn-font-size);
   line-height: var(--mn-line-height);
 }
 
-:host([opened]) {
-  display: block;
-}
-
-.modal-backdrop {
-  position: fixed;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-}
-
-.modal {
+dialog {
   background-color: var(--mn-background);
   color: var(--mn-foreground);
+  padding: 0;
+  border: none;
   border-radius: 8px;
-  width: 400px;
+  width: var(--mn-modal-width, 400px);
+  height: var(--mn-modal-height, fit-content);
   max-width: 90%;
+  max-height: min(90%, 800px);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
   animation: fadeIn 0.3s ease-in-out;
+
+  &::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
 }

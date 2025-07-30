@@ -82,7 +82,7 @@ export class AutoRecord implements AutoRecordState {
 
   /**
    * Loads an {@link AutoRecord} instance from the state storage by its unique identifier.
-   * 
+   *
    * @param uid The unique identifier of the {@link AutoRecord} to load.
    * Can be a string representing the timestamp or a partial {@link AutoRecordState}.
    * If `null` or `undefined`, no action is taken.
@@ -160,8 +160,7 @@ export class AutoRecord implements AutoRecordState {
   ): Promise<AutoRecord | undefined> {
     const configResult = await AutoRecordConfigModal.open({
       mountPoint: document.body,
-      closeOnBackdropClick: true,
-      closeOnEscape: true,
+      closedBy: 'any',
       data: this,
     }).onModalClose;
 

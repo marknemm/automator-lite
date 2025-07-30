@@ -2,7 +2,6 @@ import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import '~shared/components/field-help.js';
 import { Modal } from '~shared/components/modal.js';
-import { autoFocus } from '~shared/directives/auto-focus.js';
 import { type AutoRecord } from '~shared/models/auto-record.js';
 import './actions-config-menu.js';
 
@@ -48,7 +47,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
             <mn-field-help>A name for this record.</mn-field-help>
           </label>
           <input
-            ${autoFocus()}
+            autofocus
             type="text"
             id="record-config-record-name"
             name="recordName"
