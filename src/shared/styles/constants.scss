@@ -1,5 +1,45 @@
 @use "sass:color";
 
+/// Generates CSS variables for a color scale based on a base CSS variable.
+/// @param {string} $base-var The base CSS variable name (e.g. --mn-info)
+/// @param {color} $base-color The base color value
+/// @param {color} $invert-color The inverted color value (optional, defaults to a dimmer shade of the base color)
+@mixin color-variants($base-var, $base-color, $invert-color: color.adjust($base-color, $lightness: -30%)) {
+  #{$base-var}: #{$base-color};
+  #{$base-var}-faint: #{rgba($base-color, 0.7)};
+  #{$base-var}-fainter: #{rgba($base-color, 0.5)};
+  #{$base-var}-faintest: #{rgba($base-color, 0.2)};
+  #{$base-var}-dim: #{color.adjust($base-color, $lightness: -10%)};
+  #{$base-var}-dimmer: #{color.adjust($base-color, $lightness: -15%)};
+  #{$base-var}-dimmest: #{color.adjust($base-color, $lightness: -30%)};
+  #{$base-var}-bright: #{color.adjust($base-color, $lightness: 10%)};
+  #{$base-var}-brighter: #{color.adjust($base-color, $lightness: 15%)};
+  #{$base-var}-brightest: #{color.adjust($base-color, $lightness: 30%)};
+  #{$base-var}-invert: #{$invert-color};
+  #{$base-var}-invert-faint: #{rgba($invert-color, 0.7)};
+  #{$base-var}-invert-fainter: #{rgba($invert-color, 0.5)};
+  #{$base-var}-invert-faintest: #{rgba($invert-color, 0.2)};
+  #{$base-var}-invert-dim: #{color.adjust($invert-color, $lightness: -10%)};
+  #{$base-var}-invert-dimmer: #{color.adjust($invert-color, $lightness: -15%)};
+  #{$base-var}-invert-dimmest: #{color.adjust($invert-color, $lightness: -30%)};
+  #{$base-var}-invert-bright: #{color.adjust($invert-color, $lightness: 10%)};
+  #{$base-var}-invert-brighter: #{color.adjust($invert-color, $lightness: 15%)};
+  #{$base-var}-invert-brightest: #{color.adjust($invert-color, $lightness: 30%)};
+}
+
+@mixin shadow-variants($shadow-color) {
+  --mn-shadow-color: #{$shadow-color};
+  --mn-shadow: 0px 3px 5px -1px #{rgba($shadow-color, 0.2)},
+               0px 6px 10px 0px #{rgba($shadow-color, 0.14)},
+               0px 1px 18px 0px #{rgba($shadow-color, 0.12)};
+  --mn-shadow-light: 0px 2px 1px -1px #{rgba($shadow-color, 0.2)},
+                     0px 1px 1px 0px #{rgba($shadow-color, 0.14)},
+                     0px 1px 3px 0px #{rgba($shadow-color, 0.12)};
+  --mn-shadow-heavy: 0px 5px 5px -3px #{rgba($shadow-color, .2)},
+                     0px 8px 10px 1px #{rgba($shadow-color, .14)},
+                     0px 3px 14px 2px #{rgba($shadow-color, .12)};
+}
+
 :root, :host {
   --mn-gutter: 8px;
   --mn-field-border-radius: 4px;
@@ -11,88 +51,64 @@
   // Light Theme Colors
   $mn-background: #fff;
   --mn-background: #{$mn-background};
-  --mn-background-fainter: #f0f0f0;
-  --mn-background-faintest: #e0e0e0;
+  --mn-background-dim: #f5f5f5;
+  --mn-background-dimmer: #f0f0f0;
+  --mn-background-dimmest: #e0e0e0;
 
   $mn-foreground: #000;
   --mn-foreground: #{$mn-foreground};
-  --mn-foreground-fainter: #666;
-  --mn-foreground-faintest: #999;
+  --mn-foreground-dim: #333;
+  --mn-foreground-dimmer: #666;
+  --mn-foreground-dimmest: #999;
 
   --mn-input-background: var(--mn-background);
   --mn-input-foreground: var(--mn-foreground);
-  --mn-input-disabled: var(--mn-background-faintest);
+  --mn-input-disabled: var(--mn-background-dimmest);
 
   $mn-border-color: #ccc;
   --mn-border-color: #{$mn-border-color};
 
-  $mn-action-blue: #0078d4;
-  --mn-action-blue: #{$mn-action-blue};
-  --mn-action-blue-darker: #005a9e;
-  --mn-action-blue-lightest: #e4edfd;
-  --mn-action-blue-faint: #{rgba($mn-action-blue, 0.7)};
-  --mn-action-blue-fainter: #{rgba($mn-action-blue, 0.5)};
-  --mn-action-blue-faintest: #{rgba($mn-action-blue, 0.2)};
+  @include shadow-variants($mn-foreground);
 
-  $mn-action-green: #70b770;
-  --mn-action-green: #{$mn-action-green};
-  --mn-action-green-darker: #5a9f5a;
-  --mn-action-green-lightest: #defdeb;
-  --mn-action-green-faint: #{rgba($mn-action-green, 0.7)};
-  --mn-action-green-fainter: #{rgba($mn-action-green, 0.5)};
-  --mn-action-green-faintest: #{rgba($mn-action-green, 0.2)};
-
-  $mn-action-red: #d83b01;
-  --mn-action-red: #{$mn-action-red};
-  --mn-action-red-darker: #532b20;
-  --mn-action-red-lightest: #fce2e2;
-  --mn-action-red-faint: #{rgba($mn-action-red, 0.7)};
-  --mn-action-red-fainter: #{rgba($mn-action-red, 0.5)};
-  --mn-action-red-faintest: #{rgba($mn-action-red, 0.2)};
+  @include color-variants(--mn-info, #007bff, #fff);
+  @include color-variants(--mn-success, #28a745, #fff);
+  @include color-variants(--mn-warn, #ffc107, #000);
+  @include color-variants(--mn-danger, #dc3545, #fff);
+  @include color-variants(--mn-primary, #007bff, #cceaff);
+  @include color-variants(--mn-secondary, #6c757d, #fff);
+  @include color-variants(--mn-tertiary, #fff, #000);
 }
 
 @media (prefers-color-scheme: dark) {
   :root, :host {
     $mn-background: #222;
     --mn-background: #{$mn-background};
-    --mn-background-fainter: #{color.adjust($mn-background, $lightness: 6%)};
-    --mn-background-faintest: #{color.adjust($mn-background, $lightness: 12%)};
+    --mn-background-dim: #{color.adjust($mn-background, $lightness: 3%)};
+    --mn-background-dimmer: #{color.adjust($mn-background, $lightness: 6%)};
+    --mn-background-dimmest: #{color.adjust($mn-background, $lightness: 12%)};
 
     $mn-foreground: #e0e0e0;
     --mn-foreground: #{$mn-foreground};
-    --mn-foreground-fainter: #{color.adjust($mn-foreground, $lightness: -6%)};
-    --mn-foreground-faintest: #{color.adjust($mn-foreground, $lightness: -12%)};
+    --mn-foreground-dim: #{color.adjust($mn-foreground, $lightness: -3%)};
+    --mn-foreground-dimmer: #{color.adjust($mn-foreground, $lightness: -6%)};
+    --mn-foreground-dimmest: #{color.adjust($mn-foreground, $lightness: -12%)};
 
     $mn-border-color: #333;
     --mn-border-color: #{$mn-border-color};
 
-    --mn-input-background: var(--mn-background-faintest);
+    @include shadow-variants(color.adjust($mn-foreground, $lightness: -28%));
+
+    --mn-input-background: var(--mn-background-dimmest);
     --mn-input-foreground: var(--mn-foreground);
     --mn-input-disabled: var(--mn-background);
 
-    $mn-action-blue: #1a73e8;
-    --mn-action-blue: #{$mn-action-blue};
-    --mn-action-blue-darker: #0f5bb5;
-    --mn-action-blue-lightest: #d2e3fc;
-    --mn-action-blue-faint: #{rgba($mn-action-blue, 0.7)};
-    --mn-action-blue-fainter: #{rgba($mn-action-blue, 0.5)};
-    --mn-action-blue-faintest: #{rgba($mn-action-blue, 0.2)};
-
-    $mn-action-green: #34a853;
-    --mn-action-green: #{$mn-action-green};
-    --mn-action-green-darker: #2c7a42;
-    --mn-action-green-lightest: #e6f4ea;
-    --mn-action-green-faint: #{rgba($mn-action-green, 0.7)};
-    --mn-action-green-fainter: #{rgba($mn-action-green, 0.5)};
-    --mn-action-green-faintest: #{rgba($mn-action-green, 0.2)};
-
-    $mn-action-red: #ea4335;
-    --mn-action-red: #{$mn-action-red};
-    --mn-action-red-darker: #8b1c1b;
-    --mn-action-red-lightest: #fce8e6;
-    --mn-action-red-faint: #{rgba($mn-action-red, 0.7)};
-    --mn-action-red-fainter: #{rgba($mn-action-red, 0.5)};
-    --mn-action-red-faintest: #{rgba($mn-action-red, 0.2)};
+    @include color-variants(--mn-info, #01b2b2);
+    @include color-variants(--mn-success, #34a853);
+    @include color-variants(--mn-warn, #fbbc05);
+    @include color-variants(--mn-danger, #ea4335);
+    @include color-variants(--mn-primary, #1a73e8);
+    @include color-variants(--mn-secondary, #b0cccb);
+    @include color-variants(--mn-tertiary, #ffb787);
   }
 }
 

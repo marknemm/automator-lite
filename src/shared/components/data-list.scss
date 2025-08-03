@@ -3,12 +3,12 @@
 
 .empty {
   text-align: center;
-  color: var(--mn-foreground-fainter);
+  color: var(--mn-foreground-dimmer);
   font-style: italic;
   margin-bottom: 28px;
 }
 
 .error {
   text-align: center;
-  color: var(--mn-action-red);
+  color: var(--mn-danger);
 }

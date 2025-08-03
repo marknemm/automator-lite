@@ -1,9 +1,9 @@
 import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import type { AutoRecordAction, AutoRecordKeyboardAction, AutoRecordMouseAction } from '~shared/models/auto-record.interfaces.js';
 import '~shared/components/accordion.js';
 import '~shared/components/expansion-panel.js';
+import type { AutoRecordAction, AutoRecordKeyboardAction, AutoRecordMouseAction } from '~shared/models/auto-record.interfaces.js';
 
 import styles from './actions-config-menu.scss?inline';
 
@@ -56,6 +56,14 @@ export class ActionsConfigMenu extends LitElement {
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <div class="footer">
+              <button
+                class="icon danger delete"
+                title="Delete Action: ${action.textContent}"
+                type="button"
+                @click="${() => this.dispatchEvent(new CustomEvent('delete-action', { detail: action }))}"
+              ></button>
             </div>
           </mn-expansion-panel>
         `)}

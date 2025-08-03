@@ -142,3 +142,5 @@ export abstract class DataListBase<T = unknown> extends List {
   }
 
 }
+
+export default DataListBase;

@@ -1,9 +1,9 @@
 // This script runs in the context of the extension popup.
 
 import { Task } from '@lit/task';
-import { html, LitElement, type TemplateResult, unsafeCSS } from 'lit';
+import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { AutoRecord, type AutoRecordType } from '~shared/models/auto-record.js';
+import AutoRecord, { type AutoRecordType } from '~shared/models/auto-record.js';
 import { sendMessage } from '~shared/utils/messaging.js';
 import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
@@ -124,14 +124,14 @@ export class Popup extends LitElement {
               Automation Records
             </h2>
 
-            <button
-              type="button"
-              class="add-button"
-              title="Add a new automation record"
-              @click=${() => this.#openActionSheet()}
-            >
-              &#43;
-            </button>
+            <div class="auto-record-list-controls">
+              <button
+                class="success raised icon add"
+                title="Add New Record"
+                type="button"
+                @click=${() => this.#openActionSheet()}
+              ></button>
+            </div>
           </div>
 
           <mn-auto-record-list

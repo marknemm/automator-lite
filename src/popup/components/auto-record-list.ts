@@ -1,10 +1,8 @@
 import { html, type TemplateResult, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import '~shared/components/data-list-base.js';
 import '~shared/components/button-list-item.js';
-import { DataListBase } from '~shared/components/data-list-base.js';
-import { type AutoRecord } from '~shared/models/auto-record.js';
+import DataListBase from '~shared/components/data-list-base.js';
+import type AutoRecord from '~shared/models/auto-record.js';
 
 import styles from './auto-record-list.scss?inline';
 
@@ -44,36 +42,35 @@ export class AutoRecordList extends DataListBase<AutoRecord> {
   accessor onTogglePause!: (record: AutoRecord) => Promise<void>;
 
   protected override renderItem(record: AutoRecord): TemplateResult {
+    const name = record.name || record.uid;
+    const playPauseIcon = record.paused ? 'play' : 'pause';
+    const playPauseColor = record.paused ? 'success' : 'primary';
+    const playPauseTitle = `${record.paused ? 'Play Record:' : 'Pause Record:'} ${name}`;
+    const deleteTitle = `Delete Record: ${name}`;
+
     return html`
       <mn-button-list-item @click=${() => this.onConfigure(record)}>
-        <span class="record-name" title="${record.name || record.uid}">
-          ${record.name || record.uid}
+        <span class="record-name" title="Configure Record: ${name}">
+          ${name}
         </span>
         <span class="record-controls">
           <button
-            class="round-button ${record.paused ? 'play-button' : 'pause-button'}"
-            data-target="${record.uid}"
-            title="${record.paused ? 'Play' : 'Pause'}"
+            class="icon ${playPauseColor} ${playPauseIcon}"
+            title="${playPauseTitle}"
             type="button"
             @click=${async (event: MouseEvent) => {
               event.stopPropagation();
               await this.onTogglePause(record);
             }}
-          >
-            ${unsafeHTML(record.paused ? '&#9654;' : '&#9208;')}
-          </button>
-          <button
-            class="round-button delete-button"
-            data-target="${record.uid}"
-            title="Delete"
+          ></button>
+          <button class="icon danger delete"
+            title="${deleteTitle}"
             type="button"
             @click=${async (event: MouseEvent) => {
               event.stopPropagation();
               await this.onDelete(record);
             }}
-          >
-            &#10006;
-          </button>
+          ></button>
         </span>
       </mn-button-list-item>
     `;

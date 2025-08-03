@@ -25,7 +25,7 @@
     width: 48px;
     height: 48px;
     border: 5px solid #FFF;
-    border-bottom-color: var(--mn-action-blue);
+    border-bottom-color: var(--mn-info);
     border-radius: 50%;
     display: inline-block;
     box-sizing: border-box;
@@ -83,7 +83,7 @@
 
 .description {
   font-size: 1em;
-  color: var(--mn-foreground-fainter);
+  color: var(--mn-foreground-dimmer);
 }
 
 .auto-record-list-container {
@@ -102,18 +102,6 @@
   }
 }
 
-.add-button {
-  border-radius: 50%;
-  border: none;
-  background-color: var(--mn-action-green);
-  padding: 1px 7px;
-  font-size: 20px;
-
-  &:hover {
-    background-color: var(--mn-action-green-darker);
-  }
-}
-
 mn-auto-record-list {
   display: block;
   margin: 10px calc(-1 * var(--mn-gutter)) calc(-1 * var(--mn-gutter));
@@ -124,4 +112,8 @@ mn-add-action-sheet {
   margin-top: calc(-1 * var(--mn-gutter));
   width: calc(100% + var(--mn-gutter) * 2);
   min-height: calc(100% + var(--mn-gutter));
+}
+
+button.add {
+  --mn-icon-button-size: 25px;
 }

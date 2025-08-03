@@ -252,3 +252,4 @@ export class AutoRecord implements AutoRecordState {
 }
 
 export type * from './auto-record.interfaces.js';
+export default AutoRecord;

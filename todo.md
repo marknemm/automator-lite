@@ -59,6 +59,8 @@ List of needed bug fixes, features, and architectural updates that shall be comp
 - [ ] In modal.ts, remove content from static open method so derived classes can omit custom content without confusion.
 
 ### Medium
+- [ ] Replace all callback input properties with standard CustomEvent emitters.
+- [ ] Update Accordion component to be both useable via inheritance in addition to composition.
 - [ ] Update instances of inter-frame communication to use messaging utility instead of window utility.
 - [ ] Merge List and DataListBase so that List forms the basis for both data driven and declarative lists. This makes it possible to extends List and allow extended components to support both styles inherently.
 - [ ] Create README.md

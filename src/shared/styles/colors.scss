@@ -1,0 +1,34 @@
+.info {
+  background: var(--mn-info);
+  color: var(--mn-info-invert);
+}
+
+.success {
+  background: var(--mn-success);
+  color: var(--mn-success-invert);
+}
+
+.warn {
+  background: var(--mn-warn);
+  color: var(--mn-warn-invert);
+}
+
+.danger {
+  background: var(--mn-danger);
+  color: var(--mn-danger-invert);
+}
+
+.primary {
+  background: var(--mn-primary);
+  color: var(--mn-primary-invert);
+}
+
+.secondary {
+  background: var(--mn-secondary);
+  color: var(--mn-secondary-invert);
+}
+
+.tertiary {
+  background: var(--mn-tertiary);
+  color: var(--mn-tertiary-invert);
+}

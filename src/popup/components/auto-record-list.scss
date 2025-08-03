@@ -19,28 +19,3 @@
   margin-left: 10px;
   flex: 0 0 auto;
 }
-
-.delete-button {
-  color: var(--mn-action-red);
-
-  &:hover {
-    background-color: var(--mn-action-red-faintest);
-  }
-}
-
-.play-button {
-  color: var(--mn-action-green);
-  background-color: var(--mn-background);
-
-  &:hover {
-    background-color: var(--mn-action-green-faintest);
-  }
-}
-
-.pause-button {
-  font-size: 1.5em;
-
-  &:hover {
-    background-color: var(--mn-action-blue-faintest);
-  }
-}

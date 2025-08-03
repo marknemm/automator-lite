@@ -27,14 +27,6 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
         <h2 class="modal-title">
           Automator Lite<br>Record Configuration
         </h2>
-        <button
-          class="close-button"
-          @click="${() => this.close()}"
-          title="Close"
-          type="button"
-        >
-          &#10006;
-        </button>
       </div>
       <form @submit="${(event: SubmitEvent) => this.#submit(event)}">
         <div class="modal-body">
@@ -90,22 +82,18 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
         <div class="modal-footer">
           <button
             id="record-config-modal-cancel"
-            class="modal-cancel"
+            class="icon close danger raised square"
             @click="${() => this.close()}"
             title="Cancel"
             type="button"
-          >
-            &#10006;
-          </button>
+          ></button>
 
           <button
             id="record-config-modal-confirm"
-            class="modal-confirm"
+            class="icon confirm success raised square"
             title="Confirm"
             type="submit"
-          >
-            &#10004;
-          </button>
+          ></button>
         </div>
       </form>
     `;

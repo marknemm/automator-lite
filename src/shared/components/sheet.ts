@@ -1,6 +1,5 @@
 import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
 import styles from './sheet.scss?inline';
 
@@ -92,13 +91,11 @@ export class Sheet extends LitElement {
         ${this.renderTitle()}
       </div>
       <button
-        class="close-button"
+        class="icon danger close"
+        title="Close"
         type="button"
         @click=${() => this.close()}
-        title="Close"
-      >
-        ${unsafeHTML('&#10006;')}
-      </button>
+      ></button>
     `;
   }
 

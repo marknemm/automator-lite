@@ -26,7 +26,7 @@
 .toggle {
   position: relative;
   width: 100%;
-  background: var(--mn-accent-background, var(--mn-background-faintest));
+  background: var(--mn-accent-background, var(--mn-background-dimmest));
   border: none;
   outline-offset: -2px; // Prevent overlap from adjacent elements (accordion).
   padding: 0.75em 1em;
@@ -51,7 +51,7 @@
   box-sizing: border-box;
   border-top: none;
   background: inherit;
-  background: var(--mn-primary-background, var(--mn-background-fainter));
+  background: var(--mn-primary-background, var(--mn-background-dimmer));
   overflow: hidden;
   transition: max-height .3s ease-in-out,
               opacity .3s ease-in-out;

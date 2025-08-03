@@ -1,4 +1,6 @@
-@use "constants.scss";
+@use "constants";
+@use "colors";
+@use "button";
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--mn-font-family-serif);
@@ -25,42 +27,6 @@ h5, h6 {
   font-size: 1em;
 }
 
-button {
-  border: none;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-}
-
-.close-button,
-.round-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border-radius: 50%;
-  border: none;
-  background: none;
-  line-height: 1;
-  color: inherit;
-  cursor: pointer;
-  background-color: var(--mn-background);
-  color: var(--mn-action-blue);
-  transition: color 0.2s, background-color 0.2s;
-  font-size: 1.1em;
-}
-
-.close-button {
-  color: var(--mn-action-red);
-
-  &:hover {
-    background: var(--mn-action-red-faintest);
-  }
-}
-
 label {
   position: relative;
   font-size: 1em;
@@ -69,7 +35,7 @@ label {
   box-sizing: border-box;
   margin-bottom: .33em;
   font-weight: bold;
-  color: var(--mn-foreground-fainter);
+  color: var(--mn-foreground-dimmer);
 }
 
 input {
@@ -117,14 +83,34 @@ input {
 .not-found {
   text-align: center;
   font-size: 1em;
-  color: var(--mn-foreground-fainter);
+  color: var(--mn-foreground-dimmer);
   margin-bottom: 20px;
 }
 
+.bold {
+  font-weight: bold;
+}
+
+.center {
+  text-align: center;
+}
+
 .faint {
-  color: var(--mn-foreground-faintest);
+  color: var(--mn-foreground-dimmest);
 }
 
 .italic {
   font-style: italic;
+}
+
+.large {
+  font-size: 1.2em;
+}
+
+.small {
+  font-size: 0.8em;
+}
+
+.underline {
+  text-decoration: underline;
 }
