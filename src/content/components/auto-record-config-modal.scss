@@ -1,16 +1,16 @@
 @use 'base';
 @use '../../shared/components/modal.scss';
 
-.modal-header {
+.header {
   position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid var(--mn-border-color);
+  border-bottom: 1px solid var(--spark-border-color);
 }
 
-.modal-title {
+.title {
   font-weight: bold;
   text-align: center;
   padding: 0 30px;
@@ -18,29 +18,30 @@
   flex: 1 1 auto;
 }
 
-.modal-body {
+.body {
   padding: 16px;
 }
 
-.modal-error {
-  color: red;
+.error {
   margin-bottom: 8px;
+
+  &:empty {
+    display: none;
+  }
 }
 
-.modal-error:empty {
-  display: none;
-}
-
-.modal-footer {
+.footer {
   display: flex;
   justify-content: flex-end;
   padding: 16px;
-  border-top: 1px solid var(--mn-border-color);
+  border-top: 1px solid var(--spark-border-color);
 }
 
-button.close,
-button.confirm {
-  margin-left: 10px;
-  color: var(--mn-foreground);
-  padding: 8px 16px;
+.spark-button {
+  &[icon="close"],
+  &[icon="check"] {
+    margin-left: 10px;
+    color: var(--spark-foreground);
+    padding: 8px 16px;
+  }
 }

@@ -13,13 +13,13 @@ import styles from './modal.scss?inline';
  * This component provides a basic structure for modals, including a backdrop,
  * content area, and methods for opening and closing the modal.
  *
- * @element `mn-modal`
+ * @element `spark-modal`
  * @slot The default slot for inserting modal content.
  * @template D - The type of data passed to the modal; Defaults to `unknown`.
  * @template R - The type of result returned when the modal is closed; Defaults to `D`.
  * @extends LitElement
  */
-@customElement('mn-modal')
+@customElement('spark-modal')
 export class Modal<D = unknown, R = D> extends LitElement {
 
   static styles = [unsafeCSS(styles)];
@@ -163,11 +163,11 @@ export class Modal<D = unknown, R = D> extends LitElement {
     }
 
     if (changedProperties.has('width')) {
-      this.style.setProperty('--mn-modal-width', this.width);
+      this.style.setProperty('--spark-modal-width', this.width);
     }
 
     if (changedProperties.has('height')) {
-      this.style.setProperty('--mn-modal-height', this.height);
+      this.style.setProperty('--spark-modal-height', this.height);
     }
   }
 

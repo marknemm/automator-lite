@@ -1,9 +1,9 @@
 @use "constants";
-@use "colors";
+@use "themes";
 @use "button";
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--mn-font-family-serif);
+  font-family: var(--spark-font-family-serif);
   letter-spacing: 1.5px;
 }
 
@@ -35,7 +35,7 @@ label {
   box-sizing: border-box;
   margin-bottom: .33em;
   font-weight: bold;
-  color: var(--mn-foreground-dimmer);
+  color: var(--spark-foreground-dimmer);
 }
 
 input {
@@ -43,23 +43,23 @@ input {
   width: 100%;
   box-sizing: border-box;
   margin-bottom: 12px;
-  border: 1px solid var(--mn-border-color);
-  border-radius: var(--mn-field-border-radius);
+  border: 1px solid var(--spark-border-color);
+  border-radius: var(--spark-field-border-radius);
   font-size: 1em;
-  background-color: var(--mn-input-background);
-  color: var(--mn-input-foreground);
-  border: 1px solid var(--mn-border-color);
+  background-color: var(--spark-input-background);
+  color: var(--spark-input-foreground);
+  border: 1px solid var(--spark-border-color);
 
   &[readonly] {
-    background-color: var(--mn-input-disabled);
+    background-color: var(--spark-input-disabled);
     cursor: not-allowed;
   }
 
   &[type="checkbox"] {
     width: auto;
     margin-right: 8px;
-    accent-color: var(--mn-input-background);
-    color: var(--mn-foreground);
+    accent-color: var(--spark-input-background);
+    color: var(--spark-foreground);
     width: 17px;
     height: 17px;
     cursor: pointer;
@@ -69,8 +69,8 @@ input {
       display: block;
       width: 16px;
       height: 16px;
-      background-color: var(--mn-input-background);
-      border: 1px solid var(--mn-input-foreground);
+      background-color: var(--spark-input-background);
+      border: 1px solid var(--spark-input-foreground);
       border-radius: inherit;
     }
 
@@ -83,7 +83,7 @@ input {
 .not-found {
   text-align: center;
   font-size: 1em;
-  color: var(--mn-foreground-dimmer);
+  color: var(--spark-foreground-dimmer);
   margin-bottom: 20px;
 }
 
@@ -96,7 +96,7 @@ input {
 }
 
 .faint {
-  color: var(--mn-foreground-dimmest);
+  color: var(--spark-foreground-dimmest);
 }
 
 .italic {

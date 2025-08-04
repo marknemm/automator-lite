@@ -3,6 +3,7 @@
 import { Task } from '@lit/task';
 import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import sparkButton from '~shared/directives/spark-button.js';
 import AutoRecord, { type AutoRecordType } from '~shared/models/auto-record.js';
 import { sendMessage } from '~shared/utils/messaging.js';
 import { onStateChange } from '~shared/utils/state.js';
@@ -15,10 +16,10 @@ import styles from './popup.scss?inline';
 /**
  * The main popup component for the Automator Lite extension.
  *
- * @element `mn-popup`
+ * @element `spark-popup`
  * @extends LitElement
  */
-@customElement('mn-popup')
+@customElement('spark-popup')
 export class Popup extends LitElement {
 
   static styles = [unsafeCSS(styles)];
@@ -126,26 +127,29 @@ export class Popup extends LitElement {
 
             <div class="auto-record-list-controls">
               <button
-                class="success raised icon add"
+                ${sparkButton()}
+                class="add-record"
+                icon="add"
+                raised
+                theme="success"
                 title="Add New Record"
-                type="button"
                 @click=${() => this.#openActionSheet()}
               ></button>
             </div>
           </div>
 
-          <mn-auto-record-list
+          <spark-auto-record-list
             .task=${this.#loadRecordsTask}
             .onConfigure=${(record: AutoRecord) => this.#configureRecord(record)}
             .onDelete=${(record: AutoRecord) => this.#deleteRecord(record)}
             .onTogglePause=${(record: AutoRecord) => this.#toggleRecordPause(record)}
-          ></mn-auto-record-list>
+          ></spark-auto-record-list>
 
-          <mn-add-action-sheet
+          <spark-add-action-sheet
             .opened=${this.addActionSheetOpened}
             .onOpenChange=${() => this.#closeActionSheet()}
             .onAddActionSelect=${(action: AutoRecordType) => this.#onAddActionSelect(action)}
-          ></mn-add-action-sheet>
+          ></spark-add-action-sheet>
         </div>
       </div>
     `;

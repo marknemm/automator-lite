@@ -8,6 +8,9 @@ List of needed bug fixes, features, and architectural updates that shall be comp
 
 ## Bug Fixes
 
+Bugs that should be fixed at some point.
+These may be related to some features, but often are minor standalone issues.
+
 ### Important
 * [x] Fix duplicate Recording Panel on pages with iframes (content).
 * [x] Fix issue in SPA where auto/repeat record is not finding element on page back because iframe is dynamically added (content).
@@ -27,6 +30,9 @@ List of needed bug fixes, features, and architectural updates that shall be comp
 
 
 ## Features
+
+Required user-facing features.
+These provide a roadmap for the development of the app.
 
 ### Important
 - [ ] Add list of actions with insert and remove functionality in Record configuration modal (content).
@@ -52,6 +58,9 @@ List of needed bug fixes, features, and architectural updates that shall be comp
 
 ## Architecture
 
+Improvements to the architecture of this application.
+These are often not user-facing and can be thought of as behind the scenes features/improvements.
+
 ### Important
 *EMPTY*
 
@@ -59,6 +68,7 @@ List of needed bug fixes, features, and architectural updates that shall be comp
 - [ ] In modal.ts, remove content from static open method so derived classes can omit custom content without confusion.
 
 ### Medium
+- [x] Create `SparkComponent` abstract class that extends `LitElement` and forms uniform theming and support for all components.
 - [ ] Replace all callback input properties with standard CustomEvent emitters.
 - [ ] Update Accordion component to be both useable via inheritance in addition to composition.
 - [ ] Update instances of inter-frame communication to use messaging utility instead of window utility.
@@ -68,3 +78,14 @@ List of needed bug fixes, features, and architectural updates that shall be comp
 
 ### Hard
 - [ ] Support linter @final jsdoc to finalize inherited methods like in Java/C++; can possibly make a separate npm module.
+
+<br>
+
+
+
+## Rabbit Hole
+
+A list of spin-off ideas that are often very complex and won't be handled within the scope of this app.
+
+- Web Component Library named Spark and publish to npm.
+- VS Code / Trello / Jira Plugin with embedded AI (Copilot) for dynamic TODO list.

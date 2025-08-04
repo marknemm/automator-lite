@@ -2,14 +2,14 @@
 @use "fonts";
 
 html, body {
-  background-color: var(--mn-background);
-  color: var(--mn-foreground);
+  background-color: var(--spark-background);
+  color: var(--spark-foreground);
 }
 
 body {
   margin: 0;
-  padding: var(--mn-gutter);
-  font-family: var(--mn-font-family);
-  font-size: var(--mn-font-size);
-  line-height: var(--mn-line-height);
+  padding: var(--spark-gutter);
+  font-family: var(--spark-font-family);
+  font-size: var(--spark-font-size);
+  line-height: var(--spark-line-height);
 }

@@ -2,19 +2,19 @@
 
 :host {
   z-index: 9999;
-  font-family: var(--mn-font-family);
-  font-size: var(--mn-font-size);
-  line-height: var(--mn-line-height);
+  font-family: var(--spark-font-family);
+  font-size: var(--spark-font-size);
+  line-height: var(--spark-line-height);
 }
 
 dialog {
-  background-color: var(--mn-background);
-  color: var(--mn-foreground);
+  background-color: var(--spark-background);
+  color: var(--spark-foreground);
   padding: 0;
   border: none;
   border-radius: 8px;
-  width: var(--mn-modal-width, 400px);
-  height: var(--mn-modal-height, fit-content);
+  width: var(--spark-modal-width, 400px);
+  height: var(--spark-modal-height, fit-content);
   max-width: 90%;
   max-height: min(90%, 800px);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);

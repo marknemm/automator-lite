@@ -1,0 +1,41 @@
+.spark-theme-info,
+.spark[theme="info"] {
+  background: var(--spark-info);
+  color: var(--spark-info-inverted);
+}
+
+.spark-theme-success,
+.spark[theme="success"] {
+  background: var(--spark-success);
+  color: var(--spark-success-inverted);
+}
+
+.spark-theme-warning,
+.spark[theme="warning"] {
+  background: var(--spark-warn);
+  color: var(--spark-warn-inverted);
+}
+
+.spark-theme-danger,
+.spark[theme="danger"] {
+  background: var(--spark-danger);
+  color: var(--spark-danger-inverted);
+}
+
+.spark-theme-primary,
+.spark[theme="primary"] {
+  background: var(--spark-primary);
+  color: var(--spark-primary-inverted);
+}
+
+.spark-theme-secondary,
+.spark[theme="secondary"] {
+  background: var(--spark-secondary);
+  color: var(--spark-secondary-inverted);
+}
+
+.spark-theme-tertiary,
+.spark[theme="tertiary"] {
+  background: var(--spark-tertiary);
+  color: var(--spark-tertiary-inverted);
+}

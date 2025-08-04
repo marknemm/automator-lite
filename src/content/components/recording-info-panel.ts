@@ -9,11 +9,11 @@ import styles from './recording-info-panel.scss?inline';
 /**
  * A component that displays information about a recording.
  *
- * @element `mn-recording-info-panel`
+ * @element `spark-recording-info-panel`
  * @slot The default slot for inserting content into the recording info panel.
  * @extends LitElement
  */
-@customElement('mn-recording-info-panel')
+@customElement('spark-recording-info-panel')
 export class RecordingInfoPanel extends LitElement {
 
   static styles = [unsafeCSS(styles)];
@@ -29,7 +29,7 @@ export class RecordingInfoPanel extends LitElement {
   /**
    * The key(s) that stops the recording when pressed in combination.
    * Will be displayed in the panel.
-   * 
+   *
    * @default ['Ctrl', 'Shift', '.']
    */
   @property({ type: Array })
@@ -76,9 +76,9 @@ export class RecordingInfoPanel extends LitElement {
     return mountTemplate({
       mountPoint: document.body,
       template: html`
-        <mn-recording-info-panel .stopRecordingKeys=${stopRecordingKeys}>
+        <spark-recording-info-panel .stopRecordingKeys=${stopRecordingKeys}>
           ${contents}
-        </mn-recording-info-panel>
+        </spark-recording-info-panel>
       `,
     });
   }

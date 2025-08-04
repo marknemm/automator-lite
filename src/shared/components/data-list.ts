@@ -7,10 +7,10 @@ import { DataListBase } from './data-list-base.js';
  *
  * @param T The type of items in the list; Defaults to `unknown`.
  *
- * @element `mn-data-list`
+ * @element `spark-data-list`
  * @extends DataListBase
  */
-@customElement('mn-data-list')
+@customElement('spark-data-list')
 export class DataList<T = unknown> extends DataListBase<T> {
 
   static styles = DataListBase.styles;

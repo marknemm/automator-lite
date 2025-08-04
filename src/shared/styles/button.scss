@@ -1,12 +1,12 @@
 @use "constants";
 
-button {
+.spark-button {
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   border: none;
-  border-radius: var(--mn-field-border-radius);
+  border-radius: var(--spark-field-border-radius);
   background: none;
   color: inherit;
   cursor: pointer;
@@ -15,55 +15,67 @@ button {
     background 0.2s,
     background-color 0.2s;
 
-  &.round {
+  &[raised] {
+    box-shadow: var(--spark-shadow);
+
+    &:hover {
+      box-shadow: var(--spark-shadow-heavy);
+    }
+  }
+
+  &[outline] {
+    border: 1px solid var(--spark-border-color);
+  }
+
+  &[shape="round"] {
     border-radius: 50%;
   }
 
-  &.raised {
-    box-shadow: var(--mn-shadow);
-
-    &:hover {
-      box-shadow: var(--mn-shadow-heavy);
-    }
-  }
-
-  /// Mixin to generate color button variants with hover and non-raised states
-  /// @param {string} $variant - The variant name (e.g., primary, secondary)
-  @mixin button-variant($variant) {
-    &.#{$variant} {
-      &:hover {
-        background-color: var(--mn-#{$variant}-bright);
-      }
-
-      &:not(.raised) {
+  /// Mixin to generate color button themes with hover and non-raised states
+  /// @param {string} $theme - The theme name (e.g., primary, secondary)
+  @mixin button-theme($theme) {
+    &[theme="#{$theme}"] {
+      &:not([raised]) {
         background-color: inherit;
-        color: var(--mn-#{$variant});
+        color: var(--spark-#{$theme});
 
         &:hover {
-          background-color: var(--mn-#{$variant}-faintest);
+          background-color: var(--spark-#{$theme}-faintest);
         }
+      }
+
+      &[raised] {
+        &:hover {
+          background-color: var(--spark-#{$theme}-dim);
+        }
+      }
+
+      &:active,
+      &:active:focus {
+        background-color: var(--spark-#{$theme});
+        color: var(--spark-#{$theme}-inverted);
       }
     }
   }
 
-  @include button-variant(primary);
-  @include button-variant(secondary);
-  @include button-variant(tertiary);
-  @include button-variant(info);
-  @include button-variant(success);
-  @include button-variant(warning);
-  @include button-variant(danger);
+  @include button-theme(primary);
+  @include button-theme(secondary);
+  @include button-theme(tertiary);
+  @include button-theme(info);
+  @include button-theme(success);
+  @include button-theme(warning);
+  @include button-theme(danger);
 
-  &.icon {
+  &[icon] {
     width: auto;
-    height: var(--mn-icon-button-size, 30px);
+    height: var(--spark-icon-button-size, 30px);
     aspect-ratio: 1 / 1;
-    font-size: calc(var(--mn-icon-button-size, 30px) * 0.8);
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.8);
     line-height: 1;
     border-radius: 50%;
 
-    &.square {
-      border-radius: var(--mn-field-border-radius);
+    &[shape="rectangle"] {
+      border-radius: var(--spark-field-border-radius);
     }
 
     &:after {
@@ -77,42 +89,42 @@ button {
       font-size: inherit;
       line-height: inherit;
     }
+  }
 
-    &.add {
-      font-size: calc(var(--mn-icon-button-size, 30px) * 0.9);
+  &[icon="add"] {
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.9);
 
-      &:after {
-        content: '\002B'; // Unicode for plus sign (+)
-      }
+    &:after {
+      content: '\002B'; // Unicode for plus sign (+)
     }
+  }
 
-    &.close,
-    &.delete {
-      &:after {
-        content: '\00D7'; // Unicode for multiplication sign (×)
-      }
+  &[icon="check"] {
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.55);
+
+    &:after {
+      content: '\2714'; // Unicode for check mark (✓)
     }
+  }
 
-    &.confirm {
-      font-size: calc(var(--mn-icon-button-size, 30px) * 0.55);
-
-      &:after {
-        content: '\2714'; // Unicode for check mark (✓)
-      }
+  &[icon="close"],
+  &[icon="delete"] {
+    &:after {
+      content: '\00D7'; // Unicode for multiplication sign (×)
     }
+  }
 
-    &.pause {
-      &:after {
-        content: '\23F8'; // Unicode for pause symbol (⏸)
-      }
+  &[icon="pause"] {
+    &:after {
+      content: '\23F8'; // Unicode for pause symbol (⏸)
     }
+  }
 
-    &.play {
-      font-size: calc(var(--mn-icon-button-size, 30px) * 0.55);
+  &[icon="play"] {
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.55);
 
-      &:after {
-        content: '\25B6'; // Unicode for play symbol (▶)
-      }
+    &:after {
+      content: '\25B6'; // Unicode for play symbol (▶)
     }
   }
 }

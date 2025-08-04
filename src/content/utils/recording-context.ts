@@ -169,7 +169,7 @@ export class RecordingContext {
     if (!target?.classList) return; // Ensure the target is an HTMLElement with classList.
     this.#unsetHoverHighlight(); // Unset the previous target element if it exists.
 
-    target.classList.add('mn-highlight');
+    target.classList.add('spark-highlight');
     target.addEventListener('click', this.#mouseEventHandler);
     this.#hoverElement = target;
   };
@@ -180,7 +180,7 @@ export class RecordingContext {
   #unsetHoverHighlight = (): void => {
     if (this.#hoverElement) {
       this.#hoverElement.removeEventListener('click', this.#mouseEventHandler);
-      this.#hoverElement.classList.remove('mn-highlight');
+      this.#hoverElement.classList.remove('spark-highlight');
       this.#hoverElement = null;
     }
   };

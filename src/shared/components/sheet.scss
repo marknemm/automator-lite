@@ -10,7 +10,7 @@
   overflow: hidden;
   z-index: 1000;
   box-sizing: border-box;
-  background-color: var(--mn-background);
+  background-color: var(--spark-background);
   animation: grow 0.3s ease-out forwards;
 }
 
@@ -47,9 +47,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--mn-gutter);
-  background-color: var(--mn-color-primary);
-  color: var(--mn-color-text-light);
+  padding: var(--spark-gutter);
+  background-color: var(--spark-color-primary);
+  color: var(--spark-color-text-light);
 }
 
 .title-container {

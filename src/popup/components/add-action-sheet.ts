@@ -10,10 +10,10 @@ import styles from './add-action-sheet.scss?inline';
 /**
  * A sheet component for adding new actions to the Automator Lite extension.
  *
- * @element `mn-add-action-sheet`
+ * @element `spark-add-action-sheet`
  * @extends Sheet
  */
-@customElement('mn-add-action-sheet')
+@customElement('spark-add-action-sheet')
 export class AddActionSheet extends Sheet {
 
   static styles = [unsafeCSS(styles)];
@@ -38,14 +38,14 @@ export class AddActionSheet extends Sheet {
 
   protected override renderContent(): TemplateResult {
     return html`
-      <mn-list>
-        <mn-button-list-item @click=${() => this.onAddActionSelect('Recording')}>
+      <spark-list>
+        <spark-button-list-item @click=${() => this.onAddActionSelect('Recording')}>
           Mouse and Keyboard Recording
-        </mn-button-list-item>
-        <mn-button-list-item @click=${() => this.onAddActionSelect('Script')}>
+        </spark-button-list-item>
+        <spark-button-list-item @click=${() => this.onAddActionSelect('Script')}>
           Manual Scripting
-        </mn-button-list-item>
-      </mn-list>
+        </spark-button-list-item>
+      </spark-list>
     `;
   }
 

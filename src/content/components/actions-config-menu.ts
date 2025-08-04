@@ -3,11 +3,12 @@ import { customElement, property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
 import '~shared/components/accordion.js';
 import '~shared/components/expansion-panel.js';
+import sparkButton from '~shared/directives/spark-button.js';
 import type { AutoRecordAction, AutoRecordKeyboardAction, AutoRecordMouseAction } from '~shared/models/auto-record.interfaces.js';
 
 import styles from './actions-config-menu.scss?inline';
 
-@customElement('mn-actions-config-menu')
+@customElement('spark-actions-config-menu')
 export class ActionsConfigMenu extends LitElement {
 
   static styles = [unsafeCSS(styles)];
@@ -17,9 +18,9 @@ export class ActionsConfigMenu extends LitElement {
 
   protected override render(): TemplateResult {
     return html`
-      <mn-accordion>
+      <spark-accordion>
         ${repeat(this.actions, (action) => action.timestamp, (action) => html`
-          <mn-expansion-panel>
+          <spark-expansion-panel>
             <div
               slot="header"
               class="action-label"
@@ -59,15 +60,16 @@ export class ActionsConfigMenu extends LitElement {
             </div>
             <div class="footer">
               <button
-                class="icon danger delete"
+                ${sparkButton()}
+                theme="danger"
+                icon="delete"
                 title="Delete Action: ${action.textContent}"
-                type="button"
                 @click="${() => this.dispatchEvent(new CustomEvent('delete-action', { detail: action }))}"
               ></button>
             </div>
-          </mn-expansion-panel>
+          </spark-expansion-panel>
         `)}
-      </mn-accordion>
+      </spark-accordion>
     `;
   }
 

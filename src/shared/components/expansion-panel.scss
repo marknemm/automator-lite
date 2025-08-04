@@ -3,7 +3,7 @@
 :host {
   position: relative;
   display: block;
-  border-radius: var(--mn-field-border-radius);
+  border-radius: var(--spark-field-border-radius);
   overflow: hidden; // Ensure content does not overflow the panel
 }
 
@@ -14,7 +14,7 @@
   }
 
   .content {
-    border-top: 1px solid var(--mn-border-color);
+    border-top: 1px solid var(--spark-border-color);
     opacity: 1;
   }
 
@@ -26,7 +26,7 @@
 .toggle {
   position: relative;
   width: 100%;
-  background: var(--mn-accent-background, var(--mn-background-dimmest));
+  background: var(--spark-accent-background, var(--spark-background-dimmest));
   border: none;
   outline-offset: -2px; // Prevent overlap from adjacent elements (accordion).
   padding: 0.75em 1em;
@@ -36,6 +36,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  text-align: left;
 }
 
 .arrow {
@@ -51,7 +52,7 @@
   box-sizing: border-box;
   border-top: none;
   background: inherit;
-  background: var(--mn-primary-background, var(--mn-background-dimmer));
+  background: var(--spark-primary-background, var(--spark-background-dimmer));
   overflow: hidden;
   transition: max-height .3s ease-in-out,
               opacity .3s ease-in-out;

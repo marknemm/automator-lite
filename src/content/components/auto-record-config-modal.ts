@@ -2,6 +2,7 @@ import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import '~shared/components/field-help.js';
 import { Modal } from '~shared/components/modal.js';
+import sparkButton from '~shared/directives/spark-button.js';
 import { type AutoRecord } from '~shared/models/auto-record.js';
 import './actions-config-menu.js';
 
@@ -10,10 +11,10 @@ import styles from './auto-record-config-modal.scss?inline';
 /**
  * A {@link Modal} component for configuring an auto-record.
  *
- * @element `mn-auto-record-config-modal`
+ * @element `spark-auto-record-config-modal`
  * @extends Modal<AutoRecord>
  */
-@customElement('mn-auto-record-config-modal')
+@customElement('spark-auto-record-config-modal')
 export class AutoRecordConfigModal extends Modal<AutoRecord> {
 
   static styles = [unsafeCSS(styles)];
@@ -23,20 +24,20 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
 
   protected override renderContent(): TemplateResult {
     return html`
-      <div class="modal-header">
-        <h2 class="modal-title">
+      <div class="header">
+        <h2 class="title">
           Automator Lite<br>Record Configuration
         </h2>
       </div>
       <form @submit="${(event: SubmitEvent) => this.#submit(event)}">
-        <div class="modal-body">
-          <div class="modal-error">
+        <div class="body">
+          <div class="danger error">
             ${this.errMsg}
           </div>
 
           <label for="record-config-record-name">
             Record Name:
-            <mn-field-help>A name for this record.</mn-field-help>
+            <spark-field-help>A name for this record.</spark-field-help>
           </label>
           <input
             autofocus
@@ -49,7 +50,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
 
           <label for="record-config-record-auto-run">
             Auto Run:
-            <mn-field-help>Automatically run this record when the page loads.</mn-field-help>
+            <spark-field-help>Automatically run this record when the page loads.</spark-field-help>
           </label>
           <input
             type="checkbox"
@@ -60,7 +61,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
 
           <label for="record-config-record-interval">
             Repeat Interval:
-            <mn-field-help>The record will repeat at this interval (milliseconds) if non-zero.</mn-field-help>
+            <spark-field-help>The record will repeat at this interval (milliseconds) if non-zero.</spark-field-help>
           </label>
           <input
             type="number"
@@ -73,24 +74,29 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
 
           <label>
             Actions:
-            <mn-field-help>The playback actions for this record.</mn-field-help>
+            <spark-field-help>The playback actions for this record.</spark-field-help>
           </label>
-          <mn-actions-config-menu
+          <spark-actions-config-menu
             .actions="${this.data!.actions}"
-          ></mn-actions-config-menu>
+          ></spark-actions-config-menu>
         </div>
-        <div class="modal-footer">
+        <div class="footer">
           <button
-            id="record-config-modal-cancel"
-            class="icon close danger raised square"
-            @click="${() => this.close()}"
+            ${sparkButton()}
+            icon="close"
+            raised
+            shape="rectangle"
+            theme="danger"
             title="Cancel"
-            type="button"
+            @click="${() => this.close()}"
           ></button>
 
           <button
-            id="record-config-modal-confirm"
-            class="icon confirm success raised square"
+            ${sparkButton()}
+            icon="check"
+            raised
+            shape="rectangle"
+            theme="success"
             title="Confirm"
             type="submit"
           ></button>

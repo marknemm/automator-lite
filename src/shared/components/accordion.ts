@@ -5,7 +5,7 @@ import { List } from './list.js';
 
 import styles from './accordion.scss?inline';
 
-@customElement('mn-accordion')
+@customElement('spark-accordion')
 export class Accordion extends List {
 
   static styles = [unsafeCSS(styles)];
@@ -61,7 +61,7 @@ export class Accordion extends List {
     if (!slot) return [];
 
     return slot.assignedElements().filter(el =>
-      el.tagName.toLowerCase() === 'mn-expansion-panel'
+      el.tagName.toLowerCase() === 'spark-expansion-panel'
     ) as ExpansionPanel[];
   }
 

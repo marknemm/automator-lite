@@ -4,14 +4,14 @@
 :host {
   position: relative;
   display: block;
-  border-radius: var(--mn-field-border-radius);
+  border-radius: var(--spark-field-border-radius);
   overflow: hidden;
 }
 
-::slotted(mn-expansion-panel) {
+::slotted(spark-expansion-panel) {
   border-radius: 0; // Use accordion's border radius
 }
 
-::slotted(mn-expansion-panel:not(:first-child)) {
-  border-top: 1px solid var(--mn-border-color);
+::slotted(spark-expansion-panel:not(:first-child)) {
+  border-top: 1px solid var(--spark-border-color);
 }

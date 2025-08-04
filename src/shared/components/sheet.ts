@@ -1,17 +1,18 @@
 import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import sparkButton from '~shared/directives/spark-button.js';
 
 import styles from './sheet.scss?inline';
 
 /**
  * A modal-like component that slides in from the edge of its container.
  *
- * @element `mn-sheet`
+ * @element `spark-sheet`
  * @slot `title` - A named slot for inserting the title of the sheet.
  * @slot The default slot for inserting content into the sheet.
  * @extends LitElement
  */
-@customElement('mn-sheet')
+@customElement('spark-sheet')
 export class Sheet extends LitElement {
 
   static styles = [unsafeCSS(styles)];
@@ -91,7 +92,9 @@ export class Sheet extends LitElement {
         ${this.renderTitle()}
       </div>
       <button
-        class="icon danger close"
+        ${sparkButton()}
+        icon="close"
+        theme="danger"
         title="Close"
         type="button"
         @click=${() => this.close()}

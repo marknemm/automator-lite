@@ -1,8 +1,8 @@
 @use 'constants';
 
-.mn-highlight {
-  outline: 1px solid var(--mn-success-darker) !important;
-  background-color: var(--mn-info) !important;
+.spark-highlight {
+  outline: 1px solid var(--spark-success-darker) !important;
+  background-color: var(--spark-info) !important;
   transition: background-color 0.2s ease-in-out !important;
   cursor: cell !important;
 }

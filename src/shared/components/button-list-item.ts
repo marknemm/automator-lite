@@ -1,5 +1,6 @@
 import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import sparkButton from '~shared/directives/spark-button.js';
 import { ListItem } from './list-item.js';
 
 import styles from './button-list-item.scss?inline';
@@ -7,11 +8,11 @@ import styles from './button-list-item.scss?inline';
 /**
  * A button list item component that extends the functionality of a list item.
  *
- * @element `mn-button-list-item`
+ * @element `spark-button-list-item`
  * @slot The default slot for inserting content into the button list item.
  * @extends ListItem
  */
-@customElement('mn-button-list-item')
+@customElement('spark-button-list-item')
 export class ButtonListItem extends ListItem {
 
   static styles = [unsafeCSS(styles)];
@@ -29,7 +30,7 @@ export class ButtonListItem extends ListItem {
   protected override render(): TemplateResult {
     return html`
       <button
-        type="button"
+        ${sparkButton()}
         @click=${() => this.onClick(this.uid)}
         ?disabled=${this.disabled}
       >

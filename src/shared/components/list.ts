@@ -6,14 +6,14 @@ import styles from './list.scss?inline';
 /**
  * A simple list component that can be used to group items.
  *
- * This component is designed to contain `<mn-list-item>` elements as direct children.
+ * This component is designed to contain `<spark-list-item>` elements as direct children.
  * It provides a default `role` of `list` for accessibility purposes.
  *
- * @element `mn-list`
+ * @element `spark-list`
  * @slot The default slot for inserting list items.
  * @extends LitElement
  */
-@customElement('mn-list')
+@customElement('spark-list')
 export class List extends LitElement {
 
   static styles = [unsafeCSS(styles)];

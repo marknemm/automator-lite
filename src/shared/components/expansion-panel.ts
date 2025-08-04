@@ -1,17 +1,18 @@
 import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import sparkButton from '~shared/directives/spark-button.js';
 
 import styles from './expansion-panel.scss?inline';
 
 /**
  * A simple expansion panel component that can be toggled open or closed.
  *
- * @element `mn-expansion-panel`
+ * @element `spark-expansion-panel`
  * @extends LitElement
  * @slot `title` - Named slot for the title of the panel.
  * @slot - The default slot for embedding the content of the panel.
  */
-@customElement('mn-expansion-panel')
+@customElement('spark-expansion-panel')
 export class ExpansionPanel extends LitElement {
 
   static styles = [unsafeCSS(styles)];
@@ -76,13 +77,13 @@ export class ExpansionPanel extends LitElement {
   protected override render(): TemplateResult {
     return html`
       <button
+        ${sparkButton()}
         id="${this.id}-toggle"
         class="toggle"
         @click="${() => this.toggle()}"
         aria-expanded="${this.expanded}"
         aria-controls="${this.id}-content"
         aria-label="${this.expanded ? 'Collapse panel' : 'Expand panel'}"
-        type="button"
       >
         ${this.renderHeader()}
         <span class="arrow">▶</span>

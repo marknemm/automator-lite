@@ -2,6 +2,7 @@ import { html, type TemplateResult, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import '~shared/components/button-list-item.js';
 import DataListBase from '~shared/components/data-list-base.js';
+import sparkButton from '~shared/directives/spark-button.js';
 import type AutoRecord from '~shared/models/auto-record.js';
 
 import styles from './auto-record-list.scss?inline';
@@ -9,10 +10,10 @@ import styles from './auto-record-list.scss?inline';
 /**
  * A data list component for loading, displaying, and managing auto-records.
  *
- * @element `mn-auto-record-list`
+ * @element `spark-auto-record-list`
  * @extends DataListBase<AutoRecord>
  */
-@customElement('mn-auto-record-list')
+@customElement('spark-auto-record-list')
 export class AutoRecordList extends DataListBase<AutoRecord> {
 
   static styles = [unsafeCSS(styles)];
@@ -44,35 +45,37 @@ export class AutoRecordList extends DataListBase<AutoRecord> {
   protected override renderItem(record: AutoRecord): TemplateResult {
     const name = record.name || record.uid;
     const playPauseIcon = record.paused ? 'play' : 'pause';
-    const playPauseColor = record.paused ? 'success' : 'primary';
+    const playPauseTheme = record.paused ? 'success' : 'primary';
     const playPauseTitle = `${record.paused ? 'Play Record:' : 'Pause Record:'} ${name}`;
-    const deleteTitle = `Delete Record: ${name}`;
 
     return html`
-      <mn-button-list-item @click=${() => this.onConfigure(record)}>
+      <spark-button-list-item @click=${() => this.onConfigure(record)}>
         <span class="record-name" title="Configure Record: ${name}">
           ${name}
         </span>
         <span class="record-controls">
           <button
-            class="icon ${playPauseColor} ${playPauseIcon}"
+            ${sparkButton()}
+            icon="${playPauseIcon}"
+            theme="${playPauseTheme}"
             title="${playPauseTitle}"
-            type="button"
             @click=${async (event: MouseEvent) => {
               event.stopPropagation();
               await this.onTogglePause(record);
             }}
           ></button>
-          <button class="icon danger delete"
-            title="${deleteTitle}"
-            type="button"
+          <button
+            ${sparkButton()}
+            icon="delete"
+            theme="danger"
+            title="Delete Record: ${name}"
             @click=${async (event: MouseEvent) => {
               event.stopPropagation();
               await this.onDelete(record);
             }}
           ></button>
         </span>
-      </mn-button-list-item>
+      </spark-button-list-item>
     `;
   }
 

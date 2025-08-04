@@ -6,14 +6,14 @@ import styles from './list-item.scss?inline';
 /**
  * A list item component that can be used within a list.
  *
- * This component is designed to be used as a child of a `<mn-list>` element.
+ * This component is designed to be used as a child of a `<spark-list>` element.
  * It provides a default `role` of `listitem` for accessibility purposes.
  *
- * @element `mn-list-item`
+ * @element `spark-list-item`
  * @slot The default slot for inserting content into the list item.
  * @extends LitElement
  */
-@customElement('mn-list-item')
+@customElement('spark-list-item')
 export class ListItem extends LitElement {
 
   static styles = [unsafeCSS(styles)];
