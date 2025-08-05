@@ -1,0 +1,54 @@
+@use "variables" as *;
+
+label {
+  position: relative;
+  font-size: 1em;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: .33em;
+  font-weight: bold;
+  color: var(--spark-foreground-dimmer);
+}
+
+input {
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  border: 1px solid var(--spark-border-color);
+  border-radius: var(--spark-field-border-radius);
+  font-size: 1em;
+  background-color: var(--spark-input-background);
+  color: var(--spark-input-foreground);
+  border: 1px solid var(--spark-border-color);
+
+  &[readonly] {
+    background-color: var(--spark-input-disabled);
+    cursor: not-allowed;
+  }
+
+  &[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+    accent-color: var(--spark-input-background);
+    color: var(--spark-foreground);
+    width: 17px;
+    height: 17px;
+    cursor: pointer;
+
+    &:after {
+      content: '';
+      display: block;
+      width: 16px;
+      height: 16px;
+      background-color: var(--spark-input-background);
+      border: 1px solid var(--spark-input-foreground);
+      border-radius: inherit;
+    }
+
+    &:checked:after {
+      background-color: transparent;
+    }
+  }
+}

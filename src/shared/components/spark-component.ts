@@ -1,6 +1,6 @@
 import { LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
-import type { SparkTheme } from './spark-component.interfaces.js';
+import type { SparkColor } from './spark-component.interfaces.js';
 
 /**
  * Abstract {@link SparkComponent} class that provides common properties and methods for theming and behavior.
@@ -10,11 +10,11 @@ import type { SparkTheme } from './spark-component.interfaces.js';
 export abstract class SparkComponent extends LitElement {
 
   /**
-   * A readonly array of all possible {@link SparkTheme} values.
+   * A readonly array of all possible {@link SparkColor} values.
    *
-   * @see {@link theme} for the theme property.
+   * @see {@link color} for the color property.
    */
-  static readonly THEMES = [
+  static readonly COLORS = [
     'primary',
     'secondary',
     'tertiary',
@@ -25,11 +25,11 @@ export abstract class SparkComponent extends LitElement {
   ] as const;
 
   /**
-   * The theme to apply to this {@link SparkComponent}.
+   * The color to apply to this {@link SparkComponent}.
    *
-   * - `primary` is the main theme.
-   * - `secondary` is a supporting theme.
-   * - `tertiary` is a less emphasized theme.
+   * - `primary` is the main color.
+   * - `secondary` is a supporting color.
+   * - `tertiary` is a less emphasized color.
    * - `info` is used for informational purposes.
    * - `success` indicates a successful action.
    * - `warn` indicates a warning or caution.
@@ -38,7 +38,7 @@ export abstract class SparkComponent extends LitElement {
    * @default undefined to apply bare minimum styling.
    */
   @property({ type: String, reflect: true })
-  accessor theme: SparkTheme | undefined = undefined;
+  accessor color: SparkColor | undefined = undefined;
 
   override connectedCallback(): void {
     super.connectedCallback();

@@ -1,5 +1,4 @@
-@use "constants";
-@use "fonts";
+@use "base" as *;
 
 html, body {
   background-color: var(--spark-background);

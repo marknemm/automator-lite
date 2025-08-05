@@ -1,27 +1,29 @@
+@use "variables" as *;
+
 // ########################################### //
 /* orbitron-regular - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Orbitron';
+  font-family: '#{$brand-font-family}';
   font-style: normal;
   font-weight: 400;
-  src: url('../fonts/orbitron-v34-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$brand-font-family}-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* orbitron-500 - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Orbitron';
+  font-family: '#{$brand-font-family}';
   font-style: normal;
   font-weight: 500;
-  src: url('../fonts/orbitron-v34-latin-500.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$brand-font-family}-500.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* orbitron-700 - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Orbitron';
+  font-family: '#{$brand-font-family}';
   font-style: normal;
   font-weight: 700;
-  src: url('../fonts/orbitron-v34-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$brand-font-family}-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
 
@@ -29,69 +31,81 @@
 /* roboto-regular - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Roboto';
+  font-family: '#{$sans-serif-font-family}';
   font-style: normal;
   font-weight: 400;
-  src: url('../fonts/roboto-v48-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$sans-serif-font-family}-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* roboto-italic - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Roboto';
+  font-family: '#{$sans-serif-font-family}';
   font-style: italic;
   font-weight: 400;
-  src: url('../fonts/roboto-v48-latin-italic.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$sans-serif-font-family}-italic.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* roboto-500 - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Roboto';
+  font-family: '#{$sans-serif-font-family}';
   font-style: normal;
   font-weight: 500;
-  src: url('../fonts/roboto-v48-latin-500.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$sans-serif-font-family}-500.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* roboto-700 - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Roboto';
+  font-family: '#{$sans-serif-font-family}';
   font-style: normal;
   font-weight: 700;
-  src: url('../fonts/roboto-v48-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$sans-serif-font-family}-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
-
 
 
 // ########################################### //
 /* merriweather-regular - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Merriweather';
+  font-family: '#{$serif-font-family}';
   font-style: normal;
   font-weight: 400;
-  src: url('../fonts/merriweather-v32-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$serif-font-family}-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* merriweather-italic - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Merriweather';
+  font-family: '#{$serif-font-family}';
   font-style: italic;
   font-weight: 400;
-  src: url('../fonts/merriweather-v32-latin-italic.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$serif-font-family}-italic.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* merriweather-500 - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Merriweather';
+  font-family: '#{$serif-font-family}';
   font-style: normal;
   font-weight: 500;
-  src: url('../fonts/merriweather-v32-latin-500.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$serif-font-family}-500.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 /* merriweather-700 - latin */
 @font-face {
   font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
-  font-family: 'Merriweather';
+  font-family: '#{$serif-font-family}';
   font-style: normal;
   font-weight: 700;
-  src: url('../fonts/merriweather-v32-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  src: url('#{$font-path}/#{$serif-font-family}-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
+
+// ########################################### //
+/* icomoon */
+@font-face {
+  font-family: '#{$icomoon-font-family}';
+  src:
+    url('#{$font-path}/#{$icomoon-font-family}.ttf?7vtfzm') format('truetype'),
+    url('#{$font-path}/#{$icomoon-font-family}.woff?7vtfzm') format('woff'),
+    url('#{$font-path}/#{$icomoon-font-family}.svg?7vtfzm##{$icomoon-font-family}') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}

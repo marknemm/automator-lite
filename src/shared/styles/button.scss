@@ -1,4 +1,4 @@
-@use "constants";
+@use "variables" as *;
 
 .spark-button {
   display: flex;
@@ -31,46 +31,46 @@
     border-radius: 50%;
   }
 
-  /// Mixin to generate color button themes with hover and non-raised states
-  /// @param {string} $theme - The theme name (e.g., primary, secondary)
-  @mixin button-theme($theme) {
-    &[theme="#{$theme}"] {
+  /// Mixin to generate color button colors with hover and non-raised states
+  /// @param {string} $color - The color name (e.g., primary, secondary)
+  @mixin button-color($color) {
+    &[color="#{$color}"] {
       &:not([raised]) {
         background-color: inherit;
-        color: var(--spark-#{$theme});
+        color: var(--spark-#{$color});
 
         &:hover {
-          background-color: var(--spark-#{$theme}-faintest);
+          background-color: var(--spark-#{$color}-faintest);
         }
       }
 
       &[raised] {
         &:hover {
-          background-color: var(--spark-#{$theme}-dim);
+          background-color: var(--spark-#{$color}-dim);
         }
       }
 
       &:active,
       &:active:focus {
-        background-color: var(--spark-#{$theme});
-        color: var(--spark-#{$theme}-inverted);
+        background-color: var(--spark-#{$color});
+        color: var(--spark-#{$color}-inverted);
       }
     }
   }
 
-  @include button-theme(primary);
-  @include button-theme(secondary);
-  @include button-theme(tertiary);
-  @include button-theme(info);
-  @include button-theme(success);
-  @include button-theme(warning);
-  @include button-theme(danger);
+  @include button-color(primary);
+  @include button-color(secondary);
+  @include button-color(tertiary);
+  @include button-color(info);
+  @include button-color(success);
+  @include button-color(warning);
+  @include button-color(danger);
 
   &[icon] {
     width: auto;
     height: var(--spark-icon-button-size, 30px);
     aspect-ratio: 1 / 1;
-    font-size: calc(var(--spark-icon-button-size, 30px) * 0.8);
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.55);
     line-height: 1;
     border-radius: 50%;
 
@@ -78,8 +78,7 @@
       border-radius: var(--spark-field-border-radius);
     }
 
-    &:after {
-      content: '';
+    &:before {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -91,40 +90,15 @@
     }
   }
 
-  &[icon="add"] {
-    font-size: calc(var(--spark-icon-button-size, 30px) * 0.9);
-
-    &:after {
-      content: '\002B'; // Unicode for plus sign (+)
-    }
+  &[icon="close"] {
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.45);
   }
 
-  &[icon="check"] {
-    font-size: calc(var(--spark-icon-button-size, 30px) * 0.55);
-
-    &:after {
-      content: '\2714'; // Unicode for check mark (✓)
-    }
-  }
-
-  &[icon="close"],
   &[icon="delete"] {
-    &:after {
-      content: '\00D7'; // Unicode for multiplication sign (×)
-    }
-  }
-
-  &[icon="pause"] {
-    &:after {
-      content: '\23F8'; // Unicode for pause symbol (⏸)
-    }
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.5);
   }
 
   &[icon="play"] {
-    font-size: calc(var(--spark-icon-button-size, 30px) * 0.55);
-
-    &:after {
-      content: '\25B6'; // Unicode for play symbol (▶)
-    }
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.6);
   }
 }

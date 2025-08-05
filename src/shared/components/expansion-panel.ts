@@ -95,7 +95,7 @@ export class ExpansionPanel extends LitElement {
         role="region"
         aria-labelledby="${this.id}-toggle"
         aria-hidden="${!this.expanded}"
-        inert="${!this.expanded}"
+        ?inert="${!this.expanded}"
       >
         <div class="content-inner">
           ${this.renderContent()}

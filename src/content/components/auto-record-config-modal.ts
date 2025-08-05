@@ -86,7 +86,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
             icon="close"
             raised
             shape="rectangle"
-            theme="danger"
+            color="danger"
             title="Cancel"
             @click="${() => this.close()}"
           ></button>
@@ -96,7 +96,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
             icon="check"
             raised
             shape="rectangle"
-            theme="success"
+            color="success"
             title="Confirm"
             type="submit"
           ></button>

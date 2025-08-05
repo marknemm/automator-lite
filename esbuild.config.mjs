@@ -13,7 +13,7 @@ const prod = process.env.NODE_ENV === 'production';
 const minify = process.argv.includes('--minify') || prod;
 const watch = process.argv.includes('--watch');
 
-/** Auto resolved paths for SASS imports (e.g. can directly `@use "base"`) */
+/** Auto resolved paths for SASS imports (e.g. can directly `@use "base" as *`) */
 const sassLoadPaths = ['./src/shared/styles', './src/shared/components'];
 
 // Clean the output directory before building
@@ -26,7 +26,7 @@ const ctx = await esbuild.context({
     'src/content/content.ts',
     'src/popup/popup.ts',
   ],
-  external: ['*.woff2', '*.woff', '*.ttf'], // Exclude font files from the bundle.
+  external: ['*.woff2', '*.woff', '*.ttf', '*.svg'], // Exclude font files from the bundle.
   bundle: true,
   write: true,
   logLevel: 'info',
@@ -50,6 +50,15 @@ const ctx = await esbuild.context({
         resolve(result.css.toString());
       }),
     }),
+    {
+      name: 'font-external',
+      setup(build) {
+        build.onResolve({ filter: /\.(woff2|woff|ttf|svg)(\?.*)?$/ }, args => ({
+          path: args.path,
+          external: true,
+        }));
+      },
+    },
     sassPlugin({ // Transpile & Bundle SASS/CSS into single file (minimized in PROD build to remove duplicated styles).
       type: 'css',
       filter: /.s[ac]ss|.less|.css$/,
@@ -64,7 +73,7 @@ const ctx = await esbuild.context({
     }),
     copy({
       assets: {
-        from: ['./src/shared/fonts/*.{woff2,woff,ttf}'],
+        from: ['./src/shared/fonts/*.{woff2,woff,ttf,svg}'],
         to: ['./fonts'],
       },
       watch,

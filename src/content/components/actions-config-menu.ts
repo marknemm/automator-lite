@@ -5,6 +5,7 @@ import '~shared/components/accordion.js';
 import '~shared/components/expansion-panel.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import type { AutoRecordAction, AutoRecordKeyboardAction, AutoRecordMouseAction } from '~shared/models/auto-record.interfaces.js';
+import { DeleteActionEvent } from './actions-config-menu.events.js';
 
 import styles from './actions-config-menu.scss?inline';
 
@@ -61,10 +62,10 @@ export class ActionsConfigMenu extends LitElement {
             <div class="footer">
               <button
                 ${sparkButton()}
-                theme="danger"
+                color="danger"
                 icon="delete"
                 title="Delete Action: ${action.textContent}"
-                @click="${() => this.dispatchEvent(new CustomEvent('delete-action', { detail: action }))}"
+                @click="${() => this.dispatchEvent(new DeleteActionEvent(action))}"
               ></button>
             </div>
           </spark-expansion-panel>
@@ -99,3 +100,5 @@ export class ActionsConfigMenu extends LitElement {
   }
 
 }
+
+export * from './actions-config-menu.events.js';

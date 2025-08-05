@@ -45,7 +45,7 @@ export class AutoRecordList extends DataListBase<AutoRecord> {
   protected override renderItem(record: AutoRecord): TemplateResult {
     const name = record.name || record.uid;
     const playPauseIcon = record.paused ? 'play' : 'pause';
-    const playPauseTheme = record.paused ? 'success' : 'primary';
+    const playPauseColor = record.paused ? 'success' : 'primary';
     const playPauseTitle = `${record.paused ? 'Play Record:' : 'Pause Record:'} ${name}`;
 
     return html`
@@ -57,7 +57,7 @@ export class AutoRecordList extends DataListBase<AutoRecord> {
           <button
             ${sparkButton()}
             icon="${playPauseIcon}"
-            theme="${playPauseTheme}"
+            color="${playPauseColor}"
             title="${playPauseTitle}"
             @click=${async (event: MouseEvent) => {
               event.stopPropagation();
@@ -67,7 +67,7 @@ export class AutoRecordList extends DataListBase<AutoRecord> {
           <button
             ${sparkButton()}
             icon="delete"
-            theme="danger"
+            color="danger"
             title="Delete Record: ${name}"
             @click=${async (event: MouseEvent) => {
               event.stopPropagation();

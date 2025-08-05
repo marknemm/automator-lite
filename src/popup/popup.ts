@@ -131,7 +131,7 @@ export class Popup extends LitElement {
                 class="add-record"
                 icon="add"
                 raised
-                theme="success"
+                color="success"
                 title="Add New Record"
                 @click=${() => this.#openActionSheet()}
               ></button>

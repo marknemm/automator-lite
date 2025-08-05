@@ -1,0 +1,74 @@
+@use "variables" as *;
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--spark-font-family-serif);
+  letter-spacing: var(--spark-heading-letter-spacing, 1.5px);
+}
+
+h1 {
+  font-size: var(--spark-h1-font-size, 1.5em);
+}
+
+h2 {
+  font-size: var(--spark-h2-font-size, 1.3em);
+}
+
+h3 {
+  font-size: var(--spark-h3-font-size, 1.2em);
+}
+
+h4 {
+  font-size: var(--spark-h4-font-size, 1.1em);
+}
+
+h5 {
+  font-size: var(--spark-h5-font-size, 1.05em);
+}
+
+h6 {
+  font-size: var(--spark-h6-font-size, 1em);
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.center {
+  text-align: center;
+}
+
+.left {
+  text-align: left;
+}
+
+.right {
+  text-align: right;
+}
+
+.faint {
+  color: var(--spark-foreground-dimmest);
+}
+
+.italic {
+  font-style: italic;
+}
+
+.large {
+  font-size: var(--spark-large-font-size, 1.2em);
+}
+
+.small {
+  font-size: var(--spark-small-font-size, 0.8em);
+}
+
+.underline {
+  text-decoration: underline;
+}
+
+.error {
+  color: var(--spark-danger);
+
+  &:empty {
+    display: none;
+  }
+}

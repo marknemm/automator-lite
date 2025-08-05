@@ -16,11 +16,11 @@ export class SparkDirective<
 > extends Directive {
 
   /**
-   * A readonly array of all possible {@link SparkTheme} values for host elements/components.
+   * A readonly array of all possible {@link SparkColor} values for host elements/components.
    *
-   * @see {@link SparkComponent.THEMES} for available themes.
+   * @see {@link SparkComponent.COLORS} for available colors.
    */
-  static readonly THEMES = SparkComponent.THEMES;
+  static readonly COLORS = SparkComponent.COLORS;
 
   override render(..._props: PROPS): unknown {
     return nothing;

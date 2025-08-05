@@ -1,41 +1,168 @@
-.spark-theme-info,
-.spark[theme="info"] {
+@use "sass:color";
+@use "variables" as *;
+
+/// Generates CSS variables for a color scale based on a base CSS variable.
+/// @param {string} $base-var The base CSS variable name (e.g. --spark-info).
+/// @param {color} $base-color The base color value.
+/// @param {color} $inverted-color The inverted color value (optional, defaults to a dimmer shade of the base color).
+@mixin color-variants(
+  $base-var,
+  $base-color,
+  $inverted-color: color.adjust($base-color, $lightness: -30%)
+) {
+  #{$base-var}: #{$base-color};
+  #{$base-var}-faint: #{rgba($base-color, 0.7)};
+  #{$base-var}-fainter: #{rgba($base-color, 0.5)};
+  #{$base-var}-faintest: #{rgba($base-color, 0.2)};
+  #{$base-var}-dim: #{color.adjust($base-color, $lightness: -10%)};
+  #{$base-var}-dimmer: #{color.adjust($base-color, $lightness: -15%)};
+  #{$base-var}-dimmest: #{color.adjust($base-color, $lightness: -30%)};
+  #{$base-var}-bright: #{color.adjust($base-color, $lightness: 10%)};
+  #{$base-var}-brighter: #{color.adjust($base-color, $lightness: 15%)};
+  #{$base-var}-brightest: #{color.adjust($base-color, $lightness: 30%)};
+  #{$base-var}-inverted: #{$inverted-color};
+  #{$base-var}-inverted-faint: #{rgba($inverted-color, 0.7)};
+  #{$base-var}-inverted-fainter: #{rgba($inverted-color, 0.5)};
+  #{$base-var}-inverted-faintest: #{rgba($inverted-color, 0.2)};
+  #{$base-var}-inverted-dim: #{color.adjust($inverted-color, $lightness: -10%)};
+  #{$base-var}-inverted-dimmer: #{color.adjust($inverted-color, $lightness: -15%)};
+  #{$base-var}-inverted-dimmest: #{color.adjust($inverted-color, $lightness: -30%)};
+  #{$base-var}-inverted-bright: #{color.adjust($inverted-color, $lightness: 10%)};
+  #{$base-var}-inverted-brighter: #{color.adjust($inverted-color, $lightness: 15%)};
+  #{$base-var}-inverted-brightest: #{color.adjust($inverted-color, $lightness: 30%)};
+}
+
+/// Generates shadow variants based on a base shadow color.
+/// @param {color} $shadow-color The base shadow color (e.g. #000).
+@mixin shadow-variants($shadow-color) {
+  --spark-shadow-color: #{$shadow-color};
+  --spark-shadow: 0px 3px 5px -1px #{rgba($shadow-color, 0.2)},
+               0px 6px 10px 0px #{rgba($shadow-color, 0.14)},
+               0px 1px 18px 0px #{rgba($shadow-color, 0.12)};
+  --spark-shadow-light: 0px 2px 1px -1px #{rgba($shadow-color, 0.2)},
+                     0px 1px 1px 0px #{rgba($shadow-color, 0.14)},
+                     0px 1px 3px 0px #{rgba($shadow-color, 0.12)};
+  --spark-shadow-heavy: 0px 5px 5px -3px #{rgba($shadow-color, .2)},
+                     0px 8px 10px 1px #{rgba($shadow-color, .14)},
+                     0px 3px 14px 2px #{rgba($shadow-color, .12)};
+}
+
+
+// ############################## //
+// Light Theme (Default)
+:root, :host {
+  --spark-gutter: 8px;
+  --spark-field-border-radius: 4px;
+  --spark-font-size: 14px;
+  --spark-line-height: normal;
+  --spark-font-family: #{$sans-serif-font-family}, sans-serif;
+  --spark-font-family-serif: #{$serif-font-family}, serif;
+
+  // Light Theme Colors
+  $spark-background: #fff;
+  --spark-background: #{$spark-background};
+  --spark-background-dim: #f5f5f5;
+  --spark-background-dimmer: #f0f0f0;
+  --spark-background-dimmest: #e0e0e0;
+
+  $spark-foreground: #000;
+  --spark-foreground: #{$spark-foreground};
+  --spark-foreground-dim: #333;
+  --spark-foreground-dimmer: #666;
+  --spark-foreground-dimmest: #999;
+
+  --spark-input-background: var(--spark-background);
+  --spark-input-foreground: var(--spark-foreground);
+  --spark-input-disabled: var(--spark-background-dimmest);
+
+  $spark-border-color: #ccc;
+  --spark-border-color: #{$spark-border-color};
+
+  @include shadow-variants($spark-foreground);
+
+  @include color-variants(--spark-info, #007bff, #fff);
+  @include color-variants(--spark-success, #28a745, #fff);
+  @include color-variants(--spark-warn, #ffc107, #000);
+  @include color-variants(--spark-danger, #dc3545, #fff);
+  @include color-variants(--spark-primary, #007bff, #cceaff);
+  @include color-variants(--spark-secondary, #6c757d, #fff);
+  @include color-variants(--spark-tertiary, #fff, #000);
+}
+
+
+// ############################## //
+// Dark Theme
+@media (prefers-color-scheme: dark) {
+  :root, :host {
+    $spark-background: #222;
+    --spark-background: #{$spark-background};
+    --spark-background-dim: #{color.adjust($spark-background, $lightness: 3%)};
+    --spark-background-dimmer: #{color.adjust($spark-background, $lightness: 6%)};
+    --spark-background-dimmest: #{color.adjust($spark-background, $lightness: 12%)};
+
+    $spark-foreground: #e0e0e0;
+    --spark-foreground: #{$spark-foreground};
+    --spark-foreground-dim: #{color.adjust($spark-foreground, $lightness: -3%)};
+    --spark-foreground-dimmer: #{color.adjust($spark-foreground, $lightness: -6%)};
+    --spark-foreground-dimmest: #{color.adjust($spark-foreground, $lightness: -12%)};
+
+    $spark-border-color: #333;
+    --spark-border-color: #{$spark-border-color};
+
+    @include shadow-variants(color.adjust($spark-foreground, $lightness: -28%));
+
+    --spark-input-background: var(--spark-background-dimmest);
+    --spark-input-foreground: var(--spark-foreground);
+    --spark-input-disabled: var(--spark-background);
+
+    @include color-variants(--spark-info, #01b2b2);
+    @include color-variants(--spark-success, #34a853);
+    @include color-variants(--spark-warn, #fbbc05);
+    @include color-variants(--spark-danger, #ea4335);
+    @include color-variants(--spark-primary, #1a73e8);
+    @include color-variants(--spark-secondary, #b0cccb);
+    @include color-variants(--spark-tertiary, #ffb787);
+  }
+}
+
+.spark-color-info,
+.spark[color="info"] {
   background: var(--spark-info);
   color: var(--spark-info-inverted);
 }
 
-.spark-theme-success,
-.spark[theme="success"] {
+.spark-color-success,
+.spark[color="success"] {
   background: var(--spark-success);
   color: var(--spark-success-inverted);
 }
 
-.spark-theme-warning,
-.spark[theme="warning"] {
+.spark-color-warning,
+.spark[color="warning"] {
   background: var(--spark-warn);
   color: var(--spark-warn-inverted);
 }
 
-.spark-theme-danger,
-.spark[theme="danger"] {
+.spark-color-danger,
+.spark[color="danger"] {
   background: var(--spark-danger);
   color: var(--spark-danger-inverted);
 }
 
-.spark-theme-primary,
-.spark[theme="primary"] {
+.spark-color-primary,
+.spark[color="primary"] {
   background: var(--spark-primary);
   color: var(--spark-primary-inverted);
 }
 
-.spark-theme-secondary,
-.spark[theme="secondary"] {
+.spark-color-secondary,
+.spark[color="secondary"] {
   background: var(--spark-secondary);
   color: var(--spark-secondary-inverted);
 }
 
-.spark-theme-tertiary,
-.spark[theme="tertiary"] {
+.spark-color-tertiary,
+.spark[color="tertiary"] {
   background: var(--spark-tertiary);
   color: var(--spark-tertiary-inverted);
 }

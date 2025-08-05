@@ -1,5 +1,5 @@
-@use 'base';
-@use '../../shared/components/modal.scss';
+@use "base" as *;
+@use "../../shared/components/modal.scss";
 
 .header {
   position: relative;
@@ -20,21 +20,6 @@
 
 .body {
   padding: 16px;
-}
-
-.error {
-  margin-bottom: 8px;
-
-  &:empty {
-    display: none;
-  }
-}
-
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 16px;
-  border-top: 1px solid var(--spark-border-color);
 }
 
 .spark-button {

@@ -94,7 +94,7 @@ export class Sheet extends LitElement {
       <button
         ${sparkButton()}
         icon="close"
-        theme="danger"
+        color="danger"
         title="Close"
         type="button"
         @click=${() => this.close()}
