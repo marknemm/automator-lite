@@ -16,9 +16,10 @@ export class AutoRecord implements AutoRecordState {
   #actions: AutoRecordAction[] = [];
   #autoRun = false;
   #frequency: number | Nullish;
+  #frozenState: DeepReadonly<Partial<AutoRecordState>>;
   #name = '';
   #paused = false;
-  #state: DeepReadonly<Partial<AutoRecordState>>;
+  #state: Partial<AutoRecordState>;
   #updateTimestamp: number;
 
   /**
@@ -30,16 +31,11 @@ export class AutoRecord implements AutoRecordState {
     state = state instanceof Array
       ? { actions: state }
       : state;
-    this.#state = deepFreeze(state);
-
-    this.createTimestamp = state.createTimestamp ?? Date.now();
-
-    this.actions = state.actions;
-    this.autoRun = state.autoRun;
-    this.frequency = state.frequency;
-    this.name = state.name;
-    this.paused = state.paused;
+    this.#state = state;
+    this.#frozenState = deepFreeze(state);
+    this.createTimestamp = state.createTimestamp ?? new Date().getTime();
     this.#updateTimestamp = state.updateTimestamp ?? this.createTimestamp;
+    this.reset(state);
   }
 
   get actions(): AutoRecordAction[] { return this.#actions; }
@@ -70,7 +66,7 @@ export class AutoRecord implements AutoRecordState {
    * @return The raw {@link AutoRecordState} data.
    */
   get state(): DeepReadonly<Partial<AutoRecordState>> {
-    return this.#state;
+    return this.#frozenState;
   }
 
   /**
@@ -115,7 +111,7 @@ export class AutoRecord implements AutoRecordState {
     filter,
     sort = (a, b) => a.name.localeCompare(b.name),
   }: LoadRecordOptions = {}): Promise<AutoRecord[]> {
-    let { records } = await loadState();
+    let records = await loadState('records');
     if (filter) records = records.filter(filter);
     return records
       .sort(sort)
@@ -176,7 +172,7 @@ export class AutoRecord implements AutoRecordState {
    * @returns A {@link Promise} that resolves to this {@link AutoRecord} instance after saving.
    */
   async save(): Promise<this> {
-    const { records } = await loadState();
+    const records = await loadState('records');
     const recordStateIdx = records.findIndex(record =>
       record.createTimestamp === this.createTimestamp
     );
@@ -193,9 +189,10 @@ export class AutoRecord implements AutoRecordState {
     });
 
     // Update the local copy of the record state save data.
-    this.#state = deepFreeze(state.records.find(record =>
+    this.#state = state.records.find(record =>
       record.createTimestamp === this.createTimestamp
-    ) as AutoRecordState);
+    ) as AutoRecordState;
+    this.#frozenState = deepFreeze(this.#state);
 
     return this;
   }
@@ -208,7 +205,7 @@ export class AutoRecord implements AutoRecordState {
    * or `false` if it was not found.
    */
   async delete(): Promise<boolean> {
-    const { records } = await loadState();
+    const records = await loadState('records');
     const recordStateIdx = records.findIndex(record =>
       record.createTimestamp === this.createTimestamp
     );
@@ -220,6 +217,21 @@ export class AutoRecord implements AutoRecordState {
     records.splice(recordStateIdx, 1);
     await saveState({ records });
     return true; // Record deleted successfully.
+  }
+
+  /**
+   * Resets this {@link AutoRecord} instance to its initial state.
+   *
+   * @param state The {@link AutoRecordState} to reset this {@link AutoRecord} to.
+   * If not provided, resets to the initial state of the record.
+   */
+  reset(state: Partial<AutoRecordState> = this.#state): void {
+    this.actions = state.actions;
+    this.autoRun = state.autoRun;
+    this.frequency = state.frequency;
+    this.name = state.name;
+    this.paused = state.paused;
+    this.#updateTimestamp = state.updateTimestamp ?? this.createTimestamp;
   }
 
   /**

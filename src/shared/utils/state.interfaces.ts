@@ -1,4 +1,5 @@
 import type { AutoRecordState } from '~shared/models/auto-record.interfaces.js';
+import type { ExtensionOptionsState } from '~shared/models/extension-options.js';
 
 /**
  * The global state of the extension.
@@ -7,36 +8,37 @@ import type { AutoRecordState } from '~shared/models/auto-record.interfaces.js';
 export interface State {
 
   /**
-   * Whether the add record button is active.
-   */
-  addActive: boolean;
-
-  /**
-   * Whether all records are paused.
-   */
-  allPaused: boolean;
-
-  /**
-   * The auto-records state.
+   * The {@link AutoRecordState} list containing all saved records.
    */
   records: AutoRecordState[];
 
+  /**
+   * The {@link ExtensionOptionsState} containing options for the entire extension.
+   */
+  extensionOptions: ExtensionOptionsState;
+
 }
+
+export type StateProp = keyof State | undefined;
+
+export type StateSlice<Prop> = Prop extends keyof State ? State[Prop] : State;
+
+export type StateSubset<K extends readonly (keyof State)[]> = Pick<State, K[number]>;
 
 /**
  * The state change event.
  */
-export interface StateChange {
+export interface StateChange<T extends Partial<State> = State> {
 
   /**
    * The old value of the {@link State}.
    */
-  oldState: State;
+  oldState: T;
 
   /**
    * The new value of the {@link State}.
    */
-  newState: State;
+  newState: T;
 
 }
 

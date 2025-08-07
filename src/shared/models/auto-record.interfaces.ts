@@ -114,7 +114,7 @@ export interface AutoRecordAction {
  *
  * @extends {AutoRecordAction}
  */
-export interface AutoRecordMouseAction extends AutoRecordAction {
+export interface MouseAction extends AutoRecordAction {
 
   actionType: 'Mouse'; // Ensures the type is always 'Mouse' for this interface
 
@@ -159,16 +159,19 @@ export interface AutoRecordMouseAction extends AutoRecordAction {
  *
  * @extends {AutoRecordAction}
  */
-export interface AutoRecordKeyboardAction extends AutoRecordAction {
+export interface KeyboardAction extends AutoRecordAction {
 
   actionType: 'Keyboard'; // Ensures the type is always 'Keyboard' for this interface
 
-  keyboardEventType: KeyboardEventType; // The type of keyboard event (e.g., 'keydown', 'keyup')
+  /**
+   * The key to be pressed or released.
+   */
+  key: string;
 
   /**
-   * The key stroke(s) to be executed when the action is triggered.
+   * The type of keyboard event (e.g., 'keydown', 'keyup').
    */
-  keyStrokes: string[];
+  keyboardEventType: KeyboardEventType;
 
 }
 
@@ -176,7 +179,7 @@ export interface AutoRecordKeyboardAction extends AutoRecordAction {
  * An action that can be performed by an {@link AutoRecord} of type `Script`.
  * @extends {AutoRecordAction}
  */
-export interface AutoRecordScriptAction extends AutoRecordAction {
+export interface ScriptAction extends AutoRecordAction {
 
   actionType: 'Script'; // Ensures the type is always 'Script' for this interface
 
@@ -227,4 +230,4 @@ export type AutoRecordType = 'Recording' | 'Script';
 export type AutoRecordActionType = 'Mouse' | 'Keyboard' | 'Script';
 export type AutoRecordUid = string;
 export type KeyboardEventType = 'keydown' | 'keyup' | 'keypress';
-export type MouseEventType = 'click' | 'dblclick' | 'contextmenu';
+export type MouseEventType = 'click' | 'dblclick' | 'contextmenu' | 'mousedown' | 'mouseup';

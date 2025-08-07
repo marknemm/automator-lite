@@ -1,12 +1,13 @@
-import { html, unsafeCSS, type TemplateResult } from 'lit';
+import { html, PropertyValues, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import '~shared/components/field-help.js';
 import { Modal } from '~shared/components/modal.js';
 import sparkButton from '~shared/directives/spark-button.js';
-import { type AutoRecord } from '~shared/models/auto-record.js';
+import { AutoRecordAction, type AutoRecord } from '~shared/models/auto-record.js';
 import './actions-config-menu.js';
 
 import styles from './auto-record-config-modal.scss?inline';
+import { DeleteActionEvent } from './actions-config-menu.js';
 
 /**
  * A {@link Modal} component for configuring an auto-record.
@@ -21,6 +22,18 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
 
   @state()
   private accessor errMsg = '';
+
+  @state()
+  private accessor actions: AutoRecordAction[] = [];
+
+  override updated(changedProperties: PropertyValues): void {
+    super.updated(changedProperties);
+
+    // Keep separate actions state for edited actions.
+    if (changedProperties.has('data')) {
+      this.actions = this.data?.actions || [];
+    }
+  }
 
   protected override renderContent(): TemplateResult {
     return html`
@@ -77,7 +90,8 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
             <spark-field-help>The playback actions for this record.</spark-field-help>
           </label>
           <spark-actions-config-menu
-            .actions="${this.data!.actions}"
+            .actions="${this.actions}"
+            @deleteAction="${this.#handleDeleteAction}"
           ></spark-actions-config-menu>
         </div>
         <div class="footer">
@@ -105,6 +119,12 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
     `;
   }
 
+  #handleDeleteAction = (event: DeleteActionEvent): void => {
+    this.actions = this.actions.filter(
+      action => action.timestamp !== event.detail.timestamp
+    );
+  };
+
   #submit(event: SubmitEvent): void {
     event.preventDefault(); // Do not refresh the page on form submission
     this.errMsg = ''; // Reset error message
@@ -117,6 +137,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
       this.data!.name = formData.get('recordName')?.toString().trim() ?? '';
       this.data!.autoRun = formData.has('autoRun');
       this.data!.frequency = parseInt(formData.get('recordInterval')?.toString() ?? '0', 10);
+      this.data!.actions = this.actions;
       this.close(this.data!); // Close the modal and resolve with the updated record
     } catch (error) {
       console.error(error);

@@ -2,8 +2,8 @@
 @use "themes";
 
 .spark-highlight {
-  outline: 1px solid var(--spark-success-darker) !important;
-  background-color: var(--spark-info) !important;
+  outline: 1px solid var(--spark-success) !important;
+  background-color: var(--spark-info-faintest) !important;
   transition: background-color 0.2s ease-in-out !important;
   cursor: cell !important;
 }

@@ -1,8 +1,8 @@
 import type { Nullish } from 'utility-types';
 import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
-import { AutoRecord, type AutoRecordAction, type AutoRecordKeyboardAction, type AutoRecordMouseAction, type AutoRecordScriptAction, type AutoRecordUid } from '~shared/models/auto-record.js';
+import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
 import { sendMessage } from '~shared/utils/messaging.js';
-import { loadState, onStateChange, type AutoRecordState, type StateChange } from '~shared/utils/state.js';
+import { onStateChange, type AutoRecordState } from '~shared/utils/state.js';
 import { isSamePathname, isTopWindow } from '~shared/utils/window.js';
 
 /**
@@ -48,7 +48,7 @@ export class AutoRecordExecutor {
     }
 
     // Listen for 'records' state changes and schedule / unschedule records accordingly.
-    onStateChange((change: StateChange) => {
+    onStateChange((change) => {
       const { oldState: oldValue, newState: newValue } = change;
       const oldRecords = oldValue.records.map((record) => new AutoRecord(record));
       const newRecords = newValue.records.map((record) => new AutoRecord(record));
@@ -62,7 +62,7 @@ export class AutoRecordExecutor {
       for (const newRecord of newRecords) {
         this.scheduleRecord(newRecord);
       }
-    }, 'allPaused', 'records');
+    }, 'records');
   }
 
   /**
@@ -100,8 +100,7 @@ export class AutoRecordExecutor {
 
     // Schedule the auto-record action with a repeat interval.
     const intervalId = setInterval(async () => {
-      const { allPaused } = await loadState();
-      if (allPaused || record.paused) return; // Do not execute if paused.
+      if (record.paused) return; // Do not execute if paused.
 
       await this.execRecord(record);
     }, record.frequency ?? 5000);
@@ -178,9 +177,9 @@ export class AutoRecordExecutor {
 
     // Execute the action based on its type.
     switch (action.actionType) {
-      case 'Mouse':    await this.#execMouseAction(action as AutoRecordMouseAction); break;
-      case 'Keyboard': await this.#execKeyboardAction(action as AutoRecordKeyboardAction); break;
-      case 'Script':   await this.#execScriptAction(action as AutoRecordScriptAction); break;
+      case 'Mouse':    await this.#execMouseAction(action as MouseAction); break;
+      case 'Keyboard': await this.#execKeyboardAction(action as KeyboardAction); break;
+      case 'Script':   await this.#execScriptAction(action as ScriptAction); break;
       default:         throw new Error(`Unsupported action type: ${action.actionType}`);
     }
   }
@@ -188,9 +187,9 @@ export class AutoRecordExecutor {
   /**
    * Executes a mouse action by dispatching a {@link MouseEvent}.
    *
-   * @param action - The {@link AutoRecordMouseAction} to execute.
+   * @param action - The {@link MouseAction} to execute.
    */
-  #execMouseAction(action: AutoRecordMouseAction): void {
+  #execMouseAction(action: MouseAction): void {
     const mouseEvent = new MouseEvent(action.mouseEventType, {
       ...AutoRecordExecutor.DEFAULT_DISPATCH_OPTS,
       ...action,
@@ -201,7 +200,8 @@ export class AutoRecordExecutor {
       ? potentialTargets[0]
       : potentialTargets.find((el) => {
           return el.textContent?.trim() === action.textContent
-              || el.title?.trim() === action.textContent;
+              || el.title?.trim() === action.textContent
+              || el.innerHTML?.trim() === action.textContent;
         });
 
     target
@@ -212,36 +212,30 @@ export class AutoRecordExecutor {
   /**
    * Executes a keyboard action by dispatching a {@link KeyboardEvent}.
    *
-   * @param action - The {@link AutoRecordKeyboardAction} to execute.
+   * @param action - The {@link KeyboardAction} to execute.
    */
-  #execKeyboardAction(action: AutoRecordKeyboardAction): void {
+  #execKeyboardAction(action: KeyboardAction): void {
     const target = document.activeElement || document.body;
 
-    for (const keyStroke of action.keyStrokes) {
-      const eventOptions: KeyboardEventInit = {
-        ...AutoRecordExecutor.DEFAULT_DISPATCH_OPTS,
-        key: keyStroke,
-        code: keyStroke,
-        shiftKey: action.modifierKeys?.shift ?? false,
-        ctrlKey: action.modifierKeys?.ctrl ?? false,
-        altKey: action.modifierKeys?.alt ?? false,
-        metaKey: action.modifierKeys?.meta ?? false,
-      };
+    const eventOptions: KeyboardEventInit = {
+      ...AutoRecordExecutor.DEFAULT_DISPATCH_OPTS,
+      key: action.key,
+      shiftKey: action.modifierKeys?.shift ?? false,
+      ctrlKey: action.modifierKeys?.ctrl ?? false,
+      altKey: action.modifierKeys?.alt ?? false,
+      metaKey: action.modifierKeys?.meta ?? false,
+    };
 
-      const keydownEvent = new KeyboardEvent('keydown', eventOptions);
-      target.dispatchEvent(keydownEvent);
-
-      const keyupEvent = new KeyboardEvent('keyup', eventOptions);
-      target.dispatchEvent(keyupEvent);
-    }
+    const keydownEvent = new KeyboardEvent(action.keyboardEventType, eventOptions);
+    target.dispatchEvent(keydownEvent);
   }
 
   /**
    * Executes a script action by injecting a script element into the DOM.
    *
-   * @param action - The {@link AutoRecordScriptAction} to execute.
+   * @param action - The {@link ScriptAction} to execute.
    */
-  #execScriptAction(action: AutoRecordScriptAction): void {
+  #execScriptAction(action: ScriptAction): void {
     const script = document.createElement('script');
     script.textContent = action.src;
     document.body.appendChild(script);

@@ -1,34 +1,18 @@
 import type { Nullish } from 'utility-types';
 import { RecordingInfoPanel } from '~content/components/recording-info-panel.js';
-import type { AutoRecordAction, AutoRecordKeyboardAction, AutoRecordMouseAction, KeyboardEventType, MouseEventType } from '~shared/models/auto-record.interfaces.js';
+import type { KeyboardAction, KeyboardEventType, MouseAction, MouseEventType } from '~shared/models/auto-record.interfaces.js';
 import { AutoRecord } from '~shared/models/auto-record.js';
+import { ExtensionOptions } from '~shared/models/extension-options.js';
 import { sendMessage } from '~shared/utils/messaging.js';
 import { type MountContext } from '~shared/utils/mount.js';
-import { bindTopWindow, isTopWindow, requestTopWindow } from '~shared/utils/window.js';
+import { isTopWindow } from '~shared/utils/window.js';
+import { ActionParser } from './action-parser.js';
 import { deriveElementSelector } from './element-analysis.js';
 
 /**
  * Context for managing the recording state and interactions.
  */
 export class RecordingContext {
-
-  /**
-   * The default key that stops the recording when pressed in combination with the
-   * {@link RecordingContext.DEFAULT_STOP_MODIFIERS DEFAULT_STOP_MODIFIERS}.
-   */
-  static readonly DEFAULT_STOP_KEY = 'Enter';
-
-  /**
-   * The default modifiers that stop the recording when pressed in combination with
-   * the {@link RecordingContext.DEFAULT_STOP_KEY DEFAULT_STOP_KEY}.
-   */
-  static readonly DEFAULT_STOP_MODIFIERS = ['Ctrl', 'Shift'];
-
-  /**
-   * The message type for staging a record action in the top window.
-   * Used to communicate between embedded iframes and the top window.
-   */
-  static readonly #STAGE_RECORD_ACTION = 'mnStageRecordAction';
 
   /**
    * The singleton instance of the {@link RecordingContext}.
@@ -40,11 +24,6 @@ export class RecordingContext {
    * Indicates whether the recording is currently active.
    */
   #active = false;
-
-  /**
-   * List of {@link AutoRecordAction}s that are being recorded during the current active session.
-   */
-  #stagedActions: AutoRecordAction[] = [];
 
   /**
    * This is the {@link HTMLElement} that will be highlighted when the user hovers over.
@@ -59,15 +38,15 @@ export class RecordingContext {
   #recordingInfoMountCtx: MountContext | Nullish;
 
   /**
+   * The {@link ActionParser} instance used to stage actions during recording.
+   */
+  #actionParser: ActionParser = undefined as any; // Initialized in `init()`.
+
+  /**
    * Constructs a new {@link RecordingContext} instance.
    * This should only be called by {@link RecordingContext.init}.
    */
-  protected constructor() {
-    // Only top window should be building the auto record.
-    bindTopWindow(RecordingContext.#STAGE_RECORD_ACTION, (event) =>
-      this.#stageAction(event.data.payload)
-    );
-  }
+  protected constructor() {}
 
   /**
    * Initializes the per-frame singleton recording context.
@@ -78,6 +57,7 @@ export class RecordingContext {
    */
   static init(): RecordingContext {
     RecordingContext.#instance ??= new RecordingContext();
+    RecordingContext.#instance.#actionParser = ActionParser.init();
     return RecordingContext.#instance;
   }
 
@@ -89,18 +69,20 @@ export class RecordingContext {
   /**
    * Starts the recording process.
    */
-  start(): void {
+  async start(): Promise<void> {
     if (this.active) return; // Prevent starting if already active.
     this.#active = true;
 
     // Bind event listeners to the document for adding a new record.
     document.addEventListener('mouseover', this.#setHoverHighlight);
     document.addEventListener('mouseout', this.#unsetHoverHighlight);
-    document.addEventListener('keydown', this.#keyDownListener);
+    document.addEventListener('keydown', this.#keyboardEventHandler);
+    document.addEventListener('keyup', this.#keyboardEventHandler);
 
     if (isTopWindow()) { // Prevent duplicate mounts from iframes.
+      const { stopRecordingKey, stopRecordingModifier } = await ExtensionOptions.load();
       this.#recordingInfoMountCtx = RecordingInfoPanel.mount({
-        stopRecordingKeys: [...RecordingContext.DEFAULT_STOP_MODIFIERS, RecordingContext.DEFAULT_STOP_KEY],
+        stopRecordingKeys: ['Ctrl', stopRecordingModifier, stopRecordingKey],
       });
       if (!document.activeElement) {
         document.body.focus(); // Ensure the body is focused to capture key events.
@@ -121,41 +103,14 @@ export class RecordingContext {
 
     document.removeEventListener('mouseover', this.#setHoverHighlight);
     document.removeEventListener('mouseout', this.#unsetHoverHighlight);
-    document.removeEventListener('keydown', this.#keyDownListener);
+    document.removeEventListener('keydown', this.#keyboardEventHandler);
+    document.removeEventListener('keyup', this.#keyboardEventHandler);
 
     if (isTopWindow()) {
       this.#recordingInfoMountCtx?.unmount();
       this.#recordingInfoMountCtx = null;
-      return this.#commitStagedActions(); // Commit the staged actions to an AutoRecord.
+      return this.#actionParser.commitStagedActions(); // Commit the staged actions to an AutoRecord.
     }
-  }
-
-  /**
-   * Stages an action collected during an active recording session
-   * for later committing to an {@link AutoRecord}.
-   *
-   * @param action The {@link AutoRecordAction} to stage.
-   * @returns A {@link Promise} that resolves when the action is staged.
-   */
-  async #stageAction(action: AutoRecordAction): Promise<void> {
-    if (!this.active) return; // Ignore actions if not active.
-
-    isTopWindow() // Only stage actions in the top window.
-      ? this.#stagedActions.push(action)
-      : await requestTopWindow(RecordingContext.#STAGE_RECORD_ACTION, action);
-  }
-
-  async #commitStagedActions(): Promise<AutoRecord | undefined> {
-    const commitActions = this.#stagedActions;
-    this.#stagedActions = [];
-
-    // Trim off the set of actions used to stop the recording.
-    console.log('Committing staged actions:', commitActions);
-    const stopActionsCnt = RecordingContext.DEFAULT_STOP_MODIFIERS.length + 1;
-    commitActions.splice(commitActions.length - stopActionsCnt, stopActionsCnt);
-    if (commitActions.length === 0) return; // No actions to commit.
-
-    return new AutoRecord(commitActions).configure();
   }
 
   /**
@@ -170,8 +125,12 @@ export class RecordingContext {
     this.#unsetHoverHighlight(); // Unset the previous target element if it exists.
 
     target.classList.add('spark-highlight');
-    target.addEventListener('click', this.#mouseEventHandler);
     this.#hoverElement = target;
+    this.#hoverElement.addEventListener('mousedown', this.#mouseEventHandler);
+    this.#hoverElement.addEventListener('mouseup', this.#mouseEventHandler);
+    this.#hoverElement.addEventListener('click', this.#mouseEventHandler);
+    this.#hoverElement.addEventListener('contextmenu', this.#mouseEventHandler);
+    this.#hoverElement.addEventListener('dblclick', this.#mouseEventHandler);
   };
 
   /**
@@ -179,23 +138,27 @@ export class RecordingContext {
    */
   #unsetHoverHighlight = (): void => {
     if (this.#hoverElement) {
+      this.#hoverElement.removeEventListener('mousedown', this.#mouseEventHandler);
+      this.#hoverElement.removeEventListener('mouseup', this.#mouseEventHandler);
       this.#hoverElement.removeEventListener('click', this.#mouseEventHandler);
+      this.#hoverElement.removeEventListener('contextmenu', this.#mouseEventHandler);
+      this.#hoverElement.removeEventListener('dblclick', this.#mouseEventHandler);
       this.#hoverElement.classList.remove('spark-highlight');
       this.#hoverElement = null;
     }
   };
 
   /**
-   * Adds a click target to the state.
+   * Handles mouse events to stage a {@link MouseAction}.
    *
    * @param event - The {@link MouseEvent} that triggered the function.
-   * @returns A {@link Promise} that resolves when the click target is added.
+   * @returns A {@link Promise} that resolves when the mouse action is staged.
    */
   #mouseEventHandler = async (event: MouseEvent): Promise<void> => {
     const target = event.target as HTMLElement;
     const [selector, textContent] = deriveElementSelector(target, { interactiveElement: true });
 
-    const clickAction: AutoRecordMouseAction = {
+    const clickAction: MouseAction = {
       actionType: 'Mouse',
       coordinates: {
         pageX: event.pageX,
@@ -214,25 +177,26 @@ export class RecordingContext {
       selector,
       shadowAncestors: [],
       textContent,
-      timestamp: Date.now(),
+      timestamp: new Date().getTime(),
     };
 
-    await this.#stageAction(clickAction);
+    await this.#actionParser.stageAction(clickAction);
   };
 
   /**
-   * Key down event listener.
+   * Handles keyboard events to stage a {@link KeyboardAction}.
    *
    * @param event The {@link KeyboardEvent} that triggered the function.
+   * @returns A {@link Promise} that resolves when the key action is staged.
    */
-  #keyDownListener = async (event: KeyboardEvent) => {
+  #keyboardEventHandler = async (event: KeyboardEvent): Promise<void> => {
     const target = event.target as HTMLElement;
     const [selector, textContent] = deriveElementSelector(target, { interactiveElement: true });
-    const keyAction: AutoRecordKeyboardAction = {
+    const keyAction: KeyboardAction = {
       actionType: 'Keyboard',
       frameLocation: JSON.parse(JSON.stringify(window.location)),
+      key: event.key,
       keyboardEventType: event.type as KeyboardEventType,
-      keyStrokes: [event.key],
       modifierKeys: {
         alt: event.altKey,
         ctrl: event.ctrlKey,
@@ -242,13 +206,17 @@ export class RecordingContext {
       selector,
       shadowAncestors: [],
       textContent,
-      timestamp: Date.now(),
+      timestamp: new Date().getTime(),
     };
 
-    await this.#stageAction(keyAction);
+    await this.#actionParser.stageAction(keyAction);
 
     // Check to see if the user is trying to stop the recording.
-    if (event.ctrlKey && event.shiftKey && event.key === RecordingContext.DEFAULT_STOP_KEY) {
+    const { stopRecordingKey, stopRecordingModifier } = await ExtensionOptions.load();
+    const hasModifier = stopRecordingModifier === 'Shift' && event.shiftKey
+                      || stopRecordingModifier === 'Alt' && event.altKey
+                      || stopRecordingModifier === 'Meta' && event.metaKey;
+    if (event.ctrlKey && hasModifier && event.key === stopRecordingKey) {
       event.preventDefault();
       event.stopImmediatePropagation();
       await sendMessage({ // Notify all content scripts to stop recording.
