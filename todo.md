@@ -35,8 +35,10 @@ Required user-facing features.
 These provide a roadmap for the development of the app.
 
 ### Important
-- [ ] Add list of actions with insert and remove functionality in Record configuration modal (content).
-- [ ] Refine commit actions before saving by combining/removing/splitting where sensible (content).
+- [ ] Implement manual (JS) scripting records (content).
+- [ ] Add ability to insert actions before/after existing actions in Record configuration modal (content).
+- [x] Add list of actions with remove functionality in Record configuration modal (content).
+- [x] Refine commit actions before saving by combining/removing/splitting where sensible (content).
 
 ### Easy
 - [ ] Add button to pause all records on a pag (popup).
@@ -71,6 +73,8 @@ These are often not user-facing and can be thought of as behind the scenes featu
 ### Medium
 - [x] Create `SparkComponent` abstract class that extends `LitElement` and forms uniform theming and support for all components.
 - [ ] Replace all callback input properties with standard CustomEvent emitters.
+  - [x] Replaced a portion of properties
+  - [ ] Replaced all properties
 - [ ] Update Accordion component to be both useable via inheritance in addition to composition.
 - [ ] Update instances of inter-frame communication to use messaging utility instead of window utility.
 - [ ] Merge List and DataListBase so that List forms the basis for both data driven and declarative lists. This makes it possible to extends List and allow extended components to support both styles inherently.
