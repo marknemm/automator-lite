@@ -94,7 +94,6 @@ export class ActionParser {
    * recording was saved, or `undefined` if record configuration is cancelled.
    */
   async commitStagedActions(): Promise<AutoRecord | undefined> {
-    this.#stagedActions = this.#trimStopActions(this.#stagedActions);
     this.#commitActions = [];
 
     for (const action of this.stagedActions) {
@@ -105,6 +104,7 @@ export class ActionParser {
         default: throw new Error(`Unsupported action type: ${action.actionType}`);
       }
     }
+    this.#commitActions.pop(); // Remove stop action.
     this.#stagedActions = []; // Clear staged actions after committing.
 
     if (this.#commitActions.length === 0) return; // No actions to commit.
@@ -195,38 +195,105 @@ export class ActionParser {
       const hasMouseDownSecondPrev = secondPrevAction?.mouseEventType === 'mousedown';
 
       // Right click may only have previous mousedown if native handling is used.
-      if (hasAtomicPrev) {
-        this.#commitActions.pop(); // Remove the previous atomic (mousedown or mouseup) action.
-      }
-      if (hasMouseDownSecondPrev) {
-        this.#commitActions.pop(); // Remove the second previous mousedown action.
-      }
+      if (hasAtomicPrev)          this.#commitActions.pop(); // Remove prev mousedown/up.
+      if (hasMouseDownSecondPrev) this.#commitActions.pop(); // Remove second prev mousedown.
     }
 
     this.#commitActions.push(action); // Add the context menu action.
   }
 
   #commitKeyboardAction(action: KeyboardAction): void {
-    this.#commitActions.push(action);
+    // Do not commit a modifier key if it is a modifier part of previous key.
+    if (this.#isModifierForPrevKey(action)) return;
+
+    // Remove all previous modifier keys that are part of the current key.
+    while (this.#hasPrevModifierKey(action)) {
+      this.#commitActions.pop();
+    }
+
+    this.#commitActions.push(action); // Commit the keyboard action.
+  }
+
+  /**
+   * Checks if the given {@link action} is a keyup modifier key for the previous key.
+   *
+   * An example would be the following sequence:
+   * - Key down: Control
+   * - Key down: A
+   * - Key up: A
+   * - Key up: Control <-- Current Action
+   *
+   * @param action The {@link KeyboardAction} to check.
+   * @returns `true` if the action is a modifier key for the previous key, `false` otherwise.
+   */
+  #isModifierForPrevKey(action: KeyboardAction): boolean {
+    const { key, keyboardEventType } = action;
+    const modifierKeyStrs = ['Alt', 'Control', 'Meta', 'Shift'];
+
+    if (
+      keyboardEventType !== 'keyup'
+      || this.#commitActions.length === 0
+      || !modifierKeyStrs.includes(key)
+    ) return false;
+
+    const {
+      modifierKeys: prevModifierKeys,
+      keyboardEventType: prevKeyboardEventType,
+    } = this.#commitActions[this.#commitActions.length - 1] as KeyboardAction;
+
+    const {
+      alt: prevAlt,
+      ctrl: prevCtrl,
+      meta: prevMeta,
+      shift: prevShift,
+    } = prevModifierKeys ?? {};
+
+    return prevKeyboardEventType === 'keyup' && !!(
+      (key === 'Alt' && prevAlt)
+      || (key === 'Control' && prevCtrl)
+      || (key === 'Meta' && prevMeta)
+      || (key === 'Shift' && prevShift)
+    );
+  }
+
+  /**
+   * Checks if the given {@link action} has a modifier key that
+   * matches a previous committed action's key.
+   *
+   * An example would be the following sequence:
+   * - Key down: Control
+   * - Key down: A <-- Current Action
+   * - Key up: A
+   * - Key up: Control
+   *
+   * @param action The {@link KeyboardAction} to check.
+   * @returns `true` if the action has a matching modifier key, `false` otherwise.
+   */
+  #hasPrevModifierKey(action: KeyboardAction): boolean {
+    const { keyboardEventType, modifierKeys } = action;
+    const { alt, ctrl, meta, shift } = modifierKeys ?? {};
+
+    if (
+      keyboardEventType !== 'keydown'
+      || this.#commitActions.length === 0
+      || (!alt && !ctrl && !meta && !shift)
+    ) return false;
+
+    const {
+      key: prevKey,
+      keyboardEventType: prevKeyboardEventType,
+    } = this.#commitActions[this.#commitActions.length - 1] as KeyboardAction;
+
+    return prevKeyboardEventType === 'keydown' && !!(
+      (prevKey === 'Alt' && alt)
+      || (prevKey === 'Control' && ctrl)
+      || (prevKey === 'Meta' && meta)
+      || (prevKey === 'Shift' && shift)
+    );
   }
 
   #commitScriptAction(action: AutoRecordAction): void {
     this.#commitActions.push(action);
-  }
-
-  /**
-   * Trims the stop actions from the end of a given {@link actions} list.
-   *
-   * @param actions The {@link AutoRecordAction} list to trim the stop actions from.
-   */
-  #trimStopActions(actions: AutoRecordAction[]): AutoRecordAction[] {
-    // Trim off the set of actions used to stop the recording.
-    let stopActionsCnt = 3; // 3 for Ctrl + <stopModifier> + <stopKey>.
-    for (; stopActionsCnt + 1 < actions.length; stopActionsCnt++) {
-      const { key } = actions[actions.length - stopActionsCnt - 1] as KeyboardAction;
-      if (![this.stopModifier, 'Ctrl', 'Control'].includes(key)) break;
-    }
-    return actions.slice(0, actions.length - stopActionsCnt);
   }
 
 }

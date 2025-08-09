@@ -11,9 +11,9 @@
   color: inherit;
   cursor: pointer;
   transition:
-    color 0.2s,
-    background 0.2s,
-    background-color 0.2s;
+    color 0.3s,
+    background 0.3s,
+    background-color 0.3s;
 
   &[raised] {
     box-shadow: var(--spark-shadow);

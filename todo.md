@@ -17,7 +17,7 @@ These may be related to some features, but often are minor standalone issues.
 * [x] Fix issue where cross-origin iframe records are not working (content).
 
 ### Easy
-* [ ] Vertically align the pause button; it is off by a pixel or two in Edge (popup).
+* [x] Vertically align the pause button; it is off by a pixel or two in Edge (popup).
 
 ### Medium
 *EMPTY*
@@ -54,6 +54,7 @@ These provide a roadmap for the development of the app.
 - [ ] Record screenshot snippets of action targets and display them in configuration modal ([html2canvas](https://www.npmjs.com/package/html2canvas/v/1.4.1)) (content).
 
 <br>
+
 
 
 ## Architecture
