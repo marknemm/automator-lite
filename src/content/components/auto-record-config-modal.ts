@@ -1,22 +1,21 @@
-import { html, PropertyValues, unsafeCSS, type TemplateResult } from 'lit';
+import { html, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import '~shared/components/field-help.js';
-import { Modal } from '~shared/components/modal.js';
+import { Modal, type ModalContext, type ModalOptions } from '~shared/components/modal.js';
 import sparkButton from '~shared/directives/spark-button.js';
-import { AutoRecordAction, type AutoRecord } from '~shared/models/auto-record.js';
+import { AutoRecordState, type AutoRecordAction } from '~shared/models/auto-record.js';
+import { type DeleteActionEvent } from './action-expansion-panel.events.js';
 import './actions-config-menu.js';
-
 import styles from './auto-record-config-modal.scss?inline';
-import { DeleteActionEvent } from './actions-config-menu.js';
 
 /**
  * A {@link Modal} component for configuring an auto-record.
  *
  * @element `spark-auto-record-config-modal`
- * @extends Modal<AutoRecord>
+ * @extends Modal<AutoRecordState>
  */
 @customElement('spark-auto-record-config-modal')
-export class AutoRecordConfigModal extends Modal<AutoRecord> {
+export class AutoRecordConfigModal extends Modal<AutoRecordState> {
 
   static styles = [unsafeCSS(styles)];
 
@@ -25,6 +24,27 @@ export class AutoRecordConfigModal extends Modal<AutoRecord> {
 
   @state()
   private accessor actions: AutoRecordAction[] = [];
+
+  /**
+   * Opens an {@link AutoRecordConfigModal} for configuring a record.
+   *
+   * @param options - Either the {@link AutoRecordState} or the {@link ModalOptions} for the modal.
+   */
+  static open<D = Partial<AutoRecordState>, R = D>(
+    options: ModalOptions<D, R> | Partial<AutoRecordState> | AutoRecordAction[] = {}
+  ): ModalContext<R> {
+    if (options instanceof Array) {
+      options = { data: { actions: options } as D };
+    } else if (!(options instanceof Object && 'data' in options)) {
+      options = { data: options as D };
+    }
+
+    return super.open({
+      mountPoint: document.body,
+      closedBy: 'any',
+      ...options,
+    });
+  }
 
   override updated(changedProperties: PropertyValues): void {
     super.updated(changedProperties);

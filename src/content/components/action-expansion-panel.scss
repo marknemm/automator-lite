@@ -1,0 +1,20 @@
+@use "base" as *;
+@use "../../shared/components/expansion-panel.scss";
+
+.action-label {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.action-details {
+  table {
+    width: 100%;
+  }
+
+  td {
+    padding: 0.25rem 0.5rem;
+  }
+}

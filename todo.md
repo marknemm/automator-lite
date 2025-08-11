@@ -36,6 +36,11 @@ These provide a roadmap for the development of the app.
 
 ### Important
 - [ ] Implement manual (JS) scripting records (content).
+  - [ ] Allow user to click on target location to designate the frame context the script should run in.
+  - [ ] Open dialog box for writing or copy/pasting JS script (use lightweight code editor if possible).
+  - [ ] Show details of the script action in record config dialog actions and allow editing.
+  - [ ] Add functionality in `RecordExecutor` to run script in context of webpage.
+    - [ ] IMPORTANT: DOUBLE CHECK - DO NOT RUN WITH PRIVILEGES OF EXTENSION!!!
 - [ ] Add ability to insert actions before/after existing actions in Record configuration modal (content).
 - [x] Add list of actions with remove functionality in Record configuration modal (content).
 - [x] Refine commit actions before saving by combining/removing/splitting where sensible (content).

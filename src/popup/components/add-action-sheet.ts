@@ -3,7 +3,7 @@ import { customElement, property } from 'lit/decorators.js';
 import '~shared/components/button-list-item.js';
 import '~shared/components/list.js';
 import { Sheet } from '~shared/components/sheet.js';
-import type { AutoRecordType } from '~shared/models/auto-record.interfaces.js';
+import type { RecordingType } from '~shared/models/auto-record.interfaces.js';
 
 import styles from './add-action-sheet.scss?inline';
 
@@ -24,7 +24,7 @@ export class AddActionSheet extends Sheet {
    * @param action - The action that was selected.
    */
   @property({ attribute: false })
-  accessor onAddActionSelect: (action: AutoRecordType) => void = () => {};
+  accessor onAddActionSelect: (action: RecordingType) => void = () => {};
 
   /**
    * @default 'right'
@@ -39,10 +39,10 @@ export class AddActionSheet extends Sheet {
   protected override renderContent(): TemplateResult {
     return html`
       <spark-list>
-        <spark-button-list-item @click=${() => this.onAddActionSelect('Recording')}>
+        <spark-button-list-item @click=${() => this.onAddActionSelect('Standard')}>
           Mouse and Keyboard Recording
         </spark-button-list-item>
-        <spark-button-list-item @click=${() => this.onAddActionSelect('Script')}>
+        <spark-button-list-item @click=${() => this.onAddActionSelect('Scripting')}>
           Manual Scripting
         </spark-button-list-item>
       </spark-list>

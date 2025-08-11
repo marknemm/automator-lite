@@ -1,5 +1,6 @@
 @use "sass:color";
 @use "variables" as *;
+@forward "variables";
 
 /// Generates CSS variables for a color scale based on a base CSS variable.
 /// @param {string} $base-var The base CSS variable name (e.g. --spark-info).

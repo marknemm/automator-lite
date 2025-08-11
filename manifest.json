@@ -45,6 +45,10 @@
     {
       "resources": ["dist/fonts/*"],
       "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["dist/lazy/*"],
+      "matches": ["<all_urls>"]
     }
   ],
   "options_page": "dist/options/options.html"

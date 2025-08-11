@@ -1,15 +1,1 @@
 @use "base" as *;
-
-.action-label {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.action-details {
-  td {
-    padding: 0.25rem 0.5rem;
-  }
-}

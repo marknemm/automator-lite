@@ -1,7 +1,7 @@
 import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import sparkButton from '~shared/directives/spark-button.js';
-
+import { ExpansionPanelToggleEvent } from './expansion-panel.events.js';
 import styles from './expansion-panel.scss?inline';
 
 /**
@@ -45,23 +45,11 @@ export class ExpansionPanel extends LitElement {
   accessor expanded = false;
 
   /**
-   * Callback function that is called when the {@link expanded} state changes via user interaction.
-   * Will not be called when the {@link expanded} property is changed directly.
-   */
-  @property({ attribute: false })
-  accessor onToggle: (expanded: boolean) => void = () => {};
-
-  /**
-   * Toggles the {@link expanded} state of the panel.
+   * Toggles the {@link expanded} state of the panel and dispatches an {@link ExpansionPanelToggleEvent}.
    */
   toggle(): void {
     this.expanded = !this.expanded;
-    this.onToggle(this.expanded);
-    this.dispatchEvent(new CustomEvent('toggle', {
-      bubbles: true,
-      composed: true,
-      detail: { expanded: this.expanded },
-    }));
+    this.dispatchEvent(new ExpansionPanelToggleEvent(this.expanded));
   }
 
   protected override updated(changedProperties: Map<string, unknown>): void {
@@ -110,7 +98,7 @@ export class ExpansionPanel extends LitElement {
    *
    * @returns A {@link TemplateResult} for the header of the panel.
    */
-  protected renderHeader(): TemplateResult {
+  protected renderHeader(): TemplateResult | string {
     return html`<slot name="header">Toggle</slot>`;
   }
 
@@ -120,7 +108,9 @@ export class ExpansionPanel extends LitElement {
    *
    * @returns A {@link TemplateResult} for the content of the panel.
    */
-  protected renderContent(): TemplateResult {
+  protected renderContent(): TemplateResult | string {
     return html`<slot></slot>`;
   }
 }
+
+export * from './expansion-panel.events.js';

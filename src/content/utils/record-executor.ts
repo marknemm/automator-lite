@@ -6,9 +6,9 @@ import { onStateChange, type AutoRecordState } from '~shared/utils/state.js';
 import { isSamePathname, isTopWindow } from '~shared/utils/window.js';
 
 /**
- * Executes and schedules auto-records in the current document.
+ * Executes and schedules {@link AutoRecord} instances in the current document.
  */
-export class AutoRecordExecutor {
+export class RecordExecutor {
 
   /**
    * Default options for dispatching {@link MouseEvent}s and {@link KeyboardEvent}s.
@@ -19,9 +19,9 @@ export class AutoRecordExecutor {
   });
 
   /**
-   * The singleton instance of the {@link AutoRecordExecutor}.
+   * The singleton instance of the {@link RecordExecutor}.
    */
-  static #instance: AutoRecordExecutor | undefined;
+  static #instance: RecordExecutor | undefined;
 
   /**
    * A map to keep track of scheduled auto-records.
@@ -30,8 +30,8 @@ export class AutoRecordExecutor {
   readonly #recordScheduleRegistry = new Map<AutoRecordUid, number>();
 
   /**
-   * Constructs a new {@link AutoRecordExecutor} instance.
-   * See {@link AutoRecordExecutor.init} for initializing the singleton instance.
+   * Constructs a new {@link RecordExecutor} instance.
+   * See {@link RecordExecutor.init} for initializing the singleton instance.
    *
    * @param records An array of {@link AutoRecord} instances to schedule for execution.
    */
@@ -66,22 +66,22 @@ export class AutoRecordExecutor {
   }
 
   /**
-   * Initializes a singleton {@link AutoRecordExecutor} to handle existing records.
+   * Initializes a singleton {@link RecordExecutor} to handle existing records.
    * Will load all records and schedule them for execution.
    *
-   * @return A {@link Promise} that resolves to the {@link AutoRecordExecutor} instance when initialized.
+   * @return A {@link Promise} that resolves to the {@link RecordExecutor} instance when initialized.
    */
-  static async init(): Promise<AutoRecordExecutor> {
+  static async init(): Promise<RecordExecutor> {
     // Return existing singleton if exists.
-    if (AutoRecordExecutor.#instance) return AutoRecordExecutor.#instance;
+    if (RecordExecutor.#instance) return RecordExecutor.#instance;
 
     // Only load records for scheduling in the top window.
     const records = isTopWindow()
       ? await AutoRecord.loadMany()
       : [];
 
-    AutoRecordExecutor.#instance = new AutoRecordExecutor(records);
-    return AutoRecordExecutor.#instance;
+    RecordExecutor.#instance = new RecordExecutor(records);
+    return RecordExecutor.#instance;
   }
 
   /**
@@ -190,8 +190,8 @@ export class AutoRecordExecutor {
    * @param action - The {@link MouseAction} to execute.
    */
   #execMouseAction(action: MouseAction): void {
-    const mouseEvent = new MouseEvent(action.mouseEventType, {
-      ...AutoRecordExecutor.DEFAULT_DISPATCH_OPTS,
+    const mouseEvent = new MouseEvent(action.eventType, {
+      ...RecordExecutor.DEFAULT_DISPATCH_OPTS,
       ...action,
     });
 
@@ -218,7 +218,7 @@ export class AutoRecordExecutor {
     const target = document.activeElement || document.body;
 
     const eventOptions: KeyboardEventInit = {
-      ...AutoRecordExecutor.DEFAULT_DISPATCH_OPTS,
+      ...RecordExecutor.DEFAULT_DISPATCH_OPTS,
       key: action.key,
       shiftKey: action.modifierKeys?.shift ?? false,
       ctrlKey: action.modifierKeys?.ctrl ?? false,
@@ -226,7 +226,7 @@ export class AutoRecordExecutor {
       metaKey: action.modifierKeys?.meta ?? false,
     };
 
-    const keydownEvent = new KeyboardEvent(action.keyboardEventType, eventOptions);
+    const keydownEvent = new KeyboardEvent(action.eventType, eventOptions);
     target.dispatchEvent(keydownEvent);
   }
 
@@ -237,10 +237,10 @@ export class AutoRecordExecutor {
    */
   #execScriptAction(action: ScriptAction): void {
     const script = document.createElement('script');
-    script.textContent = action.src;
+    script.textContent = action.code;
     document.body.appendChild(script);
   }
 
 }
 
-export default AutoRecordExecutor;
+export default RecordExecutor;

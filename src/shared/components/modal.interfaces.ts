@@ -64,10 +64,11 @@ export interface ModalOptions<D = unknown, R = D> {
 
 /**
  * Contextual data for controlling the modal.
+ * Also, extends the Promise interface to allow for awaiting the modal result.
  *
  * @param R - The type of the result that can be passed back when the modal is closed.
  */
-export interface ModalContext<R = unknown> {
+export interface ModalContext<R = unknown> extends Promise<R | undefined> {
 
   /**
    * Function to close the modal and execute the onClose callback.
@@ -82,10 +83,5 @@ export interface ModalContext<R = unknown> {
    * @param template - The new {@link TemplateResult} to render inside the modal.
    */
   refreshModal: (template: TemplateResult) => void;
-
-  /**
-   * A `Promise` that resolves to the data passed to the {@link closeModal} function when the modal is closed.
-   */
-  onModalClose: Promise<R | undefined>;
 
 }

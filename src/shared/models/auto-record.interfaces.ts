@@ -75,6 +75,25 @@ export interface AutoRecordAction {
   frameLocation: Location;
 
   /**
+   * The timestamp (ms since epoch) of when the action was recorded.
+   */
+  timestamp: number;
+
+}
+
+/**
+ * An {@link AutoRecordAction} that requires user input (e.g. mouse or keyboard) to be performed.
+ *
+ * @extends AutoRecordAction
+ */
+export interface UserInputAction extends AutoRecordAction {
+
+  /**
+   * The type of user input event (e.g., 'keydown', 'keyup', 'click').
+   */
+  eventType: KeyboardEventType | MouseEventType;
+
+  /**
    * The modifier keys to be used when executing the action.
    */
   modifierKeys?: {
@@ -102,19 +121,14 @@ export interface AutoRecordAction {
    */
   textContent?: string;
 
-  /**
-   * The timestamp (ms since epoch) of when the action was recorded.
-   */
-  timestamp: number;
-
 }
 
 /**
- * An action that can be performed by an {@link AutoRecord} of type `Mouse`.
+ * An {@link AutoRecordAction} that specifies how to replay a `Mouse` user input event.
  *
- * @extends {AutoRecordAction}
+ * @extends UserInputAction
  */
-export interface MouseAction extends AutoRecordAction {
+export interface MouseAction extends UserInputAction {
 
   actionType: 'Mouse'; // Ensures the type is always 'Mouse' for this interface
 
@@ -150,34 +164,35 @@ export interface MouseAction extends AutoRecordAction {
    * - `dblclick`: A double click action.
    * - `contextmenu`: A right click action.
    */
-  mouseEventType: MouseEventType;
+  eventType: MouseEventType;
 
 }
 
 /**
- * An action that can be performed by an {@link AutoRecord} of type `Keyboard`.
+ * An {@link AutoRecordAction} that specifies how to replay a `Keyboard` user input event.
  *
- * @extends {AutoRecordAction}
+ * @extends UserInputAction
  */
-export interface KeyboardAction extends AutoRecordAction {
+export interface KeyboardAction extends UserInputAction {
 
   actionType: 'Keyboard'; // Ensures the type is always 'Keyboard' for this interface
+
+  /**
+   * The type of keyboard event (e.g., 'keydown', 'keyup').
+   */
+  eventType: KeyboardEventType;
 
   /**
    * The key to be pressed or released.
    */
   key: string;
 
-  /**
-   * The type of keyboard event (e.g., 'keydown', 'keyup').
-   */
-  keyboardEventType: KeyboardEventType;
-
 }
 
 /**
- * An action that can be performed by an {@link AutoRecord} of type `Script`.
- * @extends {AutoRecordAction}
+ * An {@link AutoRecordAction} that specifies how to execute a manual script.
+ *
+ * @extends AutoRecordAction
  */
 export interface ScriptAction extends AutoRecordAction {
 
@@ -186,7 +201,12 @@ export interface ScriptAction extends AutoRecordAction {
   /**
    * The JS script source to be executed when the action is triggered.
    */
-  src: string;
+  code: string;
+
+  /**
+   * The name of the script action.
+   */
+  name: string;
 
 }
 
@@ -226,7 +246,13 @@ export interface ConfigureRecordOptions {
 
 }
 
-export type AutoRecordType = 'Recording' | 'Script';
+/**
+ * The active recording type for this context.
+ *
+ * - `'Standard'`: Records all user interactions.
+ * - `'Scripting'`: Records a manually entered JS script.
+ */
+export type RecordingType = 'Standard' | 'Scripting';
 export type AutoRecordActionType = 'Mouse' | 'Keyboard' | 'Script';
 export type AutoRecordUid = string;
 export type KeyboardEventType = 'keydown' | 'keyup' | 'keypress';

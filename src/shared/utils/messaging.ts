@@ -1,5 +1,5 @@
 import { getExtensionContext, isBackground, isContent, queryTabs } from './extension.js';
-import type { ExtensionContext, Message } from './messaging.interfaces.js';
+import type { ExtensionContext, Message, SendMessage } from './messaging.interfaces.js';
 import { isSamePathname, isTopWindow } from './window.js';
 
 /**
@@ -17,8 +17,8 @@ import { isSamePathname, isTopWindow } from './window.js';
  * });
  * ```
  */
-export async function sendMessage<T, R = void>(
-  message: Partial<Message<T>> & Pick<Message<T>, 'route'>
+export async function sendMessage<R = void, T = unknown>(
+  message: SendMessage<T>
 ): Promise<R[]> {
   const responses: R[] = [];
   const { tabsQueryInfo = { active: true, currentWindow: true } } = message;

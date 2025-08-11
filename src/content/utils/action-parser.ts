@@ -1,5 +1,4 @@
 import type { AutoRecordAction, KeyboardAction, MouseAction } from '~shared/models/auto-record.interfaces.js';
-import AutoRecord from '~shared/models/auto-record.js';
 import { bindTopWindow, isTopWindow, requestTopWindow } from '~shared/utils/window.js';
 
 /**
@@ -93,7 +92,7 @@ export class ActionParser {
    * @returns A {@link Promise} that resolves to a newly saved {@link AutoRecord} if the
    * recording was saved, or `undefined` if record configuration is cancelled.
    */
-  async commitStagedActions(): Promise<AutoRecord | undefined> {
+  commitStagedActions(): AutoRecordAction[] {
     this.#commitActions = [];
 
     for (const action of this.stagedActions) {
@@ -104,17 +103,30 @@ export class ActionParser {
         default: throw new Error(`Unsupported action type: ${action.actionType}`);
       }
     }
-    this.#commitActions.pop(); // Remove stop action.
     this.#stagedActions = []; // Clear staged actions after committing.
 
-    if (this.#commitActions.length === 0) return; // No actions to commit.
-    return new AutoRecord(this.#commitActions).configure();
+    // Remove last action if it's a stop action.
+    const {
+      key: lastKey,
+      modifierKeys: lastModifierKeys,
+    } = this.#commitActions[this.#commitActions.length - 1] as KeyboardAction;
+    if (
+      lastKey === this.stopKey
+      && lastModifierKeys?.ctrl
+      && ((lastModifierKeys?.alt && this.stopModifier === 'Alt')
+        || (lastModifierKeys?.meta && this.stopModifier === 'Meta')
+        || (lastModifierKeys?.shift && this.stopModifier === 'Shift'))
+    ) {
+      this.#commitActions.pop(); // Remove stop action.
+    }
+
+    return this.#commitActions;
   }
 
   #commitMouseAction(action: MouseAction): void {
-    const { mouseEventType } = action;
+    const { eventType } = action;
 
-    switch (mouseEventType) {
+    switch (eventType) {
       case 'click':       this.#commitClickAction(action); break;
       case 'dblclick':    this.#commitDoubleClickAction(action); break;
       case 'contextmenu': this.#commitContextMenuAction(action); break;
@@ -136,8 +148,8 @@ export class ActionParser {
     if (this.#commitActions.length > 1) {
       const secondPrevAction = this.#commitActions[this.#commitActions.length - 2] as MouseAction;
       const prevAction = this.#commitActions[this.#commitActions.length - 1] as MouseAction;
-      const hasMouseDownUp = secondPrevAction.mouseEventType === 'mousedown'
-                          && prevAction.mouseEventType === 'mouseup';
+      const hasMouseDownUp = secondPrevAction.eventType === 'mousedown'
+                          && prevAction.eventType === 'mouseup';
 
       if (hasMouseDownUp) {
         const hasTargetMatch = secondPrevAction.selector === selector
@@ -168,8 +180,8 @@ export class ActionParser {
     if (this.#commitActions.length > 1) {
       const secondPrevAction = this.#commitActions[this.#commitActions.length - 2] as MouseAction;
       const prevAction = this.#commitActions[this.#commitActions.length - 1] as MouseAction;
-      const hasDoubleClick = secondPrevAction.mouseEventType === 'click'
-                          && prevAction.mouseEventType === 'click';
+      const hasDoubleClick = secondPrevAction.eventType === 'click'
+                          && prevAction.eventType === 'click';
 
       if (hasDoubleClick) {
         this.#commitActions.pop(); // Remove the previous click action.
@@ -190,9 +202,9 @@ export class ActionParser {
     if (this.#commitActions.length > 0) {
       const secondPrevAction = this.#commitActions[this.#commitActions.length - 2] as MouseAction;
       const prevAction = this.#commitActions[this.#commitActions.length - 1] as MouseAction;
-      const hasAtomicPrev = prevAction.mouseEventType === 'mousedown'
-                         || prevAction.mouseEventType === 'mouseup';
-      const hasMouseDownSecondPrev = secondPrevAction?.mouseEventType === 'mousedown';
+      const hasAtomicPrev = prevAction.eventType === 'mousedown'
+                         || prevAction.eventType === 'mouseup';
+      const hasMouseDownSecondPrev = secondPrevAction?.eventType === 'mousedown';
 
       // Right click may only have previous mousedown if native handling is used.
       if (hasAtomicPrev)          this.#commitActions.pop(); // Remove prev mousedown/up.
@@ -227,18 +239,18 @@ export class ActionParser {
    * @returns `true` if the action is a modifier key for the previous key, `false` otherwise.
    */
   #isModifierForPrevKey(action: KeyboardAction): boolean {
-    const { key, keyboardEventType } = action;
+    const { key, eventType } = action;
     const modifierKeyStrs = ['Alt', 'Control', 'Meta', 'Shift'];
 
     if (
-      keyboardEventType !== 'keyup'
+      eventType !== 'keyup'
       || this.#commitActions.length === 0
       || !modifierKeyStrs.includes(key)
     ) return false;
 
     const {
       modifierKeys: prevModifierKeys,
-      keyboardEventType: prevKeyboardEventType,
+      eventType: prevEventType,
     } = this.#commitActions[this.#commitActions.length - 1] as KeyboardAction;
 
     const {
@@ -248,7 +260,7 @@ export class ActionParser {
       shift: prevShift,
     } = prevModifierKeys ?? {};
 
-    return prevKeyboardEventType === 'keyup' && !!(
+    return prevEventType === 'keyup' && !!(
       (key === 'Alt' && prevAlt)
       || (key === 'Control' && prevCtrl)
       || (key === 'Meta' && prevMeta)
@@ -270,21 +282,21 @@ export class ActionParser {
    * @returns `true` if the action has a matching modifier key, `false` otherwise.
    */
   #hasPrevModifierKey(action: KeyboardAction): boolean {
-    const { keyboardEventType, modifierKeys } = action;
+    const { eventType, modifierKeys } = action;
     const { alt, ctrl, meta, shift } = modifierKeys ?? {};
 
     if (
-      keyboardEventType !== 'keydown'
+      eventType !== 'keydown'
       || this.#commitActions.length === 0
       || (!alt && !ctrl && !meta && !shift)
     ) return false;
 
     const {
       key: prevKey,
-      keyboardEventType: prevKeyboardEventType,
+      eventType: prevEventType,
     } = this.#commitActions[this.#commitActions.length - 1] as KeyboardAction;
 
-    return prevKeyboardEventType === 'keydown' && !!(
+    return prevEventType === 'keydown' && !!(
       (prevKey === 'Alt' && alt)
       || (prevKey === 'Control' && ctrl)
       || (prevKey === 'Meta' && meta)

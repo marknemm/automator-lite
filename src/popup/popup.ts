@@ -4,13 +4,12 @@ import { Task } from '@lit/task';
 import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import sparkButton from '~shared/directives/spark-button.js';
-import AutoRecord, { type AutoRecordType } from '~shared/models/auto-record.js';
+import AutoRecord, { type RecordingType } from '~shared/models/auto-record.js';
 import { sendMessage } from '~shared/utils/messaging.js';
 import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
-
-import './popup-global.scss';
+import './popup-root.scss'; // Light DOM (root) CSS.
 import styles from './popup.scss?inline';
 
 /**
@@ -97,13 +96,12 @@ export class Popup extends LitElement {
    *
    * @param action - The action that was selected.
    */
-  #onAddActionSelect(action: AutoRecordType): void {
-    if (action === 'Recording') {
-      sendMessage({
-        route: 'startRecording',
-        contexts: ['content'],
-      });
-    }
+  #onAddActionSelect(recordType: RecordingType): void {
+    sendMessage({
+      route: 'startRecording',
+      contexts: ['content'],
+      payload: recordType,
+    });
     window.close();
   }
 
@@ -148,7 +146,7 @@ export class Popup extends LitElement {
           <spark-add-action-sheet
             .opened=${this.addActionSheetOpened}
             .onOpenChange=${() => this.#closeActionSheet()}
-            .onAddActionSelect=${(action: AutoRecordType) => this.#onAddActionSelect(action)}
+            .onAddActionSelect=${(action: RecordingType) => this.#onAddActionSelect(action)}
           ></spark-add-action-sheet>
         </div>
       </div>

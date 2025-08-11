@@ -5,34 +5,47 @@ import copy from 'esbuild-plugin-copy';
 import eslintPlugin from 'esbuild-plugin-eslint';
 import inlineImportPlugin from 'esbuild-plugin-inline-import';
 import { sassPlugin } from 'esbuild-sass-plugin';
-import { rm } from 'fs/promises';
+import { rm, writeFile } from 'fs/promises';
 import * as sass from 'sass';
 
 // Resolve the environment and build options
 const prod = process.env.NODE_ENV === 'production';
+const analyze = process.argv.includes('--analyze');
 const minify = process.argv.includes('--minify') || prod;
 const watch = process.argv.includes('--watch');
 
 /** Auto resolved paths for SASS imports (e.g. can directly `@use "base" as *`) */
-const sassLoadPaths = ['./src/shared/styles', './src/shared/components'];
+const sassLoadPaths = [
+  './src/shared/styles',
+  './src/shared/components',
+];
 
 // Clean the output directory before building
 await rm('dist', { recursive: true, force: true });
 
 // Create the esbuild context with the specified entry points and plugins.
 const ctx = await esbuild.context({
-  entryPoints: [
-    'src/background/background.ts',
-    'src/content/content.ts',
-    'src/popup/popup.ts',
+  entryPoints: {
+    'background/background': 'src/background/background.ts',
+    'content/content': 'src/content/content.ts',
+    'popup/popup': 'src/popup/popup.ts',
+  },
+  external: [
+    // Exclude font files from being bundled.
+    '*.woff2',
+    '*.woff',
+    '*.ttf',
+    '*.svg',
+    // Exclude lazy loaded JS scripts from being bundled - built and bundled separately.
+    'lazy/*',
   ],
-  external: ['*.woff2', '*.woff', '*.ttf', '*.svg'], // Exclude font files from the bundle.
   bundle: true,
   write: true,
   logLevel: 'info',
   outdir: 'dist',
   target: 'es2022',
   tsconfig: 'tsconfig.json',
+  metafile: analyze,
   plugins: [
     TsconfigPathsPlugin({}),
     typecheckPlugin({
@@ -41,6 +54,7 @@ const ctx = await esbuild.context({
     }),
     eslintPlugin({
       throwOnError: true,
+      filter: /src\/.*\.(js|ts|tsx|jsx)$/,
     }),
     inlineImportPlugin({ // Inline imports ending with '?inline' as strings.
       filter: /\?inline$/,
@@ -61,12 +75,12 @@ const ctx = await esbuild.context({
     },
     sassPlugin({ // Transpile & Bundle SASS/CSS into single file (minimized in PROD build to remove duplicated styles).
       type: 'css',
-      filter: /.s[ac]ss|.less|.css$/,
+      filter: /(.s[ac]ss|.less|.css)$/,
       loadPaths: sassLoadPaths,
     }),
     copy({
       assets: {
-        from: ['./src/**/*.{html,json,svg,png,jpg,jpeg,gif,webp}'],
+        from: ['./src/**/*.{html,json,png,jpg,jpeg,gif,webp}'],
         to: ['.'],
       },
       watch,
@@ -78,6 +92,15 @@ const ctx = await esbuild.context({
       },
       watch,
     }),
+    copy({
+      assets: {
+        from: [
+          './node_modules/monaco-editor/min/vs/editor/editor.main.css',
+          // './node_modules/monaco-editor/esm/vs/base/browser/ui/codicons/codicon/*.{ttf,woff,woff2,svg}',
+        ],
+        to: ['./lazy'],
+      },
+    }),
   ],
   treeShaking: true,
   sourcemap: !minify ? 'inline' : false,
@@ -86,7 +109,14 @@ const ctx = await esbuild.context({
 
 // Perform build or watch based on the command line arguments.
 try {
-  if (watch) {
+  if (analyze) {
+    const buildResult = await ctx.rebuild();
+    await ctx.dispose();
+    await writeFile('dist/meta.json', JSON.stringify(buildResult.metafile, null, 2));
+    const { visualizer } = await import('esbuild-visualizer');
+    const visualizerResult = await visualizer(buildResult.metafile);
+    await writeFile('dist/visualizer.html', visualizerResult);
+  } else if (watch) {
     await ctx.watch();
   } else {
     await ctx.rebuild();

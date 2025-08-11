@@ -1,8 +1,7 @@
 import deepFreeze from 'deep-freeze';
 import type { DeepReadonly, Nullish } from 'utility-types';
-import { AutoRecordConfigModal } from '~content/components/auto-record-config-modal.js';
 import { loadState, saveState } from '~shared/utils/state.js';
-import type { AutoRecordAction, AutoRecordState, AutoRecordUid, ConfigureRecordOptions, LoadRecordOptions } from './auto-record.interfaces.js';
+import type { AutoRecordAction, AutoRecordState, AutoRecordUid, LoadRecordOptions } from './auto-record.interfaces.js';
 
 /**
  * Represents an {@link AutoRecord} that contains actions that are replayable on a webpage.
@@ -119,69 +118,25 @@ export class AutoRecord implements AutoRecordState {
   }
 
   /**
-   * Configures and saves a given new or existing {@link AutoRecord} instance.
-   *
-   * @param recordState The state of the {@link AutoRecord} to configure.
-   * If `null` or `undefined`, will perform no action.
-   * @param options - Options for configuring the record.
-   * @param options.omitSave - If `true`, the record will not be saved after configuration. Defaults to `false`.
-   * @returns A {@link Promise} that resolves to the configured and saved {@link AutoRecord} instance.
-   * If the user cancels the configuration, it resolves to `undefined`.
-   */
-  static async configure(
-    recordState: Partial<AutoRecordState> | AutoRecordAction[] | Nullish,
-    { omitSave = false }: ConfigureRecordOptions = {},
-  ): Promise<AutoRecord | undefined> {
-    if (!recordState) return; // No-op if no record state is provided.
-
-    // Ensure the recordState is an instance of AutoRecord for better type safety.
-    const record = (recordState instanceof AutoRecord)
-      ? recordState
-      : new AutoRecord(recordState);
-
-    return record.configure({ omitSave });
-  }
-
-  /**
-   * Configures and saves the given {@link AutoRecord} by opening the configuration modal.
-   *
-   * @param record - The {@link AutoRecord} to save.
-   * @param options - Options for configuring the record.
-   * @param options.omitSave - If `true`, the record will not be saved after configuration. Defaults to `false`.
-   * @returns A {@link Promise} that resolves to this {@link AutoRecord} instance after configuration.
-   * If the user cancels the configuration, it resolves to `undefined`.
-   */
-  async configure(
-    { omitSave = false }: ConfigureRecordOptions = {}
-  ): Promise<AutoRecord | undefined> {
-    const configResult = await AutoRecordConfigModal.open({
-      mountPoint: document.body,
-      closedBy: 'any',
-      data: this,
-    }).onModalClose;
-
-    return (!omitSave && configResult)
-      ? await this.save() // Save the record if the user confirmed the configuration.
-      : configResult;
-  }
-
-  /**
    * Saves the current state of this {@link AutoRecord} to state storage.
    * This will update the record in the state storage, or create a new one if it doesn't exist.
    *
+   * @param mergeData - Optional partial {@link AutoRecordState} data to {@link merge} with the
+   * record before saving. Will leave unspecified properties unchanged and save them as-is.
    * @returns A {@link Promise} that resolves to this {@link AutoRecord} instance after saving.
    */
-  async save(): Promise<this> {
+  async save(mergeData: Partial<AutoRecordState> = {}): Promise<this> {
     const records = await loadState('records');
     const recordStateIdx = records.findIndex(record =>
       record.createTimestamp === this.createTimestamp
     );
 
+    this.merge(mergeData); // Merges any given data into the record before saving.
     this.#updateTimestamp = Date.now();
 
     // Either add new record or update existing one.
     const state = await saveState({
-      records: recordStateIdx === -1
+      records: (recordStateIdx === -1)
         ? records.concat(this.#toSaveData())
         : records.slice(0, recordStateIdx)
           .concat(this.#toSaveData())
@@ -210,9 +165,8 @@ export class AutoRecord implements AutoRecordState {
       record.createTimestamp === this.createTimestamp
     );
 
-    if (recordStateIdx === -1) {
-      return false; // Record not found.
-    }
+    // Record not found?
+    if (recordStateIdx === -1) return false;
 
     records.splice(recordStateIdx, 1);
     await saveState({ records });
@@ -222,16 +176,29 @@ export class AutoRecord implements AutoRecordState {
   /**
    * Resets this {@link AutoRecord} instance to its initial state.
    *
-   * @param state The {@link AutoRecordState} to reset this {@link AutoRecord} to.
-   * If not provided, resets to the initial state of the record.
+   * @param mergeData The {@link AutoRecordState} Partial containing explicit reset data.
+   * Will {@link merge} the provided data into the initial state. Useful for retaining some properties.
    */
-  reset(state: Partial<AutoRecordState> = this.#state): void {
-    this.actions = state.actions;
-    this.autoRun = state.autoRun;
-    this.frequency = state.frequency;
-    this.name = state.name;
-    this.paused = state.paused;
-    this.#updateTimestamp = state.updateTimestamp ?? this.createTimestamp;
+  reset(mergeData: Partial<AutoRecordState> = {}): void {
+    const state = mergeData
+      ? Object.assign({}, this.#state, mergeData)
+      : this.#state;
+    this.merge(state);
+    this.#updateTimestamp = this.#state.updateTimestamp ?? this.createTimestamp;
+  }
+
+  /**
+   * Merges the given {@link data} into this {@link AutoRecord} instance.
+   *
+   * @param data The {@link AutoRecordState} Partial containing the new state values.
+   * Will only set the state of included properties.
+   */
+  merge(data: Partial<AutoRecordState>): void {
+    if (Object.hasOwn(data, 'actions'))    this.actions = data.actions;
+    if (Object.hasOwn(data, 'autoRun'))    this.autoRun = data.autoRun;
+    if (Object.hasOwn(data, 'frequency'))  this.frequency = data.frequency;
+    if (Object.hasOwn(data, 'name'))       this.name = data.name;
+    if (Object.hasOwn(data, 'paused'))     this.paused = data.paused;
   }
 
   /**

@@ -1,4 +1,5 @@
 @use "variables" as *;
+@forward "variables";
 
 [class^="icon-"], [class*=" icon-"], [icon] {
   /* use !important to prevent issues with browser extensions that change fonts */
@@ -15,17 +16,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-[icon="play"],
-.icon-play {
+[icon="add"],
+.icon-add {
   &:before {
-    content: $icon-play;
-  }
-}
-
-[icon="pause"],
-.icon-pause {
-  &:before {
-    content: $icon-pause;
+    content: $icon-add;
   }
 }
 
@@ -51,9 +45,23 @@
   }
 }
 
-[icon="add"],
-.icon-add {
+[icon="edit"],
+.icon-edit {
   &:before {
-    content: $icon-add;
+    content: $icon-edit;
+  }
+}
+
+[icon="pause"],
+.icon-pause {
+  &:before {
+    content: $icon-pause;
+  }
+}
+
+[icon="play"],
+.icon-play {
+  &:before {
+    content: $icon-play;
   }
 }

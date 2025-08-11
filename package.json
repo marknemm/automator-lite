@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node esbuild.config.mjs -- --minify",
+    "build:analyze": "node esbuild.config.mjs -- --analyze",
     "build:watch": "node esbuild.config.mjs -- --watch",
     "clean": "rimraf dist",
     "clean:all": "npm run clean && rimraf node_modules",
@@ -14,8 +15,10 @@
   "author": "Mark Nemmer",
   "license": "ISC",
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.4",
     "@lit/task": "^1.0.2",
     "@webcomponents/custom-elements": "^1.6.0",
+    "codemirror": "^6.0.2",
     "deep-freeze": "^0.0.1",
     "lit": "^3.3.0",
     "lodash-es": "^4.17.21",
@@ -32,6 +35,7 @@
     "esbuild-plugin-eslint": "^0.3.12",
     "esbuild-plugin-inline-import": "^1.1.0",
     "esbuild-sass-plugin": "^3.3.1",
+    "esbuild-visualizer": "^0.7.0",
     "eslint": "^9.28.0",
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",

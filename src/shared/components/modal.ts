@@ -89,7 +89,9 @@ export class Modal<D = unknown, R = D> extends LitElement {
     }: ModalOptions<D, R> = {}
   ): ModalContext<R> {
     const { promise: onModalClose, resolve } = deferredPromise<R | undefined>();
-    const modalCtx: ModalContext<R> = { onModalClose, closeModal: () => {}, refreshModal: () => {} };
+    const modalCtx = onModalClose as ModalContext<R>;
+    modalCtx.closeModal = () => {};
+    modalCtx.refreshModal = () => {};
     const modalElement = new this<D, R>(); // Target subclass of Modal
     const modalTagName = unsafeStatic(modalElement.tagName.toLowerCase());
 
