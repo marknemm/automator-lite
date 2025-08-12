@@ -27,7 +27,7 @@ async function init() {
   const recordExecutor = await RecordExecutor.init();
 
   /** Per-frame singleton recording context for recording new records. */
-  const recordingCtx = RecordingContext.init();
+  const recordingCtx = await RecordingContext.init();
 
   // Listen for messages from popup or background script.
   onMessage('configureRecord', async (message: Message<AutoRecordState>) =>
@@ -42,8 +42,8 @@ async function init() {
   onMessage('startRecording', (message: Message<RecordingType>) =>
     recordingCtx.start(message.payload));
 
-  onMessage('stopRecording',
-    () => recordingCtx.stop());
+  onMessage('stopRecording', () =>
+    recordingCtx.stop());
 }
 
 init().then().catch((error) => {

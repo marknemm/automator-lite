@@ -24,7 +24,18 @@ export class RecordingContext {
   /**
    * The {@link ActionParser} instance used to stage actions during recording.
    */
-  #actionParser: ActionParser = undefined as any; // Initialized in `init()`.
+  #actionParser!: ActionParser; // Initialized in `init()`.
+
+  /**
+   * The active {@link RecordingType} for this context.
+   * @see {@link RecordingContext.activeRecordingType activeRecordingType}
+   */
+  #activeRecordingType: RecordingType | Nullish;
+
+  /**
+   * The {@link ExtensionOptions} for the current extension installation.
+   */
+  #extensionOptions!: ExtensionOptions; // Initialized in `init()`.
 
   /**
    * This is the {@link HTMLElement} that will be highlighted when the user hovers over.
@@ -37,12 +48,6 @@ export class RecordingContext {
    * This is used to control the panel's lifecycle and interactions.
    */
   #recordingInfoMountCtx: MountContext | Nullish;
-
-  /**
-   * The active {@link RecordingType} for this context.
-   * @see {@link RecordingContext.activeRecordingType activeRecordingType}
-   */
-  #activeRecordingType: RecordingType | Nullish;
 
   /**
    * Constructs a new {@link RecordingContext} instance.
@@ -58,9 +63,10 @@ export class RecordingContext {
    *
    * @return A new instance of {@link RecordingContext}.
    */
-  static init(): RecordingContext {
+  static async init(): Promise<RecordingContext> {
     RecordingContext.#instance ??= new RecordingContext();
     RecordingContext.#instance.#actionParser = ActionParser.init();
+    RecordingContext.#instance.#extensionOptions = await ExtensionOptions.load();
     return RecordingContext.#instance;
   }
 
@@ -100,20 +106,19 @@ export class RecordingContext {
    * Starts the recording process.
    *
    * @param recordingType - The {@link RecordingType} to start. Defaults to `'Standard'`.
-   * @return A {@link Promise} that resolves when the recording is started.
    */
-  async start(recordingType: RecordingType = 'Standard'): Promise<void> {
+  start(recordingType: RecordingType = 'Standard'): void {
     if (this.active) return; // Prevent starting if already active.
     this.#activeRecordingType = recordingType;
 
     // Bind event listeners to the document for adding a new record.
     document.addEventListener('mouseover', this.#setHoverHighlight);
     document.addEventListener('mouseout', this.#unsetHoverHighlight);
-    document.addEventListener('keydown', this.#keyboardEventHandler);
-    document.addEventListener('keyup', this.#keyboardEventHandler);
+    document.addEventListener('keydown', this.#keyboardEventHandler, true);
+    document.addEventListener('keyup', this.#keyboardEventHandler, true);
 
     if (isTopWindow()) { // Prevent duplicate mounts from iframes.
-      const { stopRecordingKey, stopRecordingModifier } = await ExtensionOptions.load();
+      const { stopRecordingKey, stopRecordingModifier } = this.#extensionOptions;
       this.#recordingInfoMountCtx = RecordingInfoPanel.mount({
         stopRecordingKeys: ['Ctrl', stopRecordingModifier, stopRecordingKey],
       });
@@ -267,7 +272,7 @@ export class RecordingContext {
    * @returns A {@link Promise} that resolves when the key action is staged.
    */
   #keyboardEventHandler = async (event: KeyboardEvent): Promise<void> => {
-    const { stopRecordingKey, stopRecordingModifier } = await ExtensionOptions.load();
+    const { stopRecordingKey, stopRecordingModifier } = this.#extensionOptions;
     const hasModifier = stopRecordingModifier === 'Shift' && event.shiftKey
                       || stopRecordingModifier === 'Alt' && event.altKey
                       || stopRecordingModifier === 'Meta' && event.metaKey;
@@ -282,7 +287,6 @@ export class RecordingContext {
         route: 'stopRecording',
         contexts: ['content'],
       });
-      return; // Do not stage the stop recording keyboard action.
     }
 
     // If scripting, then do not record keystrokes.

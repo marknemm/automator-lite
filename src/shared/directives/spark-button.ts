@@ -20,7 +20,9 @@ export class SparkButton extends SparkDirective {
     super.update(part, []);
 
     element.classList.add('spark-button');
-    element.type ??= 'button'; // Ensure button type is set.
+    if (!element.hasAttribute('type')) {
+      element.type = 'button'; // Ensure button type is set.
+    }
   }
 
 }

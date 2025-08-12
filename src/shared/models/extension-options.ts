@@ -11,6 +11,11 @@ export class ExtensionOptions implements ExtensionOptionsState {
 
   readonly createTimestamp: number;
 
+  /**
+   * The singleton instance of the {@link ExtensionOptions}.
+   */
+  static #instance: ExtensionOptions | undefined;
+
   #frozenState: DeepReadonly<Partial<ExtensionOptionsState>>;
 
   #state: Partial<ExtensionOptionsState>;
@@ -21,7 +26,7 @@ export class ExtensionOptions implements ExtensionOptionsState {
 
   #updateTimestamp: number;
 
-  constructor(state: ExtensionOptionsState) {
+  protected constructor(state: ExtensionOptionsState) {
     this.#state = state;
     this.#frozenState = deepFreeze(state);
 
@@ -54,32 +59,60 @@ export class ExtensionOptions implements ExtensionOptionsState {
 
   get updateTimestamp(): number { return this.#updateTimestamp; }
 
+  /**
+   * Loads the extension options from storage and populates a singleton cached instance.
+   */
   static async load(): Promise<ExtensionOptions> {
-    const extensionOptions = await loadState('extensionOptions');
-    return new ExtensionOptions(extensionOptions);
+    if (!ExtensionOptions.#instance) {
+      const extensionOptions = await loadState('extensionOptions');
+      ExtensionOptions.#instance = new ExtensionOptions(extensionOptions);
+    }
+    return ExtensionOptions.#instance;
   }
 
-  static async save(options: Partial<ExtensionOptionsState>): Promise<void> {
-    const currentOptions = await ExtensionOptions.load();
-    const newOptions: ExtensionOptionsState = {
-      createTimestamp: currentOptions.createTimestamp,
-      stopRecordingKey: options.stopRecordingKey ?? currentOptions.stopRecordingKey,
-      stopRecordingModifier: options.stopRecordingModifier ?? currentOptions.stopRecordingModifier,
-      updateTimestamp: new Date().getTime(),
-    };
-    await saveState({ extensionOptions: newOptions });
+  /**
+   * Saves the current state of this {@link ExtensionOptions} model.
+   *
+   * @param mergeData The options to {@link merge} with the current state before saving.
+   * Any options not specified in {@link mergeData} will be saved as-is.
+   * @returns A {@link Promise} that resolves to this {@link ExtensionOptions} instance when the save is complete.
+   */
+  async save(mergeData: Partial<ExtensionOptionsState>): Promise<this> {
+    this.stopRecordingKey = mergeData.stopRecordingKey ?? this.stopRecordingKey;
+    this.stopRecordingModifier = mergeData.stopRecordingModifier ?? this.stopRecordingModifier;
+    this.#updateTimestamp = new Date().getTime();
+    this.#state = (await saveState({ extensionOptions: this })).extensionOptions;
+    this.#frozenState = deepFreeze(this.#state);
+    return this;
+  }
+
+  /**
+   * Merges the given {@link data} into this {@link ExtensionOptions} instance.
+   *
+   * @param data The {@link ExtensionOptionsState} Partial containing the new state values.
+   * Will only set the state of included properties.
+   * @return This {@link ExtensionOptions} instance with the given {@link data} merged in.
+   */
+  merge(data: Partial<ExtensionOptionsState>): this {
+    if (Object.hasOwn(data, 'stopRecordingKey'))      this.stopRecordingKey = data.stopRecordingKey!;
+    if (Object.hasOwn(data, 'stopRecordingModifier')) this.stopRecordingModifier = data.stopRecordingModifier!;
+    return this;
   }
 
   /**
    * Resets this {@link ExtensionOptions} instance to its initial state.
    *
-   * @param state The {@link ExtensionOptionsState} to reset this {@link ExtensionOptions} to.
-   * If not provided, resets to the initial state of the extension options.
+   * @param mergeData The {@link ExtensionOptionsState} Partial containing explicit reset data.
+   * Will {@link merge} the provided data into the initial state. Useful for retaining some properties.
+   * @return This {@link ExtensionOptions} instance with the reset state applied.
    */
-  reset(state: Partial<ExtensionOptionsState> = this.#state): void {
-    this.stopRecordingKey = state.stopRecordingKey;
-    this.stopRecordingModifier = state.stopRecordingModifier;
-    this.#updateTimestamp = state.updateTimestamp ?? this.createTimestamp;
+  reset(mergeData: Partial<ExtensionOptionsState> = {}): this {
+    const state = mergeData
+      ? Object.assign({}, this.#state, mergeData)
+      : this.#state;
+    this.merge(state);
+    this.#updateTimestamp = this.#state.updateTimestamp ?? this.createTimestamp;
+    return this;
   }
 
 }

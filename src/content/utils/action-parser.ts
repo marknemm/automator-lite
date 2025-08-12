@@ -108,14 +108,14 @@ export class ActionParser {
     // Remove last action if it's a stop action.
     const {
       key: lastKey,
-      modifierKeys: lastModifierKeys,
+      eventType: lastEventType,
     } = this.#commitActions[this.#commitActions.length - 1] as KeyboardAction;
-    if (
-      lastKey === this.stopKey
-      && lastModifierKeys?.ctrl
-      && ((lastModifierKeys?.alt && this.stopModifier === 'Alt')
-        || (lastModifierKeys?.meta && this.stopModifier === 'Meta')
-        || (lastModifierKeys?.shift && this.stopModifier === 'Shift'))
+    if ( // If last action is keydown and either stopKey or modifer, then remove.
+      lastEventType === 'keydown' && (
+           lastKey === this.stopKey
+        || lastKey === this.stopModifier
+        || lastKey === 'Control'
+      )
     ) {
       this.#commitActions.pop(); // Remove stop action.
     }

@@ -178,13 +178,15 @@ export class AutoRecord implements AutoRecordState {
    *
    * @param mergeData The {@link AutoRecordState} Partial containing explicit reset data.
    * Will {@link merge} the provided data into the initial state. Useful for retaining some properties.
+   * @return This {@link AutoRecord} instance with the reset state applied.
    */
-  reset(mergeData: Partial<AutoRecordState> = {}): void {
+  reset(mergeData: Partial<AutoRecordState> = {}): this {
     const state = mergeData
       ? Object.assign({}, this.#state, mergeData)
       : this.#state;
     this.merge(state);
     this.#updateTimestamp = this.#state.updateTimestamp ?? this.createTimestamp;
+    return this;
   }
 
   /**
@@ -192,13 +194,15 @@ export class AutoRecord implements AutoRecordState {
    *
    * @param data The {@link AutoRecordState} Partial containing the new state values.
    * Will only set the state of included properties.
+   * @return This {@link AutoRecord} instance with the given {@link data} merged in.
    */
-  merge(data: Partial<AutoRecordState>): void {
+  merge(data: Partial<AutoRecordState>): this {
     if (Object.hasOwn(data, 'actions'))    this.actions = data.actions;
     if (Object.hasOwn(data, 'autoRun'))    this.autoRun = data.autoRun;
     if (Object.hasOwn(data, 'frequency'))  this.frequency = data.frequency;
     if (Object.hasOwn(data, 'name'))       this.name = data.name;
     if (Object.hasOwn(data, 'paused'))     this.paused = data.paused;
+    return this;
   }
 
   /**
