@@ -53,39 +53,41 @@ export class ActionExpansionPanel extends ExpansionPanel {
   }
 
   #genMouseActionLabel(): TemplateResult {
-    const { eventType, textContent } = this.action as MouseAction;
+    const { eventType, selector, textContent } = this.action as MouseAction;
+    const label = textContent || selector;
 
     switch (eventType) {
       case 'click': return html`
         Click:&nbsp;
-        <span class="faint italic" title="${textContent}">${textContent}</span>
+        <span class="faint italic" title="${label}">${label}</span>
       `;
       case 'dblclick': return html`
         Double Click:&nbsp;
-        <span class="faint italic" title="${textContent}">${textContent}</span>
+        <span class="faint italic" title="${label}">${label}</span>
       `;
       case 'mousedown': return html`
         Mouse Down:&nbsp;
-        <span class="faint italic" title="${textContent}">${textContent}</span>
+        <span class="faint italic" title="${label}">${label}</span>
       `;
       case 'mouseup': return html`
         Mouse Up:&nbsp;
-        <span class="faint italic" title="${textContent}">${textContent}</span>
+        <span class="faint italic" title="${label}">${label}</span>
       `;
       case 'contextmenu': return html`
         Right Click:&nbsp;
-        <span class="faint italic" title="${textContent}">${textContent}</span>
+        <span class="faint italic" title="${label}">${label}</span>
       `;
       default: return html`Mouse Action`;
     }
   }
 
   #genScriptActionLabel(): TemplateResult {
-    const { name } = this.action as ScriptAction;
+    const { code, name } = this.action as ScriptAction;
+    const label = name || code;
 
     return html`
       Script Action:&nbsp;
-      <span class="faint italic">${name}</span>
+      <span class="faint italic" title="${label}">${label}</span>
     `;
   }
 
@@ -170,33 +172,14 @@ export class ActionExpansionPanel extends ExpansionPanel {
       <div class="action-details">
         <table>
           <tbody>
-            ${!this.editing
-              ? html`
-                <tr>
-                  <td>Script Name:</td>
-                  <td>${name}</td>
-                </tr>
-                <tr>
-                  <td>Code:</td>
-                  <td title="${code}">${code}</td>
-                </tr>
-              `
-              : html`
-                <tr>
-                  <td>
-                    <label for="script-name">Script Name:</label>
-                  </td>
-                  <td>
-                    <input id="script-name" .value="${name}">
-                  </td>
-                </tr>
-                <tr>
-                  <td colspan="2">
-                    <spark-code-editor></spark-code-editor>
-                  </td>
-                </tr>
-              `
-            }
+            <tr>
+              <td>Script Name:</td>
+              <td>${name}</td>
+            </tr>
+            <tr>
+              <td>Code:</td>
+              <td title="${code}">${code}</td>
+            </tr>
             <tr>
               <td>Timestamp:</td>
               <td>${new Date(timestamp).toLocaleString()}</td>

@@ -94,11 +94,8 @@ const ctx = await esbuild.context({
     }),
     copy({
       assets: {
-        from: [
-          './node_modules/monaco-editor/min/vs/editor/editor.main.css',
-          // './node_modules/monaco-editor/esm/vs/base/browser/ui/codicons/codicon/*.{ttf,woff,woff2,svg}',
-        ],
-        to: ['./lazy'],
+        from: ['./src/content/inline-script-executor.js'],
+        to: ['./scripts'],
       },
     }),
   ],

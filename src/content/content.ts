@@ -17,11 +17,9 @@ import RecordingContext from './utils/recording-context.js';
 async function init() {
   // Inject the font styles into the document head - must use chrome extension ID to reference font files.
   // Unlike popup, content scripts cannot directly access the extension's resources.
-  document.head.insertAdjacentHTML('beforeend', `
-    <style>
-      ${fontStyles.replaceAll('../fonts/', `chrome-extension://${chrome.runtime.id}/dist/fonts/`)}
-    </style>
-  `);
+  const style = document.createElement('style');
+  style.textContent = fontStyles.replaceAll('../fonts/', `chrome-extension://${chrome.runtime.id}/dist/fonts/`);
+  document.head.appendChild(style);
 
   /** Per-frame singleton auto-record executor for scheduling and executing records. */
   const recordExecutor = await RecordExecutor.init();
@@ -30,17 +28,17 @@ async function init() {
   const recordingCtx = await RecordingContext.init();
 
   // Listen for messages from popup or background script.
-  onMessage('configureRecord', async (message: Message<AutoRecordState>) =>
-    recordingCtx.configureAndSave(message.payload));
+  onMessage('configureRecord', async ({ payload }: Message<AutoRecordState>) =>
+    recordingCtx.configureAndSave(payload));
 
-  onMessage('executeRecord', (message: Message<AutoRecordState>) =>
-    recordExecutor.execRecord(message.payload));
+  onMessage('executeRecord', ({ payload }: Message<AutoRecordState>) =>
+    recordExecutor.execRecord(payload));
 
-  onMessage('executeRecordAction', (message: Message<AutoRecordAction>) =>
-    recordExecutor.execAction(message.payload));
+  onMessage('executeRecordAction', ({ payload }: Message<AutoRecordAction>) =>
+    recordExecutor.execAction(payload));
 
-  onMessage('startRecording', (message: Message<RecordingType>) =>
-    recordingCtx.start(message.payload));
+  onMessage('startRecording', ({ payload }: Message<RecordingType>) =>
+    recordingCtx.start(payload));
 
   onMessage('stopRecording', () =>
     recordingCtx.stop());

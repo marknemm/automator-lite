@@ -96,11 +96,11 @@ export class Popup extends LitElement {
    *
    * @param action - The action that was selected.
    */
-  #onAddActionSelect(recordType: RecordingType): void {
+  #onAddActionSelect(recordingType: RecordingType): void {
     sendMessage({
       route: 'startRecording',
       contexts: ['content'],
-      payload: recordType,
+      payload: recordingType,
     });
     window.close();
   }

@@ -1,9 +1,0 @@
-@use "variables" as *;
-@forward "variables";
-
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 16px;
-  border-top: 1px solid var(--spark-border-color);
-}

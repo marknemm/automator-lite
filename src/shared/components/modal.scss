@@ -8,6 +8,8 @@
 }
 
 dialog {
+  display: flex;
+  flex-direction: column;
   background-color: var(--spark-background);
   color: var(--spark-foreground);
   padding: 0;
@@ -19,8 +21,45 @@ dialog {
   max-height: min(90%, 800px);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
   animation: fadeIn 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out,
+              height 0.3s ease-in-out;
+  overflow: hidden;
 
   &::backdrop {
     background-color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--spark-gutter) * 2);
+  border-bottom: 1px solid var(--spark-border-color);
+
+  > * {
+    margin-top: 0;
+    margin-bottom: 0;
+    text-align: center;
+  }
+}
+
+.body {
+  flex-grow: 1;
+  overflow: auto;
+  padding: calc(var(--spark-gutter) * 2);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: calc(var(--spark-gutter) * 2);
+  border-top: 1px solid var(--spark-border-color);
+
+  .spark-button {
+    margin-left: 10px;
+    color: var(--spark-foreground);
+    padding: var(--spark-gutter) calc(var(--spark-gutter) * 2);
   }
 }

@@ -199,9 +199,14 @@ export interface ScriptAction extends AutoRecordAction {
   actionType: 'Script'; // Ensures the type is always 'Script' for this interface
 
   /**
-   * The JS script source to be executed when the action is triggered.
+   * The JS script source whose {@link compiledCode} will be executed when the action is triggered.
    */
   code: string;
+
+  /**
+   * The {@link code} compiled to ES5 JS to be executed when the action is triggered.
+   */
+  compiledCode: string;
 
   /**
    * The name of the script action.

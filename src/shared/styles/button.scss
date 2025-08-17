@@ -71,7 +71,7 @@
     width: auto;
     height: var(--spark-icon-button-size, 30px);
     aspect-ratio: 1 / 1;
-    font-size: calc(var(--spark-icon-button-size, 30px) * 0.55);
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.5);
     line-height: 1;
     border-radius: 50%;
 
@@ -92,14 +92,14 @@
   }
 
   &[icon="close"] {
-    font-size: calc(var(--spark-icon-button-size, 30px) * 0.45);
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.4);
   }
 
   &[icon="delete"] {
-    font-size: calc(var(--spark-icon-button-size, 30px) * 0.5);
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.45);
   }
 
   &[icon="play"] {
-    font-size: calc(var(--spark-icon-button-size, 30px) * 0.6);
+    font-size: calc(var(--spark-icon-button-size, 30px) * 0.55);
   }
 }

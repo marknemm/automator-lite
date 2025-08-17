@@ -4,6 +4,7 @@ import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAct
 import { sendMessage } from '~shared/utils/messaging.js';
 import { onStateChange, type AutoRecordState } from '~shared/utils/state.js';
 import { isSamePathname, isTopWindow } from '~shared/utils/window.js';
+import { ScriptInterpreter } from './script-interpreter.js';
 
 /**
  * Executes and schedules {@link AutoRecord} instances in the current document.
@@ -28,6 +29,11 @@ export class RecordExecutor {
    * The key is the {@link AutoRecordUid}, and the value is the interval ID.
    */
   readonly #recordScheduleRegistry = new Map<AutoRecordUid, number>();
+
+  /**
+   * The {@link ScriptInterpreter} instance used to execute user scripts.
+   */
+  #scriptInterpreter!: ScriptInterpreter;
 
   /**
    * Constructs a new {@link RecordExecutor} instance.
@@ -81,6 +87,7 @@ export class RecordExecutor {
       : [];
 
     RecordExecutor.#instance = new RecordExecutor(records);
+    RecordExecutor.#instance.#scriptInterpreter = ScriptInterpreter.init();
     return RecordExecutor.#instance;
   }
 
@@ -177,9 +184,9 @@ export class RecordExecutor {
 
     // Execute the action based on its type.
     switch (action.actionType) {
-      case 'Mouse':    await this.#execMouseAction(action as MouseAction); break;
+      case 'Mouse':    await this.#execMouseAction(action as MouseAction);       break;
       case 'Keyboard': await this.#execKeyboardAction(action as KeyboardAction); break;
-      case 'Script':   await this.#execScriptAction(action as ScriptAction); break;
+      case 'Script':   await this.#execScriptAction(action as ScriptAction);     break;
       default:         throw new Error(`Unsupported action type: ${action.actionType}`);
     }
   }
@@ -196,13 +203,13 @@ export class RecordExecutor {
     });
 
     const potentialTargets = deepQuerySelectorAll(action.selector);
-    const target = potentialTargets.length === 1
+    const target = (potentialTargets.length === 1)
       ? potentialTargets[0]
-      : potentialTargets.find((el) => {
-          return el.textContent?.trim() === action.textContent
-              || el.title?.trim() === action.textContent
-              || el.innerHTML?.trim() === action.textContent;
-        });
+      : potentialTargets.find((el) =>
+             el.textContent?.trim() === action.textContent
+          || el.title?.trim() === action.textContent
+          || el.innerHTML?.trim() === action.textContent
+        );
 
     target
       ? target.dispatchEvent(mouseEvent)
@@ -234,11 +241,10 @@ export class RecordExecutor {
    * Executes a script action by injecting a script element into the DOM.
    *
    * @param action - The {@link ScriptAction} to execute.
+   * @return A {@link Promise} that resolves when the script is finished executing.
    */
-  #execScriptAction(action: ScriptAction): void {
-    const script = document.createElement('script');
-    script.textContent = action.code;
-    document.body.appendChild(script);
+  async #execScriptAction(action: ScriptAction): Promise<void> {
+    await this.#scriptInterpreter.run(action.compiledCode);
   }
 
 }

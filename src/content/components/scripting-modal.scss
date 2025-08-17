@@ -1,0 +1,13 @@
+@use "base" as *;
+@use "../../shared/components/modal";
+
+spark-code-editor {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.body {
+  padding: 0;
+}

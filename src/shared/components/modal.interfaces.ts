@@ -20,7 +20,7 @@ export interface ModalOptions<D = unknown, R = D> {
   closedBy?: 'any' | 'closerequest' | 'none';
 
   /**
-   * The content to be rendered inside the modal.
+   * The content {@link Template} to be rendered inside the modal.
    */
   content?: Template | ((ctx: ModalContext<R>) => TemplateResult);
 
@@ -63,6 +63,14 @@ export interface ModalOptions<D = unknown, R = D> {
 }
 
 /**
+ * {@link ModalOptions} for a modal that has `static` content.
+ *
+ * @template D - The type of data that can be passed to the modal when it is opened.
+ * @template R - The type of result that can be passed back when the modal is closed.
+ */
+export type StaticModalOptions<D, R> = Omit<ModalOptions<D, R>, 'content'>;
+
+/**
  * Contextual data for controlling the modal.
  * Also, extends the Promise interface to allow for awaiting the modal result.
  *
@@ -75,13 +83,21 @@ export interface ModalContext<R = unknown> extends Promise<R | undefined> {
    *
    * @param data - Optional data to pass to the onClose callback.
    */
-  closeModal: (result?: R) => void;
+  close: (result?: R) => void;
 
   /**
    * Function to refresh the modal content with a new template.
    *
    * @param template - The new {@link TemplateResult} to render inside the modal.
    */
-  refreshModal: (template: TemplateResult) => void;
+  refresh: (template: TemplateResult) => void;
+
+  /**
+   * Resizes the modal to the specified CSS {@link width} and {@link height}.
+   *
+   * @param width - The new CSS width of the modal.
+   * @param height - The new CSS height of the modal.
+   */
+  resize: (width: string, height: string) => void;
 
 }

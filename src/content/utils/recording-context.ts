@@ -9,6 +9,8 @@ import { type MountContext } from '~shared/utils/mount.js';
 import { isTopWindow } from '~shared/utils/window.js';
 import { ActionParser } from './action-parser.js';
 import { deriveElementSelector } from './element-analysis.js';
+import { ScriptingModal } from '~content/components/scripting-modal.js';
+import { ScriptCompiler } from './script-compiler.js';
 
 /**
  * Context for managing the recording state and interactions.
@@ -50,6 +52,11 @@ export class RecordingContext {
   #recordingInfoMountCtx: MountContext | Nullish;
 
   /**
+   * The {@link ScriptCompiler} instance used to compile user scripts.
+   */
+  #scriptCompiler!: ScriptCompiler; // Initialized in `init()`.
+
+  /**
    * Constructs a new {@link RecordingContext} instance.
    *
    * This should only be called by {@link RecordingContext.init} to enforce singleton pattern.
@@ -67,6 +74,7 @@ export class RecordingContext {
     RecordingContext.#instance ??= new RecordingContext();
     RecordingContext.#instance.#actionParser = ActionParser.init();
     RecordingContext.#instance.#extensionOptions = await ExtensionOptions.load();
+    RecordingContext.#instance.#scriptCompiler = ScriptCompiler.init();
     return RecordingContext.#instance;
   }
 
@@ -107,10 +115,21 @@ export class RecordingContext {
    *
    * @param recordingType - The {@link RecordingType} to start. Defaults to `'Standard'`.
    */
-  start(recordingType: RecordingType = 'Standard'): void {
+  async start(recordingType: RecordingType = 'Standard'): Promise<void> {
     if (this.active) return; // Prevent starting if already active.
     this.#activeRecordingType = recordingType;
 
+    switch(recordingType) {
+      case 'Standard':
+        this.#startStandardRecording();
+        break;
+      case 'Scripting':
+        await this.#startScripting();
+        break;
+    }
+  }
+
+  #startStandardRecording() {
     // Bind event listeners to the document for adding a new record.
     document.addEventListener('mouseover', this.#setHoverHighlight);
     document.addEventListener('mouseout', this.#unsetHoverHighlight);
@@ -125,6 +144,16 @@ export class RecordingContext {
       if (!document.activeElement) {
         document.body.focus(); // Ensure the body is focused to capture key events.
       }
+    }
+  }
+
+  async #startScripting() {
+    if (isTopWindow()) {
+      const code = await ScriptingModal.open<string>();
+      if (code) {
+        this.#stageScriptAction(code);
+      }
+      await this.#triggerStopRecording();
     }
   }
 
@@ -200,16 +229,6 @@ export class RecordingContext {
       case 'Standard':
         await this.#stageMouseAction(event);
         break;
-      case 'Scripting':
-        await this.#stageScriptAction();
-
-        // Once frame context is selected, stop recording and prompt user to enter script.
-        await sendMessage({
-          route: 'stopRecording',
-          contexts: ['content'],
-        });
-
-        break;
       default: // Not recording, do nothing.
     }
   };
@@ -251,14 +270,19 @@ export class RecordingContext {
 
   /**
    * Stages a {@link ScriptAction} that can later be committed to a saved {@link AutoRecord}.
+   *
+   * @param code - The script code to stage.
    * @return A {@link Promise} that resolves when the action is staged.
    */
-  async #stageScriptAction(): Promise<void> {
+  async #stageScriptAction(code: string): Promise<void> {
+    const compiledCode = this.#scriptCompiler.compile(code);
+
     const scriptAction: ScriptAction = {
       actionType: 'Script',
-      code: '', // Will be filled within AutoRecordConfigModal.
+      code,
+      compiledCode,
       frameLocation: JSON.parse(JSON.stringify(window.location)),
-      name: '', // Will be filled within AutoRecordConfigModal.
+      name: '', // Can be filled within AutoRecordConfigModal.
       timestamp: new Date().getTime(),
     };
 
@@ -281,12 +305,7 @@ export class RecordingContext {
     if (event.ctrlKey && hasModifier && event.key === stopRecordingKey) {
       event.preventDefault();
       event.stopImmediatePropagation();
-
-      // Stop the recording due to stop key combination.
-      await sendMessage({
-        route: 'stopRecording',
-        contexts: ['content'],
-      });
+      await this.#triggerStopRecording();
     }
 
     // If scripting, then do not record keystrokes.
@@ -322,6 +341,14 @@ export class RecordingContext {
     };
 
     await this.#actionParser.stageAction(keyAction);
+  }
+
+  async #triggerStopRecording(): Promise<void> {
+    // Send message to all frames to stop recording.
+    await sendMessage({
+      route: 'stopRecording',
+      contexts: ['content'],
+    });
   }
 
 }

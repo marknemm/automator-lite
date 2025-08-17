@@ -1,4 +1,4 @@
-import { LitElement, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
+import { unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import { html, unsafeStatic } from 'lit/static-html.js';
 import deferredPromise from 'p-defer';
@@ -6,9 +6,10 @@ import { mountTemplate, Template, type MountContext } from '~shared/utils/mount.
 import type { ModalContext, ModalOptions } from './modal.interfaces.js';
 
 import styles from './modal.scss?inline';
+import { SparkComponent } from './spark-component.js';
 
 /**
- * A base modal component that can be extended to create custom modals.
+ * A base {@link Modal} component that can be extended to create custom modals.
  *
  * This component provides a basic structure for modals, including a backdrop,
  * content area, and methods for opening and closing the modal.
@@ -17,10 +18,10 @@ import styles from './modal.scss?inline';
  * @slot The default slot for inserting modal content.
  * @template D - The type of data passed to the modal; Defaults to `unknown`.
  * @template R - The type of result returned when the modal is closed; Defaults to `D`.
- * @extends LitElement
+ * @extends SparkComponent
  */
 @customElement('spark-modal')
-export class Modal<D = unknown, R = D> extends LitElement {
+export class Modal<D = unknown, R = D> extends SparkComponent {
 
   static styles = [unsafeCSS(styles)];
 
@@ -90,8 +91,9 @@ export class Modal<D = unknown, R = D> extends LitElement {
   ): ModalContext<R> {
     const { promise: onModalClose, resolve } = deferredPromise<R | undefined>();
     const modalCtx = onModalClose as ModalContext<R>;
-    modalCtx.closeModal = () => {};
-    modalCtx.refreshModal = () => {};
+    modalCtx.close = () => {};
+    modalCtx.refresh = () => {};
+    modalCtx.resize = () => {};
     const modalElement = new this<D, R>(); // Target subclass of Modal
     const modalTagName = unsafeStatic(modalElement.tagName.toLowerCase());
 
@@ -99,7 +101,7 @@ export class Modal<D = unknown, R = D> extends LitElement {
       <${modalTagName}
         .closedBy="${closedBy}"
         .data=${data}
-        @close=${(event: CustomEvent) => modalCtx.closeModal(event.detail.data)}
+        @close=${(event: CustomEvent) => modalCtx.close(event.detail.data)}
         open
         width="${width}"
         height="${height}"
@@ -112,15 +114,20 @@ export class Modal<D = unknown, R = D> extends LitElement {
       mountPoint,
       mountMode: 'append',
       template: ({ refresh, unmount }: MountContext) => {
-        modalCtx.closeModal = (result?: R) => {
+        modalCtx.close = (result?: R) => {
           const close = onClose?.(result);
           if (close === false) return; // Prevent unmounting if close is prevented.
           unmount();
           resolve(result);
         };
 
-        modalCtx.refreshModal = (content: Template | ((ctx: ModalContext<R>) => TemplateResult)) => {
+        modalCtx.refresh = (content: Template | ((ctx: ModalContext<R>) => TemplateResult)) => {
           refresh(typeof content === 'function' ? content(modalCtx) : content);
+        };
+
+        modalCtx.resize = (width: string, height: string) => {
+          modalElement.width = width;
+          modalElement.height = height;
         };
 
         return modalTemplate(typeof content === 'function' ? content(modalCtx) : content);

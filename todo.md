@@ -73,7 +73,7 @@ These are often not user-facing and can be thought of as behind the scenes featu
 *EMPTY*
 
 ### Easy
-- [ ] In modal.ts, remove content from static open method so derived classes can omit custom content without confusion.
+- [x] In modal.ts, remove content from static open method so derived classes can omit custom content without confusion.
 
 ### Medium
 - [x] Create `SparkComponent` abstract class that extends `LitElement` and forms uniform theming and support for all components.

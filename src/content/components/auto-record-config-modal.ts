@@ -1,7 +1,7 @@
 import { html, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import '~shared/components/field-help.js';
-import { Modal, type ModalContext, type ModalOptions } from '~shared/components/modal.js';
+import { Modal, type ModalContext, type StaticModalOptions } from '~shared/components/modal.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import { AutoRecordState, type AutoRecordAction } from '~shared/models/auto-record.js';
 import { type DeleteActionEvent } from './action-expansion-panel.events.js';
@@ -20,10 +20,10 @@ export class AutoRecordConfigModal extends Modal<AutoRecordState> {
   static styles = [unsafeCSS(styles)];
 
   @state()
-  private accessor errMsg = '';
+  private accessor actions: AutoRecordAction[] = [];
 
   @state()
-  private accessor actions: AutoRecordAction[] = [];
+  private accessor errMsg = '';
 
   /**
    * Opens an {@link AutoRecordConfigModal} for configuring a record.
@@ -31,7 +31,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecordState> {
    * @param options - Either the {@link AutoRecordState} or the {@link ModalOptions} for the modal.
    */
   static open<D = Partial<AutoRecordState>, R = D>(
-    options: ModalOptions<D, R> | Partial<AutoRecordState> | AutoRecordAction[] = {}
+    options: StaticModalOptions<D, R> | Partial<AutoRecordState> | AutoRecordAction[] = {}
   ): ModalContext<R> {
     if (options instanceof Array) {
       options = { data: { actions: options } as D };
