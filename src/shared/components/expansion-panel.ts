@@ -26,7 +26,7 @@ export class ExpansionPanel extends LitElement {
   /**
    * The CSS ID for the panel.
    *
-   * @default `expansion-panel${AUTO_INC_ID}`
+   * @default `expansion-panel-${AUTO_INC_ID}`
    */
   @property({ type: String, reflect: true })
   accessor id = `expansion-panel-${ExpansionPanel.AUTO_INC_ID++}`;
