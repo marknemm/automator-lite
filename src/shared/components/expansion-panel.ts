@@ -1,9 +1,10 @@
-import { html, LitElement, PropertyValues, unsafeCSS, type TemplateResult } from 'lit';
+import { html, PropertyValues, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { observeResize } from '~shared/decorators/observe-resize.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import { ExpansionPanelToggleEvent } from './expansion-panel.events.js';
 import styles from './expansion-panel.scss?inline';
+import { SparkComponent } from './spark-component.js';
 
 /**
  * A simple expansion panel component that can be toggled open or closed.
@@ -14,7 +15,7 @@ import styles from './expansion-panel.scss?inline';
  * @slot - The default slot for embedding the content of the panel.
  */
 @customElement('spark-expansion-panel')
-export class ExpansionPanel extends LitElement {
+export class ExpansionPanel extends SparkComponent {
 
   static styles = [unsafeCSS(styles)];
 

@@ -26,12 +26,12 @@ export function observeResize(selector: string) {
         throw new Error(`Resize element not found for selector: ${selector}`);
       }
 
-      const resizeCb = (this as any)[propertyKey];
+      const resizeCb = (this as any)[propertyKey].bind(this, resizeElem);
       if (typeof resizeCb !== 'function') {
         throw new Error(`observeResize decorator must be placed on a function, and ${propertyKey} is not a function`);
       }
 
-      resizeObs = new ResizeObserver(resizeCb.bind(this, resizeElem));
+      resizeObs = new ResizeObserver(resizeCb);
       resizeObs.observe(resizeElem);
     };
 
