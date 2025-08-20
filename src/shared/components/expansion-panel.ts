@@ -1,5 +1,6 @@
-import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { html, LitElement, PropertyValues, unsafeCSS, type TemplateResult } from 'lit';
+import { customElement, property, query, state } from 'lit/decorators.js';
+import { observeResize } from '~shared/decorators/observe-resize.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import { ExpansionPanelToggleEvent } from './expansion-panel.events.js';
 import styles from './expansion-panel.scss?inline';
@@ -31,18 +32,24 @@ export class ExpansionPanel extends LitElement {
   accessor id = `expansion-panel-${ExpansionPanel.AUTO_INC_ID++}`;
 
   /**
-   * The maximum height of the content area based on its scroll height and the {@link expanded} state.
-   */
-  @state()
-  private accessor contentMaxHeight = '0';
-
-  /**
    * Indicates and controls the expanded state of the panel.
    *
    * @default false
    */
   @property({ type: Boolean, reflect: true })
   accessor expanded = false;
+
+  /**
+   * The maximum height of the content area based on its scroll height and the {@link expanded} state.
+   */
+  @state()
+  private accessor contentHeight = '0';
+
+  /**
+   * The inner content container element.
+   */
+  @query('.content-inner')
+  private accessor contentInner!: HTMLElement;
 
   /**
    * Toggles the {@link expanded} state of the panel and dispatches an {@link ExpansionPanelToggleEvent}.
@@ -52,14 +59,25 @@ export class ExpansionPanel extends LitElement {
     this.dispatchEvent(new ExpansionPanelToggleEvent(this.expanded));
   }
 
-  protected override updated(changedProperties: Map<string, unknown>): void {
-    // Re-calculate the max-height when expanded.
+  protected override update(changedProperties: PropertyValues): void {
+    super.update(changedProperties);
     if (changedProperties.has('expanded')) {
-      this.contentMaxHeight = this.expanded
-        ? `${this.shadowRoot?.querySelector('.content')?.scrollHeight ?? 0}px`
-        : '0';
+      this.recalcHeight();
     }
   }
+
+  /**
+   * Recalculates the height of the content area based on its scroll height and the {@link expanded} state.
+   * 
+   * The {@link observeResize} decorator also automatically invokes this method when the content is resized.
+   */
+  @observeResize('.content-inner')
+  private recalcHeight = (): void => {
+    console.log(this.contentInner.scrollHeight);
+    this.contentHeight = this.expanded && this.contentInner
+      ? `${this.contentInner.scrollHeight}px`
+      : '0';
+  };
 
   /** @final Override {@link renderHeader} and/or {@link renderContent} instead. */
   protected override render(): TemplateResult {
@@ -79,7 +97,7 @@ export class ExpansionPanel extends LitElement {
       <div
         id="${this.id}-content"
         class="content"
-        style="max-height: ${this.contentMaxHeight};"
+        style="height: ${this.contentHeight};"
         role="region"
         aria-labelledby="${this.id}-toggle"
         aria-hidden="${!this.expanded}"

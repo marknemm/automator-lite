@@ -47,14 +47,14 @@
 
 .content {
   position: relative;
-  max-height: 0;
+  height: 0;
   opacity: 0;
   box-sizing: border-box;
   border-top: none;
   background: inherit;
   background: var(--spark-primary-background, var(--spark-background-dimmer));
   overflow: hidden;
-  transition: max-height .3s ease-in-out,
+  transition: height .3s ease-in-out,
               opacity .3s ease-in-out;
 
   > .content-inner {

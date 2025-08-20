@@ -97,9 +97,18 @@
 
 @keyframes grow {
   from {
-    max-height: 100%;
+    transform: scaleY(var(--grow-start, 0));
   }
   to {
-    max-height: 300%;
+    transform: scaleY(var(--grow-end, 1));
+  }
+}
+
+@keyframes shrink {
+  from {
+    transform: scaleY(var(--grow-end, 1));
+  }
+  to {
+    transform: scaleY(var(--grow-start, 0));
   }
 }
