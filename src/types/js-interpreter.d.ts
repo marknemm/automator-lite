@@ -1,1 +1,1 @@
-declare var Interpreter: any;
+declare const Interpreter: any;

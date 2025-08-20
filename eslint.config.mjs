@@ -1,4 +1,3 @@
-import { functions } from 'lodash-es';
 import tseslint from 'typescript-eslint';
 
 export default [
@@ -6,6 +5,7 @@ export default [
     ignores: [
       'dist/',
       'node_modules/',
+      'js-interpreter.js',
     ],
   },
   ...tseslint.configs.recommended,
