@@ -1,5 +1,5 @@
 import { html, TemplateResult, unsafeCSS } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import type { Nullish } from 'utility-types';
 import '~shared/components/code-editor.js';
 import { ExpansionPanel } from '~shared/components/expansion-panel.js';
@@ -7,6 +7,8 @@ import sparkButton from '~shared/directives/spark-button.js';
 import type { AutoRecordAction, KeyboardAction, MouseAction, ScriptAction, UserInputAction } from '~shared/models/auto-record.interfaces.js';
 import { DeleteActionEvent } from './action-expansion-panel.events.js';
 import styles from './action-expansion-panel.scss?inline';
+import { ScriptingModal } from './scripting-modal.js';
+import { ScriptCompiler } from '~content/utils/script-compiler.js';
 
 @customElement('spark-action-expansion-panel')
 export class ActionExpansionPanel extends ExpansionPanel {
@@ -16,8 +18,7 @@ export class ActionExpansionPanel extends ExpansionPanel {
   @property({ attribute: false })
   accessor action: AutoRecordAction | Nullish;
 
-  @state()
-  accessor editing: boolean = false;
+  #compiler = ScriptCompiler.init();
 
   protected override renderHeader(): TemplateResult {
     let actionLabelContent: TemplateResult = html``;
@@ -188,42 +189,33 @@ export class ActionExpansionPanel extends ExpansionPanel {
         </table>
       </div>
       <div class="footer">
-        ${!this.editing
-          ? html`
-            <button
-              ${sparkButton()}
-              color="primary"
-              icon="edit"
-              title="Edit Action: ${name}"
-              @click="${() => this.editing = true}"
-            ></button>
-            <button
-              ${sparkButton()}
-              color="danger"
-              icon="delete"
-              title="Delete Action: ${name}"
-              @click="${() => this.dispatchEvent(new DeleteActionEvent(this.action!))}"
-            ></button>
-          `
-          : html`
-            <button
-              ${sparkButton()}
-              color="success"
-              icon="check"
-              title="Accept Changes: ${name}"
-              @click="${() => this.editing = false}"
-            ></button>
-            <button
-              ${sparkButton()}
-              color="danger"
-              icon="close"
-              title="Discard Changes: ${name}"
-              @click="${() => this.editing = false}"
-            ></button>
-          `
-        }
+        <button
+          ${sparkButton()}
+          color="primary"
+          icon="edit"
+          title="Edit Action: ${name}"
+          @click="${async () => await this.#openScriptingModal()}"
+        ></button>
+        <button
+          ${sparkButton()}
+          color="danger"
+          icon="delete"
+          title="Delete Action: ${name}"
+          @click="${() => this.dispatchEvent(new DeleteActionEvent(this.action!))}"
+        ></button>
       </div>
     `;
+  }
+
+  async #openScriptingModal(): Promise<void> {
+    if (!this.action) return;
+    const { code } = this.action as ScriptAction;
+    // Open the scripting modal with the action's code
+    const updatedCode = await ScriptingModal.open({ data: code });
+    if (updatedCode) {
+      (this.action as ScriptAction).code = updatedCode;
+      (this.action as ScriptAction).compiledCode = this.#compiler.compile(updatedCode);
+    }
   }
 
   #genModifiersKeysStr(): string {
