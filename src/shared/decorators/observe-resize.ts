@@ -1,48 +1,47 @@
-import type { LitElement, PropertyValues } from 'lit';
+import { DecoratorController, type LitMethodDecorator } from '~shared/controllers/decorator-controller.js';
 
 /**
- * A decorator to observe resize events on a specific element within a {@link LitElement}.
- * Binds to a callback method that will be invoked by the {@link ResizeObserver}.
- * 
- * `Note`: The internal {@link ResizeObserver} will automatically observe and disconnect based on the
- * lifecycle of the {@link LitElement}.
+ * A decorator to observe resize events on specific element(s) within a `LitElement`.
  *
- * @param selector - The CSS selector for the element to observe.
- * @returns A method decorator.
+ * Binds to a callback method that will be invoked by the {@link ResizeObserver}.
+ * The bound callback method can take up to two arguments:
+ *
+ * - `entries`: An array of {@link ResizeObserverEntry} objects, each representing a resized element.
+ * - `observer`: The {@link ResizeObserver} instance that triggered the callback.
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver/ResizeObserver#parameters
+ *
+ * `Note`: The internal {@link ResizeObserver} will automatically observe and disconnect based on the
+ * lifecycle of the `LitElement`.
+ *
+ * @param selectors - The CSS selector(s) used to query the LitElement's DOM for the element(s) to observe.
+ * @returns A {@link LitMethodDecorator}.
  */
-export function observeResize(selector: string) {
-  return function (target: LitElement, propertyKey: string) {
-    let resizeObs!: ResizeObserver;
+export function observeResize(...selectors: string[]): LitMethodDecorator<ResizeObserverCallback> {
+  let resizeObs: ResizeObserver;
 
-    // Overload firstUpdated lifecycle method to init ResizeObserver.
-    const origFirstUpdated = target['firstUpdated'].bind(target);
-    target['firstUpdated'] = function (changedProperties: PropertyValues) {
-      if (typeof origFirstUpdated === 'function') {
-        origFirstUpdated.apply(this, [changedProperties]);
-      }
+  return DecoratorController.bind({
 
-      const resizeElem = this.shadowRoot?.querySelector(selector);
-      if (!(resizeElem instanceof Element)) {
-        throw new Error(`Resize element not found for selector: ${selector}`);
-      }
-
-      const resizeCb = (this as any)[propertyKey].bind(this, resizeElem);
+    hostFirstUpdated({ component, propKey }) {
+      const resizeCb = (component as any)[propKey].bind(component);
       if (typeof resizeCb !== 'function') {
-        throw new Error(`observeResize decorator must be placed on a function, and ${propertyKey} is not a function`);
+        throw new Error(`observeResize decorator must be placed on a function, and ${String(propKey)} is not a function`);
       }
 
       resizeObs = new ResizeObserver(resizeCb);
-      resizeObs.observe(resizeElem);
-    };
 
-    // Overload disconnectedCallback lifecycle method to cleanup ResizeObserver.
-    const origDisconnectedCallback = target.disconnectedCallback.bind(target);
-    target.disconnectedCallback = function () {
-      if (typeof origDisconnectedCallback === 'function') {
-        origDisconnectedCallback.apply(this);
-      }
+      selectors.forEach(selector => {
+        const resizeElem = component.shadowRoot?.querySelector(selector);
+        if (!(resizeElem instanceof Element)) {
+          throw new Error(`Resize element not found for selector: ${selector}`);
+        }
 
+        resizeObs.observe(resizeElem);
+      });
+    },
+
+    hostDisconnected() {
       resizeObs?.disconnect();
-    };
-  };
+    },
+
+  });
 }

@@ -69,16 +69,15 @@ export class ExpansionPanel extends SparkComponent {
 
   /**
    * Recalculates the height of the content area based on its scroll height and the {@link expanded} state.
-   * 
+   *
    * The {@link observeResize} decorator also automatically invokes this method when the content is resized.
    */
   @observeResize('.content-inner')
-  private recalcHeight = (): void => {
-    console.log(this.contentInner.scrollHeight);
+  private recalcHeight(): void {
     this.contentHeight = this.expanded && this.contentInner
       ? `${this.contentInner.scrollHeight}px`
       : '0';
-  };
+  }
 
   /** @final Override {@link renderHeader} and/or {@link renderContent} instead. */
   protected override render(): TemplateResult {

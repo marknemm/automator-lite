@@ -1,18 +1,27 @@
-import { LitElement } from 'lit';
+import { DecoratorController, type LitMemberDecorator } from '~shared/controllers/decorator-controller.js';
 
-export function cleanup(cleanupCb: string) {
-  return function (target: LitElement, propertyKey: string) {
-    const origDisconnectedCallback = target.disconnectedCallback.bind(target);
-    target.disconnectedCallback = function () {
-      if (typeof origDisconnectedCallback === 'function') {
-        origDisconnectedCallback.apply(this);
-      }
+/**
+ * A decorator to cleanup resources when a `LitElement` is disconnected.
+ *
+ * Can be bound to any instance property.
+ *
+ * @template T The type of the bound property; enforces type safety for `cleanupCb`. Defaults to `unknown`.
+ *
+ * @param cleanupCb - The name of the cleanup method to call on the property when the `LitElement` is disconnected.
+ * @returns A {@link LitMemberDecorator}.
+ */
+export function cleanup<T = unknown>(
+  cleanupCb: keyof T
+): LitMemberDecorator<T> {
+  return DecoratorController.bind({
 
-      const prop = (this as any)[propertyKey];
-      if (prop && typeof prop[cleanupCb] === 'function') {
-        console.log('invoking cleanup for property:', propertyKey);
-        prop[cleanupCb]();
+    hostDisconnected({ component, propKey }) {
+      const prop = (component as any)[propKey];
+      if (typeof prop?.[cleanupCb] !== 'function') {
+        throw new Error(`cleanup method '${String(cleanupCb)}' not found on property ${String(propKey)}`);
       }
-    };
-  };
+      prop[cleanupCb]();
+    },
+
+  });
 }
