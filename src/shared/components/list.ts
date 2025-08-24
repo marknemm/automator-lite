@@ -1,7 +1,7 @@
-import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
+import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement } from 'lit/decorators.js';
-
 import styles from './list.scss?inline';
+import { SparkComponent } from './spark-component.js';
 
 /**
  * A simple list component that can be used to group items.
@@ -11,10 +11,10 @@ import styles from './list.scss?inline';
  *
  * @element `spark-list`
  * @slot The default slot for inserting list items.
- * @extends LitElement
+ * @extends SparkComponent
  */
 @customElement('spark-list')
-export class List extends LitElement {
+export class List extends SparkComponent {
 
   static styles = [unsafeCSS(styles)];
 

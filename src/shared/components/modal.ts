@@ -4,7 +4,6 @@ import { html, unsafeStatic } from 'lit/static-html.js';
 import deferredPromise from 'p-defer';
 import { mountTemplate, Template, type MountContext } from '~shared/utils/mount.js';
 import type { ModalContext, ModalOptions } from './modal.interfaces.js';
-
 import styles from './modal.scss?inline';
 import { SparkComponent } from './spark-component.js';
 

@@ -1,7 +1,7 @@
-import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
+import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement } from 'lit/decorators.js';
-
 import styles from './field-help.scss?inline';
+import { SparkComponent } from './spark-component.js';
 
 /**
  * A component that provides help text for form fields.
@@ -9,10 +9,10 @@ import styles from './field-help.scss?inline';
  *
  * @element `spark-field-help`
  * @slot The default slot for inserting help text or description.
- * @extends LitElement
+ * @extends SparkComponent
  */
 @customElement('spark-field-help')
-export class FieldHelp extends LitElement {
+export class FieldHelp extends SparkComponent {
 
   static styles = [unsafeCSS(styles)];
 

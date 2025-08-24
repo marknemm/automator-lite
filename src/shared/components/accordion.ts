@@ -1,10 +1,17 @@
 import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { ExpansionPanel } from './expansion-panel.js';
+import { AccordionToggleEvent } from './accordion.events.js';
+import styles from './accordion.scss?inline';
+import { ExpansionPanel, ExpansionPanelToggleEvent } from './expansion-panel.js';
 import { List } from './list.js';
 
-import styles from './accordion.scss?inline';
-
+/**
+ * A component that allows for the display of collapsible sections of content.
+ *
+ * @element `spark-accordion`
+ * @slot The default slot for inserting expansion panels.
+ * @extends List
+ */
 @customElement('spark-accordion')
 export class Accordion extends List {
 
@@ -12,10 +19,7 @@ export class Accordion extends List {
 
   /** If `true`, multiple panels can be open at the same time. */
   @property({ type: Boolean })
-  accessor multiExpand = false;
-
-  @property({ attribute: false })
-  accessor onPanelToggle: (panel: ExpansionPanel) => void = () => {};
+  accessor multi = false;
 
   #panels: ExpansionPanel[] = [];
 
@@ -43,7 +47,7 @@ export class Accordion extends List {
   protected handleSlotChange = () => {
     // Remove existing event listeners from all panels.
     for (const panel of this.panels) {
-      panel.removeEventListener('toggle', this.#onPanelToggle);
+      panel.removeEventListener(ExpansionPanelToggleEvent.TYPE, this.#onPanelToggle);
     }
 
     // Query the slot for all ExpansionPanel elements.
@@ -51,7 +55,7 @@ export class Accordion extends List {
 
     // Reattach event listeners to the newly queried panels.
     for (const panel of this.panels) {
-      panel.addEventListener('toggle', this.#onPanelToggle);
+      panel.addEventListener(ExpansionPanelToggleEvent.TYPE, this.#onPanelToggle);
       panel.role = 'listitem'; // Ensure each panel has the correct role.
     }
   };
@@ -68,7 +72,7 @@ export class Accordion extends List {
   #onPanelToggle = (event: Event) => {
     const toggledPanel = event.currentTarget as ExpansionPanel;
 
-    if (!this.multiExpand && toggledPanel.expanded) {
+    if (!this.multi && toggledPanel.expanded) {
       // Close all other panels
       for (const panel of this.panels) {
         if (panel !== toggledPanel && panel.expanded) {
@@ -77,6 +81,9 @@ export class Accordion extends List {
       }
     }
 
-    this.onPanelToggle(toggledPanel);
+    this.dispatchEvent(new AccordionToggleEvent(toggledPanel));
   };
 }
+
+export * from './accordion.events.js';
+export * from './expansion-panel.js';

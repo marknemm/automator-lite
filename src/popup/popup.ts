@@ -12,8 +12,6 @@ import './components/auto-record-list.js';
 import './popup-root.scss'; // Light DOM (root) CSS.
 import styles from './popup.scss?inline';
 
-import '~shared/components/expansion-panel.js'; // Import expansion panel for use in the popup.
-
 /**
  * The main popup component for the Automator Lite extension.
  *
@@ -138,10 +136,6 @@ export class Popup extends LitElement {
             </div>
           </div>
 
-          <spark-expansion-panel>
-            <div id="test">TEST</div>
-          </spark-expansion-panel>
-<!--
           <spark-auto-record-list
             .task=${this.#loadRecordsTask}
             .onConfigure=${(record: AutoRecord) => this.#configureRecord(record)}
@@ -153,7 +147,7 @@ export class Popup extends LitElement {
             .opened=${this.addActionSheetOpened}
             .onOpenChange=${() => this.#closeActionSheet()}
             .onAddActionSelect=${(action: RecordingType) => this.#onAddActionSelect(action)}
-          ></spark-add-action-sheet> -->
+          ></spark-add-action-sheet>
         </div>
       </div>
     `;

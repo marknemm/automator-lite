@@ -12,9 +12,9 @@ import { SparkComponent } from './spark-component.js';
  * A simple expansion panel component that can be toggled open or closed.
  *
  * @element `spark-expansion-panel`
- * @extends LitElement
  * @slot `title` - Named slot for the title of the panel.
  * @slot - The default slot for embedding the content of the panel.
+ * @extends SparkComponent
  */
 @customElement('spark-expansion-panel')
 export class ExpansionPanel extends SparkComponent {

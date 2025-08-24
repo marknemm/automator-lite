@@ -1,8 +1,8 @@
-import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
+import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import sparkButton from '~shared/directives/spark-button.js';
-
 import styles from './sheet.scss?inline';
+import { SparkComponent } from './spark-component.js';
 
 /**
  * A modal-like component that slides in from the edge of its container.
@@ -10,10 +10,10 @@ import styles from './sheet.scss?inline';
  * @element `spark-sheet`
  * @slot `title` - A named slot for inserting the title of the sheet.
  * @slot The default slot for inserting content into the sheet.
- * @extends LitElement
+ * @extends SparkComponent
  */
 @customElement('spark-sheet')
-export class Sheet extends LitElement {
+export class Sheet extends SparkComponent {
 
   static styles = [unsafeCSS(styles)];
 

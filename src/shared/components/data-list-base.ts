@@ -2,9 +2,8 @@ import { Task } from '@lit/task/task.js';
 import { html, type TemplateResult, unsafeCSS } from 'lit';
 import { property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
-import { List } from './list.js';
-
 import styles from './data-list.scss?inline';
+import { List } from './list.js';
 
 /**
  * Base class for data-driven lists that manage loading and rendering of items.
