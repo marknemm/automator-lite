@@ -1,4 +1,5 @@
 import type { LitElement } from 'lit';
+import type { Key } from '~shared/utils/types.js';
 
 /**
  * The context for a bound {@link LitElement} component decorator.
@@ -26,7 +27,7 @@ export interface DecoratorContext<E extends LitElement = LitElement> {
   /**
    * The key of the property or method being decorated.
    */
-  propKey: string | symbol;
+  propKey: Key<E>;
 
   /**
    * The property descriptor for the decorated property.
@@ -102,7 +103,7 @@ export type DecoratorBinding<E extends LitElement = LitElement> = {
   /**
    * The key of the property or method being decorated.
    */
-  propKey: string | symbol;
+  propKey: Key;
 
   /**
    * The {@link PropertyDecorator} for the decorated property.
@@ -125,7 +126,7 @@ export type DecoratorBinding<E extends LitElement = LitElement> = {
  *
  * @template E The type of the `LitElement` component; defaults to `LitElement`.
  */
-export type DecoratedComponent<E extends LitElement = LitElement> = E & {
+export type DecoratedComponent<E extends LitElement = any> = E & {
 
   /**
    * The list of {@link DecoratorBinding}s bound to the {@link LitElement} component prototype.
@@ -144,7 +145,7 @@ export type DecoratedComponent<E extends LitElement = LitElement> = E & {
  */
 export type LitPropertyDecorator<E extends LitElement = LitElement> = (
   prototype: E,
-  propKey: string | symbol,
+  propKey: Key,
 ) => void;
 
 /**
@@ -154,16 +155,16 @@ export type LitPropertyDecorator<E extends LitElement = LitElement> = (
  * @param propKey The key of the method being decorated.
  * @param descriptor The {@link PropertyDescriptor} for the decorated method.
  *
- * @template T The type of the decorated method; defaults to `(...args: unknown[]) => unknown`.
  * @template E The type of the `LitElement` component containing the decorator; defaults to `LitElement`.
+ * @template T The type of the decorated method; defaults to `(...args: unknown[]) => unknown`.
  */
 export type LitMethodDecorator<
-  T extends ((...args: any[]) => any) = (...args: unknown[]) => unknown,
-  E extends LitElement = LitElement
+  E extends LitElement = LitElement,
+  T extends ((...args: any[]) => any) = (...args: unknown[]) => unknown
 > = (
   prototype: E,
-  propKey: string | symbol,
-  descriptor: TypedPropertyDescriptor<OptionalParameters<T>>
+  propKey: Key,
+  descriptor: TypedPropertyDescriptor<T>
 ) => void;
 
 /**
@@ -173,15 +174,15 @@ export type LitMethodDecorator<
  * @param propKey The key of the accessor being decorated.
  * @param descriptor The {@link PropertyDescriptor} for the decorated accessor.
  *
- * @template T The type of the decorated accessor; defaults to `unknown`.
  * @template E The type of the `LitElement` component containing the decorator; defaults to `LitElement`.
+ * @template T The type of the decorated accessor; defaults to `unknown`.
  */
 export type LitAccessorDecorator<
-  T = unknown,
-  E extends LitElement = LitElement
+  E extends LitElement = LitElement,
+  T = any
 > = (
   prototype: E,
-  propKey: string | symbol,
+  propKey: Key,
   descriptor: TypedPropertyDescriptor<T>
 ) => void;
 
@@ -193,17 +194,14 @@ export type LitAccessorDecorator<
  * @param descriptor The {@link PropertyDescriptor} for the decorated accessor or method.
  * Will be `undefined` for plain properties.
  *
- * @template T The type of the decorated accessor or method; defaults to `unknown`.
  * @template E The type of the `LitElement` component containing the decorator; defaults to `LitElement`.
+ * @template T The type of the decorated accessor or method; defaults to `unknown`.
  */
 export type LitMemberDecorator<
-  T = unknown,
-  E extends LitElement = LitElement
+  E extends LitElement = LitElement,
+  T = unknown
 > = (
   prototype: E,
-  propKey: string | symbol,
+  propKey: Key,
   descriptor?: TypedPropertyDescriptor<T>
 ) => void;
-
-type OptionalParameters<T extends (...args: any) => any> =
-  (...args: Partial<Parameters<T>>) => ReturnType<T>;

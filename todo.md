@@ -85,6 +85,7 @@ These are often not user-facing and can be thought of as behind the scenes featu
 - [ ] Merge List and DataListBase so that List forms the basis for both data driven and declarative lists. This makes it possible to extends List and allow extended components to support both styles inherently.
 - [ ] Create README.md
 - [ ] Add unit test framework (individual unit tests will be added as separate tasks).
+- [ ] Create a utility type for taking a union of all possible parameter subsets for a function.
 
 ### Hard
 - [ ] Support linter @final jsdoc to finalize inherited methods like in Java/C++; can possibly make a separate npm module.

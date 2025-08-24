@@ -1,5 +1,6 @@
 import { LitElement, type ReactiveController } from 'lit';
 import type { DecoratedComponent, DecoratorBinding, DecoratorContext, DecoratorLifecycleHooks, LitMemberDecorator } from './decorator-controller.interfaces.js';
+import type { Key } from '~shared/utils/types.js';
 
 /**
  * A controller for enabling decorators on a {@link LitElement} component
@@ -28,7 +29,7 @@ export class DecoratorController<E extends LitElement = LitElement> implements R
    *
    * @param component The instance of the {@link LitElement} component containing the decorator.
    */
-  protected constructor(
+  constructor(
     public readonly component: DecoratedComponent<E>
   ) {
     component.addController(this);
@@ -49,36 +50,40 @@ export class DecoratorController<E extends LitElement = LitElement> implements R
    * that will be invoked during the containing component's lifecycle method invocations.
    * @return A {@link LitMemberDecorator}.
    *
+   * @template E The type of the `LitElement` component containing the decorator.
+   * Defaults to `LitElement`.
    * @template T The type of the decorated accessor or method.
    * Defaults to `unknown`.
    * Ignored if the decorated element is a plain property.
-   * @template E The type of the `LitElement` component containing the decorator.
-   * Defaults to `LitElement`.
    */
   static bind<
-    T = unknown,
     E extends LitElement = LitElement,
+    T = unknown
   >(
-    lifecycleHooks: DecoratorLifecycleHooks<E>
-  ): LitMemberDecorator<T, E> {
+    lifecycleHooks: DecoratorLifecycleHooks<E>,
+    baseDecorator?: LitMemberDecorator<E, T>
+  ): LitMemberDecorator<E, T> {
     return (
       prototype: DecoratedComponent<E>,
-      propKey: string | symbol,
+      propKey: Key,
       descriptor?: TypedPropertyDescriptor<T>
     ) => {
       const binding: DecoratorBinding<E> = { prototype, propKey, descriptor, lifecycleHooks };
       prototype._sparkDecoratorBindings?.push(binding);
 
       // Only initialize the cbs array and monkey patch the connectedCallback for first decorator.
-      if (prototype._sparkDecoratorBindings) return;
-      prototype._sparkDecoratorBindings = [binding];
+      if (!prototype._sparkDecoratorBindings) {
+        prototype._sparkDecoratorBindings = [binding];
 
-      // Whenever a new instance of LitElement is created and connected, will setup the controller for decorators.
-      const origConnectedCallback = prototype.connectedCallback;
-      prototype.connectedCallback = function() {
-        new DecoratorController<E>(this);
-        origConnectedCallback?.call(this);
-      };
+        // Whenever a new instance of LitElement is created and connected, will setup the controller for decorators.
+        const origConnectedCallback = prototype.connectedCallback;
+        prototype.connectedCallback = function() {
+          new DecoratorController<E>(this);
+          origConnectedCallback?.call(this);
+        };
+      }
+
+      return baseDecorator?.(prototype, propKey, descriptor);
     };
   }
 
@@ -96,19 +101,15 @@ export class DecoratorController<E extends LitElement = LitElement> implements R
   }
 
   hostDisconnected(): void {
-    try {
-      for (const binding of this.#decoratorBindings) {
-        const { lifecycleHooks } = binding;
-        const ctx = this.#toDecoratorContext(binding);
+    for (const binding of this.#decoratorBindings) {
+      const { lifecycleHooks } = binding;
+      const ctx = this.#toDecoratorContext(binding);
 
-        try {
-          lifecycleHooks.hostDisconnected?.(ctx);
-        } catch (error) {
-          console.error('Error in hostDisconnected lifecycle hook:', error);
-        }
+      try {
+        lifecycleHooks.hostDisconnected?.(ctx);
+      } catch (error) {
+        console.error('Error in hostDisconnected lifecycle hook:', error);
       }
-    } finally {
-      this.component._sparkDecoratorBindings = []; // IMPORTANT: No memory leaks!
     }
   }
 
@@ -163,7 +164,7 @@ export class DecoratorController<E extends LitElement = LitElement> implements R
     return {
       component: this.component,
       prototype: binding.prototype,
-      propKey: binding.propKey,
+      propKey: binding.propKey as Key<E>,
       descriptor: binding.descriptor,
     };
   }

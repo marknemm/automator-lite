@@ -15,3 +15,8 @@ export type SparkColors = typeof SparkComponent.COLORS;
  * @see {@link SparkComponent.color} for the color property.
  */
 export type SparkColor = typeof SparkComponent.COLORS[number];
+
+export interface SparkUpdatedWatch<C extends SparkComponent = SparkComponent> {
+  property: keyof C;
+  callback: (oldValue: C[keyof C]) => void;
+}

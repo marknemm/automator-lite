@@ -1,7 +1,9 @@
+import { type LitElement } from 'lit';
 import { DecoratorController, type LitMethodDecorator } from '~shared/controllers/decorator-controller.js';
+import type { ObserveResizeMethod, WithObserveResize } from './observe-resize.interfaces.js';
 
 /**
- * A decorator to observe resize events on specific element(s) within a `LitElement`.
+ * A decorator to observe resize events on specific element(s) within a {@link LitElement}.
  *
  * Binds to a callback method that will be invoked by the {@link ResizeObserver}.
  * The bound callback method can take up to two arguments:
@@ -11,23 +13,27 @@ import { DecoratorController, type LitMethodDecorator } from '~shared/controller
  * @see https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver/ResizeObserver#parameters
  *
  * `Note`: The internal {@link ResizeObserver} will automatically observe and disconnect based on the
- * lifecycle of the `LitElement`.
+ * lifecycle of the {@link LitElement}.
  *
  * @param selectors - The CSS selector(s) used to query the LitElement's DOM for the element(s) to observe.
  * @returns A {@link LitMethodDecorator}.
+ *
+ * @template E The type of the `LitElement` component containing the decorator; defaults to `LitElement`.
  */
-export function observeResize(...selectors: string[]): LitMethodDecorator<ResizeObserverCallback> {
-  let resizeObs: ResizeObserver;
-
+export function observeResize<E extends WithObserveResize<LitElement> = LitElement>(
+  ...selectors: string[]
+): LitMethodDecorator<E, ObserveResizeMethod> {
   return DecoratorController.bind({
 
     hostFirstUpdated({ component, propKey }) {
-      const resizeCb = (component as any)[propKey].bind(component);
+      const resizeCb = component[propKey as keyof E];
       if (typeof resizeCb !== 'function') {
-        throw new Error(`observeResize decorator must be placed on a function, and ${String(propKey)} is not a function`);
+        throw new Error(`observeResize decorator must be placed on a method, and '${String(propKey)}' is not a method`);
       }
 
-      resizeObs = new ResizeObserver(resizeCb);
+      const resizeObs = new ResizeObserver(resizeCb.bind(component));
+      component._resizeObservers ??= [];
+      component._resizeObservers.push(resizeObs);
 
       selectors.forEach(selector => {
         const resizeElem = component.shadowRoot?.querySelector(selector);
@@ -39,9 +45,14 @@ export function observeResize(...selectors: string[]): LitMethodDecorator<Resize
       });
     },
 
-    hostDisconnected() {
-      resizeObs?.disconnect();
+    hostDisconnected({ component }) {
+      for (const obs of (component._resizeObservers ?? [])) {
+        obs.disconnect();
+      }
+      delete component._resizeObservers;
     },
 
   });
 }
+
+export type * from './observe-resize.interfaces.js';

@@ -1,6 +1,8 @@
-import { html, PropertyValues, unsafeCSS, type TemplateResult } from 'lit';
-import { customElement, property, query, state } from 'lit/decorators.js';
+import { html, unsafeCSS, type TemplateResult } from 'lit';
+import { customElement, query } from 'lit/decorators.js';
 import { observeResize } from '~shared/decorators/observe-resize.js';
+import { property } from '~shared/decorators/property.js';
+import { state } from '~shared/decorators/state.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import { ExpansionPanelToggleEvent } from './expansion-panel.events.js';
 import styles from './expansion-panel.scss?inline';
@@ -37,7 +39,7 @@ export class ExpansionPanel extends SparkComponent {
    *
    * @default false
    */
-  @property({ type: Boolean, reflect: true })
+  @property({ type: Boolean, reflect: true, updated: 'recalcHeight' })
   accessor expanded = false;
 
   /**
@@ -60,20 +62,13 @@ export class ExpansionPanel extends SparkComponent {
     this.dispatchEvent(new ExpansionPanelToggleEvent(this.expanded));
   }
 
-  protected override update(changedProperties: PropertyValues): void {
-    super.update(changedProperties);
-    if (changedProperties.has('expanded')) {
-      this.recalcHeight();
-    }
-  }
-
   /**
    * Recalculates the height of the content area based on its scroll height and the {@link expanded} state.
    *
    * The {@link observeResize} decorator also automatically invokes this method when the content is resized.
    */
   @observeResize('.content-inner')
-  private recalcHeight(): void {
+  recalcHeight(): void {
     this.contentHeight = this.expanded && this.contentInner
       ? `${this.contentInner.scrollHeight}px`
       : '0';

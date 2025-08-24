@@ -1,6 +1,6 @@
-import { LitElement } from 'lit';
+import { LitElement, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
-import type { SparkColor } from './spark-component.interfaces.js';
+import type { SparkColor, SparkUpdatedWatch } from './spark-component.interfaces.js';
 
 /**
  * Abstract {@link SparkComponent} class that provides common properties and methods for theming and behavior.
@@ -40,9 +40,42 @@ export abstract class SparkComponent extends LitElement {
   @property({ type: String, reflect: true })
   accessor color: SparkColor | undefined = undefined;
 
+  #updatedWatch: SparkUpdatedWatch<this>[] = [];
+
   override connectedCallback(): void {
     super.connectedCallback();
     this.classList.add('spark');
+  }
+
+  protected override updated(changedProperties: PropertyValues): void {
+    super.updated(changedProperties);
+
+    for (const watch of this.#updatedWatch) {
+      if (changedProperties.has(watch.property)) {
+        watch.callback(changedProperties.get(watch.property));
+      }
+    }
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.#updatedWatch = []; // Avoid any potential memory leaks
+  }
+
+  onUpdated(
+    property: keyof this,
+    cb: (oldValue: this[typeof property]) => void
+  ): void {
+    this.#updatedWatch.push({ property, callback: cb });
+  }
+
+  offUpdated(
+    property: keyof this,
+    cb: (oldValue: this[typeof property]) => void
+  ): void {
+    this.#updatedWatch = this.#updatedWatch.filter(
+      (watch) => watch.property !== property || watch.callback !== cb
+    );
   }
 
 }
