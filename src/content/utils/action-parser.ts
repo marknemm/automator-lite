@@ -1,5 +1,5 @@
 import type { AutoRecordAction, KeyboardAction, MouseAction } from '~shared/models/auto-record.interfaces.js';
-import { bindTopWindow, isTopWindow, requestTopWindow } from '~shared/utils/window.js';
+import { listenTopWindow, requestTopWindow } from '~shared/utils/window.js';
 
 /**
  * A utility class for parsing and managing user actions during an active recording session.
@@ -22,8 +22,13 @@ export class ActionParser {
    * The message type for staging a record action in the top window.
    * Used to communicate between embedded iframes and the top window.
    */
-  static readonly #STAGE_RECORD_ACTION = 'mnStageRecordAction';
+  static readonly #STAGE_RECORD_ACTION = 'ALStageRecordAction';
 
+  /**
+   * The singleton instance of the {@link ActionParser} class.
+   *
+   * Initialized via invocation of the {@link ActionParser.init} method.
+   */
   static #instance: ActionParser | undefined;
 
   /**
@@ -50,24 +55,39 @@ export class ActionParser {
 
   /**
    * Constructs a new {@link ActionParser} instance.
-   * This should only be called by {@link ActionParser.init}.
+   *
+   * This should only be called by {@link ActionParser.init} to enforce singleton behavior.
    */
   protected constructor() {
     // Only top window should be building the auto record.
-    bindTopWindow(ActionParser.#STAGE_RECORD_ACTION, (event) =>
-      this.stageAction(event.data.payload)
-    );
+    listenTopWindow<AutoRecordAction>(ActionParser.#STAGE_RECORD_ACTION, (event) => {
+      this.#stagedActions.push(event.data.payload);
+    });
   }
 
+  /**
+   * Initializes the {@link ActionParser} instance.
+   *
+   * @returns The singleton instance of {@link ActionParser}.
+   */
   static init(): ActionParser {
-    ActionParser.#instance ??= new ActionParser();
-    return ActionParser.#instance;
+    return ActionParser.#instance ??= new ActionParser();
   }
 
+  /**
+   * Gets the staged {@link AutoRecordAction}s for the current recording session.
+   *
+   * These are the raw actions that have been staged during the recording.
+   */
   get stagedActions(): ReadonlyArray<AutoRecordAction> {
     return this.#stagedActions;
   }
 
+  /**
+   * Gets the committed {@link AutoRecordAction}s for the current recording session.
+   *
+   * These are preprocessed actions that are ready to be committed to an {@link AutoRecord}.
+   */
   get commitActions(): ReadonlyArray<AutoRecordAction> {
     return this.#commitActions;
   }
@@ -80,9 +100,7 @@ export class ActionParser {
    * @returns A {@link Promise} that resolves when the action is staged.
    */
   async stageAction(action: AutoRecordAction): Promise<void> {
-    isTopWindow() // Only stage actions in the top window.
-      ? this.#stagedActions.push(action)
-      : await requestTopWindow(ActionParser.#STAGE_RECORD_ACTION, action);
+    await requestTopWindow(ActionParser.#STAGE_RECORD_ACTION, action);
   }
 
   /**
@@ -110,7 +128,7 @@ export class ActionParser {
       key: lastKey,
       eventType: lastEventType,
     } = this.#commitActions[this.#commitActions.length - 1] as KeyboardAction;
-    if ( // If last action is keydown and either stopKey or modifer, then remove.
+    if ( // If last action is keydown and either stopKey or modifier, then remove.
       lastEventType === 'keydown' && (
            lastKey === this.stopKey
         || lastKey === this.stopModifier
@@ -123,6 +141,12 @@ export class ActionParser {
     return this.#commitActions;
   }
 
+  /**
+   * Commits a mouse action to the staged actions.
+   * This is used to handle mouse actions and deduplicate them if necessary.
+   *
+   * @param action The {@link MouseAction} representing the mouse action.
+   */
   #commitMouseAction(action: MouseAction): void {
     const { eventType } = action;
 
@@ -214,6 +238,12 @@ export class ActionParser {
     this.#commitActions.push(action); // Add the context menu action.
   }
 
+  /**
+   * Commits a keyboard action to the staged actions.
+   * This is used to handle keyboard actions and deduplicate them if necessary.
+   *
+   * @param action The {@link KeyboardAction} representing the keyboard action.
+   */
   #commitKeyboardAction(action: KeyboardAction): void {
     // Do not commit a modifier key if it is a modifier part of previous key.
     if (this.#isModifierForPrevKey(action)) return;
@@ -304,6 +334,11 @@ export class ActionParser {
     );
   }
 
+  /**
+   * Commits a script action to the staged actions.
+   *
+   * @param action The {@link AutoRecordAction} representing the script action.
+   */
   #commitScriptAction(action: AutoRecordAction): void {
     this.#commitActions.push(action);
   }

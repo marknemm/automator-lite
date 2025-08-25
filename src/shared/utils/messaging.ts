@@ -16,11 +16,14 @@ import { isSamePathname, isTopWindow } from './window.js';
  *   payload: { key: 'value' },
  * });
  * ```
+ *
+ * @template Req The type of the request payload.
+ * @template Resp The type of the response payload.
  */
-export async function sendMessage<R = void, T = unknown>(
-  message: SendMessage<T>
-): Promise<R[]> {
-  const responses: R[] = [];
+export async function sendMessage<Req = unknown, Resp = void>(
+  message: SendMessage<Req>
+): Promise<Resp[]> {
+  const responses: Promise<Resp>[] = [];
   const { tabsQueryInfo = { active: true, currentWindow: true } } = message;
 
   // Normalize contexts to an array.
@@ -37,14 +40,14 @@ export async function sendMessage<R = void, T = unknown>(
   // Send message to background, options, and popup contexts.
   if (contexts.find(ctx => ['background', 'options', 'popup'].includes(ctx)) || forward) {
     responses.push(
-      await chrome.runtime.sendMessage({
+      chrome.runtime.sendMessage({
         originContext: getExtensionContext(),
         originLocation: isBackground() ? 'background' : window.location,
         ...message,
         contexts: contexts.filter(ctx => ctx !== 'content'), // Use chrome.tabs below for content.
         forward, // If true, background will forward message to content scripts.
         tabsQueryInfo,
-      } as Message<T>)
+      } as Message<Req>)
     );
   }
 
@@ -53,20 +56,20 @@ export async function sendMessage<R = void, T = unknown>(
     const tabs = await queryTabs(tabsQueryInfo);
 
     for (const tab of tabs) {
-      if (tab?.id) {
-        responses.push(
-          await chrome.tabs.sendMessage(tab.id, {
-            originContext: getExtensionContext(),
-            originLocation: isBackground() ? 'background' : window.location,
-            ...message,
-            contexts: ['content'], // chrome.tabs API is only for content.
-            tabsQueryInfo,
-          } as Message<T>)
-        );
-      }
+      if (tab?.id == null) continue;
+      responses.push(
+        chrome.tabs.sendMessage(tab.id, {
+          originContext: getExtensionContext(),
+          originLocation: isBackground() ? 'background' : window.location,
+          ...message,
+          contexts: ['content'], // chrome.tabs API is only for content.
+          tabsQueryInfo,
+        } as Message<Req>)
+      );
     }
   }
 
+  console.log(responses.length);
   return Promise.all(responses);
 }
 
@@ -86,13 +89,16 @@ export async function sendMessage<R = void, T = unknown>(
  *   return 'Response data';
  * });
  * ```
+ *
+ * @template Req The type of the request payload.
+ * @template Resp The type of the response payload.
  */
-export function onMessage<T, R = unknown>(
+export function onMessage<Req = unknown, Resp = void>(
   route: string | RegExp,
-  callback: (message: Message<T>, sender: chrome.runtime.MessageSender) => Promise<R> | R,
+  callback: (message: Message<Req>, sender: chrome.runtime.MessageSender) => Promise<Resp> | Resp,
 ): () => void {
-  const listener = async (
-    message: Message<T>,
+  const listener = (
+    message: Message<Req>,
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ) => {
@@ -103,8 +109,11 @@ export function onMessage<T, R = unknown>(
 
     // Should listener handle the message based on route and context match?
     if (routeMatch && testContextMatch(message)) {
-      const result = await callback(message, sender);
-      sendResponse(result);
+      const result = callback(message, sender);
+      (result instanceof Promise)
+        ? result.then(sendResponse)
+        : sendResponse(result);
+      return true; // Signal that the sender should wait for the response.
     }
   };
 

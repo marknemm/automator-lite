@@ -3,7 +3,7 @@ import { isWindowDefined } from './window.js';
 
 /**
  * Gets the current {@link ExtensionContext} that this script is running in.
- * 
+ *
  * @returns The current {@link ExtensionContext} of this script.
  */
 export function getExtensionContext(): ExtensionContext {
@@ -16,7 +16,7 @@ export function getExtensionContext(): ExtensionContext {
 
 /**
  * Checks if this script is running in the context of the Chrome extension background page.
- * 
+ *
  * @returns `true` if running in the background context, otherwise `false`.
  */
 export function isBackground(): boolean {
@@ -25,7 +25,7 @@ export function isBackground(): boolean {
 
 /**
  * Checks if this script is running in the context of a content script.
- * 
+ *
  * @returns `true` if running in the content script context, otherwise `false`.
  */
 export function isContent(): boolean {
@@ -34,7 +34,7 @@ export function isContent(): boolean {
 
 /**
  * Checks if this script is running in the context of the Chrome extension options page.
- * 
+ *
  * @returns `true` if running in the options context, otherwise `false`.
  */
 export function isOptions(): boolean {
@@ -43,7 +43,7 @@ export function isOptions(): boolean {
 
 /**
  * Checks if this script is running in the context of the Chrome extension popup.
- * 
+ *
  * @returns `true` if running in the popup context, otherwise `false`.
  */
 export function isPopup(): boolean {
@@ -52,10 +52,10 @@ export function isPopup(): boolean {
 
 /**
  * Queries the current active {@link chrome.tabs.Tab Tab}.
- * 
+ *
  * `Note`: This function will alway return `undefined` if called from a content script,
  * as content scripts do not have access to the `chrome.tabs` API.
- * 
+ *
  * @returns The current active {@link chrome.tabs.Tab Tab} or `undefined` if not found.
  */
 export async function queryActiveTab(): Promise<chrome.tabs.Tab | undefined> {
@@ -64,10 +64,10 @@ export async function queryActiveTab(): Promise<chrome.tabs.Tab | undefined> {
 
 /**
  * Queries all {@link chrome.tabs.Tab Tab}s matching the given {@link queryInfo}.
- * 
+ *
  * `Note`: This function will alway return `[]` if called from a content script,
  * as content scripts do not have access to the `chrome.tabs` API.
- * 
+ *
  * @param queryInfo The {@link chrome.tabs.QueryInfo QueryInfo} for the {@link chrome.tabs.Tab Tab}s.
  * @returns An array of matching {@link chrome.tabs.Tab Tab}s or `[]` if none found.
  */
@@ -77,8 +77,6 @@ export async function queryTabs(
   if (isContent()) return Promise.resolve([]); // Not available in content scripts.
 
   return new Promise((resolve) => {
-    chrome.tabs.query(queryInfo, (tabs) => {
-      resolve(tabs);
-    });
+    chrome.tabs.query(queryInfo, resolve);
   });
 }

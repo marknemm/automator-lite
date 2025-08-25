@@ -4,6 +4,9 @@ import { type CodeEditorChangeEvent } from '~shared/components/code-editor.event
 import { Modal } from '~shared/components/modal.js';
 import { sparkButton } from '~shared/directives/spark-button.js';
 import styles from './scripting-modal.scss?inline';
+import { repeat } from 'lit/directives/repeat.js';
+import { Task } from '@lit/task';
+import { sendMessage } from '~shared/utils/messaging.js';
 
 @customElement('spark-scripting-modal')
 export class ScriptingModal extends Modal<string> {
@@ -20,6 +23,20 @@ export class ScriptingModal extends Modal<string> {
   @property({ type: String, attribute: false })
   accessor height: string = '80vh';
 
+  #windowLocationTask = new Task(this, {
+    task: async () => {
+      console.log('Sending getHref message');
+      const hrefs = await sendMessage<undefined, string>({
+        route: 'getHref',
+        contexts: ['content'],
+      });
+
+      console.log('Got getHrefs response: ', hrefs);
+      return hrefs;
+    },
+    args: () => [], // runs once
+  });
+
   protected override renderContent(): TemplateResult {
     return html`
       <div class="header">
@@ -28,6 +45,16 @@ export class ScriptingModal extends Modal<string> {
         </h2>
       </div>
       <div class="body">
+        <div>
+          <select>
+            ${this.#windowLocationTask.render({
+              pending: () => html`<option>${window.location.href}</option>`,
+              complete: (hrefs) => repeat(hrefs, (href) => html`
+                <option value="${href}">${href}</option>
+              `),
+            })}
+          </select>
+        </div>
         <spark-code-editor
           .value="${this.data ?? ''}"
           @change="${(event: CodeEditorChangeEvent) => this.#stagedCode = event.detail}"
