@@ -3,7 +3,7 @@
 import { isEqual } from 'lodash-es';
 import { isContent } from './extension.js';
 import type { State, StateChange, StateProp, StateSlice, StateSubset } from './state.interfaces.js';
-import { bindTopWindow, isTopWindow, requestTopWindow } from './window.js';
+import { WindowMessageRoutes, requestTopWindow } from './window.js';
 
 /**
  * Retrieves the {@link State} of the current page from Chrome storage.
@@ -85,27 +85,19 @@ function getStateSubset<Props extends (keyof State)[]>(
   }, {} as StateSubset<Props>);
 }
 
-if (isContent()) { // Top Window can only generate the UID for all state on the content page.
-  bindTopWindow('mnGetStateUid', getStateUid);
-}
-
 /**
  * Gets the {@link State} UID associated with the current tab.
  * @returns A {@link Promise} that resolves to the {@link State} UID for the current tab.
  */
 async function getStateUid(): Promise<string> {
-  return new Promise((resolve) => {
-    if (isContent()) {
-      isTopWindow() // Top Window can only generate the UID for all state on the content page.
-        ? resolve(window.location.hostname + window.location.pathname)
-        : resolve(requestTopWindow('mnGetStateUid'));
-    } else {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const url = new URL(tabs[0].url ?? '');
-        resolve(url.hostname + url.pathname);
-      });
-    }
-  });
+  return new Promise((resolve) =>
+    (isContent())
+      ? resolve(requestTopWindow(WindowMessageRoutes.GET_BASE_URL))
+      : chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          const url = new URL(tabs[0].url ?? '');
+          resolve(url.hostname + url.pathname);
+        })
+  );
 }
 
 export type * from './state.interfaces.js';

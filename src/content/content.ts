@@ -42,6 +42,11 @@ async function init() {
 
   onMessage('stopRecording', () =>
     recordingCtx.stop());
+
+  onMessage('getHref', () => {
+    console.log('Sending getHref response: ', window.location.href);
+    return window.location.href;
+  });
 }
 
 init().then().catch((error) => {

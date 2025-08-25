@@ -191,17 +191,17 @@ export class ActionExpansionPanel extends ExpansionPanel {
       <div class="footer">
         <button
           ${sparkButton()}
-          color="primary"
-          icon="edit"
-          title="Edit Action: ${name}"
-          @click="${async () => await this.#openScriptingModal()}"
-        ></button>
-        <button
-          ${sparkButton()}
           color="danger"
           icon="delete"
           title="Delete Action: ${name}"
           @click="${() => this.dispatchEvent(new DeleteActionEvent(this.action!))}"
+        ></button>
+        <button
+          ${sparkButton()}
+          color="primary"
+          icon="edit"
+          title="Edit Action: ${name}"
+          @click="${async () => await this.#openScriptingModal()}"
         ></button>
       </div>
     `;

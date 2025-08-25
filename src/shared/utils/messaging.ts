@@ -16,11 +16,14 @@ import { isSamePathname, isTopWindow } from './window.js';
  *   payload: { key: 'value' },
  * });
  * ```
+ *
+ * @template Req The type of the request payload.
+ * @template Resp The type of the response payload.
  */
-export async function sendMessage<R = void, T = unknown>(
-  message: SendMessage<T>
-): Promise<R[]> {
-  const responses: R[] = [];
+export async function sendMessage<Req = unknown, Resp = void>(
+  message: SendMessage<Req>
+): Promise<Resp[]> {
+  const responses: Resp[] = [];
   const { tabsQueryInfo = { active: true, currentWindow: true } } = message;
 
   // Normalize contexts to an array.
@@ -44,7 +47,7 @@ export async function sendMessage<R = void, T = unknown>(
         contexts: contexts.filter(ctx => ctx !== 'content'), // Use chrome.tabs below for content.
         forward, // If true, background will forward message to content scripts.
         tabsQueryInfo,
-      } as Message<T>)
+      } as Message<Req>)
     );
   }
 
@@ -53,17 +56,16 @@ export async function sendMessage<R = void, T = unknown>(
     const tabs = await queryTabs(tabsQueryInfo);
 
     for (const tab of tabs) {
-      if (tab?.id) {
-        responses.push(
-          await chrome.tabs.sendMessage(tab.id, {
-            originContext: getExtensionContext(),
-            originLocation: isBackground() ? 'background' : window.location,
-            ...message,
+      if (tab?.id == null) continue;
+      responses.push(
+        await chrome.tabs.sendMessage(tab.id, {
+          originContext: getExtensionContext(),
+          originLocation: isBackground() ? 'background' : window.location,
+          ...message,
             contexts: ['content'], // chrome.tabs API is only for content.
             tabsQueryInfo,
-          } as Message<T>)
-        );
-      }
+        } as Message<Req>)
+      );
     }
   }
 
@@ -86,13 +88,16 @@ export async function sendMessage<R = void, T = unknown>(
  *   return 'Response data';
  * });
  * ```
+ *
+ * @template Req The type of the request payload.
+ * @template Resp The type of the response payload.
  */
-export function onMessage<T, R = unknown>(
+export function onMessage<Req = unknown, Resp = void>(
   route: string | RegExp,
-  callback: (message: Message<T>, sender: chrome.runtime.MessageSender) => Promise<R> | R,
+  callback: (message: Message<Req>, sender: chrome.runtime.MessageSender) => Promise<Resp> | Resp,
 ): () => void {
   const listener = async (
-    message: Message<T>,
+    message: Message<Req>,
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ) => {
@@ -104,6 +109,7 @@ export function onMessage<T, R = unknown>(
     // Should listener handle the message based on route and context match?
     if (routeMatch && testContextMatch(message)) {
       const result = await callback(message, sender);
+      console.log('Sending response: ', result);
       sendResponse(result);
     }
   };

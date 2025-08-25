@@ -1,4 +1,6 @@
 import type { Nullish } from 'utility-types';
+import { isContent } from './extension.js';
+import type { WindowMessage, WindowResponse } from './window.interfaces.js';
 
 /**
  * Gets the topmost {@link Window} with the same origin of the current browsing context.
@@ -36,7 +38,7 @@ export function getParentWindow(win: Window | Nullish = getWindow()): Window | n
  * Gets the current {@link window} object if it is defined.
  * This is a safe way to access the {@link window} object,
  * as it checks if the {@link window} object is defined before accessing it.
- * 
+ *
  * @returns The current {@link window} object if it is defined, otherwise `undefined`.
  */
 export function getWindow(): Window | undefined {
@@ -46,7 +48,7 @@ export function getWindow(): Window | undefined {
 /**
  * Checks if the {@link window} object is defined.
  * The {@link window} object will not be defined in background scripts or service workers.
- * 
+ *
  * @returns `true` if the {@link window} object is defined, otherwise `false`.
  */
 export function isWindowDefined(): boolean {
@@ -77,7 +79,7 @@ export function isSameOrigin(frame: Window | HTMLIFrameElement | Nullish): boole
 
 /**
  * Checks if the given {@link location} has the same pathname as a given {@link frame}.
- * 
+ *
  * @param location The {@link Location} or pathname to check.
  * @param frame The {@link Window} or {@link HTMLIFrameElement} to check against.
  * @returns `true` if the pathnames match, otherwise `false`.
@@ -103,41 +105,47 @@ export function isSamePathname(
 /**
  * Binds a listener for messages sent to the top window.
  *
- * @param type The type of message to listen for.
+ * @param route The type of message to listen for.
  * @param callback The callback to invoke when a message is received.
  * This callback receives the message event and can optionally return a promise with the response data.
  * @returns A function to unbind the listener.
+ *
+ * @template Req The type of the request payload.
+ * @template Resp The type of the response payload.
  */
-export function bindTopWindow<T>(
-  type: string,
-  callback: (event: MessageEvent<{ type: string; payload: any }>) => Promise<T> | T
+export function listenTopWindow<Req = unknown, Resp = void>(
+  route: string,
+  callback: (event: WindowMessage<Req>) => Promise<Resp> | Resp
 ): () => void {
   if (!isTopWindow()) return () => {}; // Only listen if this is the top window.
-  return bindWindow(type, callback, getWindow()?.top);
+  return listenWindow(route, callback, getWindow()?.top);
 }
 
 /**
  * Binds a listener for messages sent to a specific {@link Window}.
  *
- * @param type The type of message to bind to.
+ * @param route The type of message to bind to.
  * @param callback The callback to invoke when a message of the given type is received.
  * This callback receives the message event and can optionally return a promise with the response data.
  * @param win The {@link Window} to bind the listener to. Defaults to the current {@link window}.
  * @returns A function to unbind the listener.
+ *
+ * @template Req The type of the request payload.
+ * @template Resp The type of the response payload.
  */
-export function bindWindow(
-  type: string,
-  callback: (event: MessageEvent<{ type: string; payload: any }>) => void,
+export function listenWindow<Req = unknown, Resp = void>(
+  route: string,
+  callback: (event: WindowMessage<Req>) => Promise<Resp> | Resp,
   win: Window | Nullish = getWindow()
 ): () => void {
   if (!win) return () => {}; // If win is explicitly null, do nothing.
 
   // Create a listener that will invoke the callback and respond with any result from the callback.
-  const requestListener = async (event: MessageEvent<{ type: string; payload: any; }>) => {
-    if (event.data.type === type) {
+  const requestListener = async (event: WindowMessage<Req>) => {
+    if (event.data.route === route) {
       const result = await callback(event);
       event.source?.postMessage({
-        type: `${type}_response`,
+        route: `${route}_response`,
         payload: result,
       }, { targetOrigin: '*' });
     }
@@ -151,76 +159,85 @@ export function bindWindow(
 /**
  * Sends a request message to the top {@link Window} and returns a promise that resolves to the response data.
  *
- * @param type The type of the message to request.
+ * @param route The type of the message to request.
  * @param payload The payload to send with the request.
  * @returns A {@link Promise} that resolves with the response payload.
+ *
+ * @template Req The type of the request payload.
+ * @template Resp The type of the response payload.
  */
-export async function requestTopWindow<T>(
-  type: string,
-  payload?: any,
-): Promise<T> {
-  return requestWindow<T>(type, payload, getWindow()?.top) as Promise<T>;
+export async function requestTopWindow<Req = unknown, Resp = void>(
+  route: string,
+  payload?: Req,
+): Promise<Resp> {
+  return requestWindow<Req, Resp>(route, payload, getWindow()?.top) as Promise<Resp>;
 }
 
 /**
  * Sends a request message to a specific {@link Window} and returns a promise that resolves to the response data.
  *
- * @param type The type of the message to request.
+ * @param route The type of the message to request.
  * @param payload The payload to send with the request.
  * @param win The {@link Window} to send the request to. Defaults to the current {@link window}.
  * @param targetOrigin The origin of windows to send the request to. Defaults to `'*'` for all origins.
  * @returns A {@link Promise} that resolves with the response payload.
+ *
+ * @template Req The type of the request payload.
+ * @template Resp The type of the response payload.
  */
-export async function requestWindow<T>(
-  type: string,
-  payload?: any,
+export async function requestWindow<Req = unknown, Resp = void>(
+  route: string,
+  payload?: Req,
   win: Window | Nullish = getWindow(),
   targetOrigin = '*'
-): Promise<T | undefined> {
+): Promise<Resp | undefined> {
   if (!win) return Promise.resolve(undefined); // If win is explicitly null, return undefined.
 
-  const result = (await requestWindows<T>(type, payload, [win], targetOrigin))[0];
+  const result = (await requestWindows<Req, Resp>(route, payload, [win], targetOrigin))[0];
   if (result.error) throw result.error;
 
-  return result.result;
+  return result.payload;
 }
 
 /**
  * Sends a request message to specific {@link Window}(s) and returns a promise that resolves to the response data.
  *
- * @param type The type of the message to request.
+ * @param route The type of the message to request.
  * @param payload The payload to send with the request.
  * @param windows The {@link Window}(s) to send the request to.
  * If no windows are provided, it defaults to the current document's iframes.
  * @param targetOrigin The origin to send the request to. Defaults to `'*'` for all origins.
  * @returns A {@link Promise} that resolves with the response payload from each {@link Window}.
+ *
+ * @template Req The type of the request payload.
+ * @template Resp The type of the response payload.
  */
-export async function requestWindows<T>(
-  type: string,
-  payload?: any,
+export async function requestWindows<Req = unknown, Resp = void>(
+  route: string,
+  payload?: Req,
   windows: Window[] = [],
   targetOrigin = '*',
-): Promise<{ result?: T, error?: Error }[]> {
+): Promise<WindowResponse<Resp>[]> {
   // If no windows are provided, use the current document's iframes.
   if (windows.length === 0) {
     windows = Array.from(document.querySelectorAll('iframe'))
       .filter((iframe) => !!iframe.contentWindow)
       .map((iframe) => iframe.contentWindow!);
   }
-  const results: Promise<{ result?: T, error?: Error }>[] = [];
+  const results: Promise<WindowResponse<Resp>>[] = [];
 
   for (const win of windows) {
     results.push(new Promise((resolve) => {
       // Setup listener for the response.
-      const responseListener = (event: MessageEvent<{ type: string; payload: T, error?: Error }>) => {
-        if (event.data.type === `${type}_response`) {
+      const responseListener = (message: WindowMessage<Resp>) => {
+        if (message.data.route === `${route}_response`) {
           // Remove the listener once we receive the response.
           window.removeEventListener('message', responseListener);
 
           // Resolve with the payload or error.
-          (!event.data.error)
-            ? resolve({ result: event.data.payload })
-            : resolve({ error: event.data.error });
+          (!message.data.error)
+            ? resolve({ payload: message.data.payload })
+            : resolve({ error: message.data.error });
         }
       };
 
@@ -229,8 +246,38 @@ export async function requestWindows<T>(
     }));
 
     // Send the request message to the window.
-    win.postMessage({ type, payload }, targetOrigin);
+    win.postMessage({ route, payload }, targetOrigin);
   }
 
   return Promise.all(results);
 }
+
+/**
+ * Types of predefined inter-window messages.
+ */
+export const WindowMessageRoutes = {
+
+  /**
+   * Gets the base URL of any contacted windows.
+   */
+  GET_BASE_URL: 'ALgetBaseUrl',
+
+  /**
+   * Gets the href of any contacted windows.
+   */
+  GET_HREF: 'ALgetHref',
+
+  /**
+   * Gets the {@link URL} of any contacted windows.
+   */
+  GET_URL: 'ALgetURL',
+
+};
+
+// Register some default bindings for basic window properties.
+if (isContent()) {
+  listenWindow(WindowMessageRoutes.GET_BASE_URL, () => window.location.hostname + window.location.pathname);
+  listenWindow(WindowMessageRoutes.GET_HREF, () => window.location.href);
+}
+
+export type * from './window.interfaces.js';
