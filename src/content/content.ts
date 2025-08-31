@@ -3,12 +3,11 @@
 import '@webcomponents/custom-elements'; // MUST be first!
 
 import { type AutoRecordAction, type AutoRecordState, type RecordingType } from '~shared/models/auto-record.js';
-import { onMessage, sendMessage, type Message } from '~shared/utils/messaging.js';
+import { onMessage, type Message } from '~shared/utils/messaging.js';
 import fontStyles from '../shared/styles/fonts.scss?inline';
 import './content.scss';
 import RecordExecutor from './utils/record-executor.js';
 import RecordingContext from './utils/recording-context.js';
-import { isTopWindow } from '~shared/utils/window.js';
 
 /**
  * Initializes the content script.

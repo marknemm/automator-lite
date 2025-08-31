@@ -61,7 +61,9 @@ export class ActionParser {
   protected constructor() {
     // Only top window should be building the auto record.
     listenTopWindow<AutoRecordAction>(ActionParser.#STAGE_RECORD_ACTION, (event) => {
-      this.#stagedActions.push(event.data.payload);
+      if (event.data.payload) {
+        this.#stagedActions.push(event.data.payload!);
+      }
     });
   }
 

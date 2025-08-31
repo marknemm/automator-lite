@@ -90,9 +90,9 @@ function getStateSubset<Props extends (keyof State)[]>(
  * @returns A {@link Promise} that resolves to the {@link State} UID for the current tab.
  */
 async function getStateUid(): Promise<string> {
-  return new Promise((resolve) =>
-    (isContent())
-      ? resolve(requestTopWindow(WindowMessageRoutes.GET_BASE_URL))
+  return new Promise(async (resolve) =>
+    isContent()
+      ? resolve((await requestTopWindow<void, string>(WindowMessageRoutes.GET_BASE_URL)) ?? '')
       : chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           const url = new URL(tabs[0].url ?? '');
           resolve(url.hostname + url.pathname);
