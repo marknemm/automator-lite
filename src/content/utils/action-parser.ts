@@ -1,5 +1,5 @@
 import type { AutoRecordAction, KeyboardAction, MouseAction } from '~shared/models/auto-record.interfaces.js';
-import { listenTopWindow, requestTopWindow } from '~shared/utils/window.js';
+import { listenTopWindow, sendTopWindow } from '~shared/utils/window-messaging.js';
 
 /**
  * A utility class for parsing and managing user actions during an active recording session.
@@ -102,7 +102,7 @@ export class ActionParser {
    * @returns A {@link Promise} that resolves when the action is staged.
    */
   async stageAction(action: AutoRecordAction): Promise<void> {
-    await requestTopWindow(ActionParser.#STAGE_RECORD_ACTION, action);
+    await sendTopWindow(ActionParser.#STAGE_RECORD_ACTION, action);
   }
 
   /**
@@ -129,7 +129,7 @@ export class ActionParser {
     const {
       key: lastKey,
       eventType: lastEventType,
-    } = this.#commitActions[this.#commitActions.length - 1] as KeyboardAction;
+    } = (this.#commitActions?.[this.#commitActions.length - 1] ?? {}) as KeyboardAction;
     if ( // If last action is keydown and either stopKey or modifier, then remove.
       lastEventType === 'keydown' && (
            lastKey === this.stopKey

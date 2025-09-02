@@ -6,7 +6,7 @@ import { sparkButton } from '~shared/directives/spark-button.js';
 import styles from './scripting-modal.scss?inline';
 import { repeat } from 'lit/directives/repeat.js';
 import { Task } from '@lit/task';
-import { sendMessage } from '~shared/utils/messaging.js';
+import { sendExtension } from '~shared/utils/extension-messaging.js';
 
 @customElement('spark-scripting-modal')
 export class ScriptingModal extends Modal<string> {
@@ -25,8 +25,7 @@ export class ScriptingModal extends Modal<string> {
 
   #windowLocationTask = new Task(this, {
     task: async () => {
-      console.log('Sending getHref message');
-      const hrefs = await sendMessage<undefined, string>({
+      const hrefs = await sendExtension<undefined, string>({
         route: 'getHref',
         contexts: ['content'],
       });
@@ -49,7 +48,7 @@ export class ScriptingModal extends Modal<string> {
           <select>
             ${this.#windowLocationTask.render({
               pending: () => html`<option>${window.location.href}</option>`,
-              complete: (hrefs) => repeat(hrefs, (href) => html`
+              complete: ({ payload }) => repeat(payload, (href) => html`
                 <option value="${href}">${href}</option>
               `),
             })}

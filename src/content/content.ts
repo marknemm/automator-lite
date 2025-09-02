@@ -3,7 +3,7 @@
 import '@webcomponents/custom-elements'; // MUST be first!
 
 import { type AutoRecordAction, type AutoRecordState, type RecordingType } from '~shared/models/auto-record.js';
-import { onMessage, type Message } from '~shared/utils/messaging.js';
+import { listenExtension, type ExtensionRequestMessage } from '~shared/utils/extension-messaging.js';
 import fontStyles from '../shared/styles/fonts.scss?inline';
 import './content.scss';
 import RecordExecutor from './utils/record-executor.js';
@@ -28,23 +28,29 @@ async function init() {
   const recordingCtx = await RecordingContext.init();
 
   // Listen for messages from popup or background script.
-  onMessage('configureRecord', async ({ payload }: Message<AutoRecordState>) =>
-    recordingCtx.configureAndSave(payload));
+  listenExtension('configureRecord', ({ payload }: ExtensionRequestMessage<AutoRecordState>) => {
+    recordingCtx.configureAndSave(payload);
+  });
 
-  onMessage('executeRecord', ({ payload }: Message<AutoRecordState>) =>
-    recordExecutor.execRecord(payload));
+  listenExtension('executeRecord', ({ payload }: ExtensionRequestMessage<AutoRecordState>) => {
+    recordExecutor.execRecord(payload);
+  });
 
-  onMessage('executeRecordAction', ({ payload }: Message<AutoRecordAction>) =>
-    recordExecutor.execAction(payload));
+  listenExtension('executeRecordAction', ({ payload }: ExtensionRequestMessage<AutoRecordAction>) => {
+    recordExecutor.execAction(payload);
+  });
 
-  onMessage('startRecording', ({ payload }: Message<RecordingType>) =>
-    recordingCtx.start(payload));
+  listenExtension('startRecording', ({ payload }: ExtensionRequestMessage<RecordingType>) => {
+    recordingCtx.start(payload);
+  });
 
-  onMessage('stopRecording', () =>
-    recordingCtx.stop());
+  listenExtension('stopRecording', () => {
+    recordingCtx.stop();
+  });
 
-  onMessage('getHref', () =>
-    window.location.href);
+  listenExtension('getHref', () => {
+    return window.location.href;
+  });
 }
 
 init().then().catch((error) => {

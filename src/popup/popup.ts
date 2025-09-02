@@ -5,7 +5,7 @@ import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import AutoRecord, { type RecordingType } from '~shared/models/auto-record.js';
-import { sendMessage } from '~shared/utils/messaging.js';
+import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
@@ -30,7 +30,7 @@ export class Popup extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    sendMessage({
+    sendExtension({
       route: 'stopRecording',
       contexts: ['content'],
     });
@@ -45,13 +45,14 @@ export class Popup extends LitElement {
    *
    * @param record - The {@link AutoRecord} to configure.
    */
-  #configureRecord(record: AutoRecord): void {
-    sendMessage({
+  async #configureRecord(record: AutoRecord): Promise<void> {
+    await sendExtension({
       route: 'configureRecord',
       contexts: ['content'],
       topFrameOnly: true, // Only show config dialog in the top content window.
       payload: record.state,
     });
+
     window.close();
   }
 
@@ -96,12 +97,13 @@ export class Popup extends LitElement {
    *
    * @param action - The action that was selected.
    */
-  #onAddActionSelect(recordingType: RecordingType): void {
-    sendMessage({
+  async #onAddActionSelect(recordingType: RecordingType): Promise<void> {
+    await sendExtension({
       route: 'startRecording',
       contexts: ['content'],
       payload: recordingType,
     });
+
     window.close();
   }
 

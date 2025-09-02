@@ -3,7 +3,7 @@
 import { isEqual } from 'lodash-es';
 import { isContent } from './extension.js';
 import type { State, StateChange, StateProp, StateSlice, StateSubset } from './state.interfaces.js';
-import { WindowMessageRoutes, requestTopWindow } from './window.js';
+import { sendTopWindow, WindowMessageRoutes } from './window-messaging.js';
 
 /**
  * Retrieves the {@link State} of the current page from Chrome storage.
@@ -92,7 +92,7 @@ function getStateSubset<Props extends (keyof State)[]>(
 async function getStateUid(): Promise<string> {
   return new Promise(async (resolve) =>
     isContent()
-      ? resolve((await requestTopWindow<void, string>(WindowMessageRoutes.GET_BASE_URL)) ?? '')
+      ? resolve((await sendTopWindow<void, string>(WindowMessageRoutes.GET_BASE_URL)) ?? '')
       : chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           const url = new URL(tabs[0].url ?? '');
           resolve(url.hostname + url.pathname);

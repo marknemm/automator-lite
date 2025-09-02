@@ -4,7 +4,7 @@ import { RecordingInfoPanel } from '~content/components/recording-info-panel.js'
 import type { AutoRecordAction, AutoRecordState, KeyboardAction, KeyboardEventType, MouseAction, MouseEventType, RecordingType, ScriptAction } from '~shared/models/auto-record.interfaces.js';
 import { AutoRecord } from '~shared/models/auto-record.js';
 import { ExtensionOptions } from '~shared/models/extension-options.js';
-import { sendMessage } from '~shared/utils/messaging.js';
+import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { type MountContext } from '~shared/utils/mount.js';
 import { isTopWindow } from '~shared/utils/window.js';
 import { ActionParser } from './action-parser.js';
@@ -115,7 +115,7 @@ export class RecordingContext {
    *
    * @param recordingType - The {@link RecordingType} to start. Defaults to `'Standard'`.
    */
-  async start(recordingType: RecordingType = 'Standard'): Promise<void> {
+  start(recordingType: RecordingType = 'Standard'): void {
     if (this.active) return; // Prevent starting if already active.
     this.#activeRecordingType = recordingType;
 
@@ -124,7 +124,7 @@ export class RecordingContext {
         this.#startStandardRecording();
         break;
       case 'Scripting':
-        await this.#startScripting();
+        this.#startScripting();
         break;
     }
   }
@@ -345,7 +345,7 @@ export class RecordingContext {
 
   async #triggerStopRecording(): Promise<void> {
     // Send message to all frames to stop recording.
-    await sendMessage({
+    await sendExtension({
       route: 'stopRecording',
       contexts: ['content'],
     });

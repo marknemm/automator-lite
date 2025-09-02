@@ -4,9 +4,9 @@
   "version": "1.0",
   "manifest_version": 3,
   "permissions": [
-    "activeTab",
-    "scripting",
-    "storage"
+    "storage",
+    "tabs",
+    "webNavigation"
   ],
   "background": {
     "service_worker": "dist/background/background.js"
@@ -44,10 +44,6 @@
   "web_accessible_resources": [
     {
       "resources": ["dist/fonts/*"],
-      "matches": ["<all_urls>"]
-    },
-    {
-      "resources": ["dist/lazy/*"],
       "matches": ["<all_urls>"]
     },
     {
