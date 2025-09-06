@@ -1,4 +1,4 @@
-import { getExtensionContext, isBackground, isContent, getAllFrames, queryTabs } from './extension.js';
+import { getExtensionContext, isBackground, isContent, getAllFrames, queryTabs, GetAllFrameResultDetails } from './extension.js';
 import type { ExtensionContext, ExtensionRequestMessage, ExtensionRequest, ExtensionRequestHandler, ExtensionResponseMessage, ExtensionResponse } from './extension-messaging.interfaces.js';
 import { getBaseURL, isSameBaseUrl, isTopWindow } from './window.js';
 
@@ -40,13 +40,16 @@ export async function sendExtension<Req = unknown, Resp = void>(
   if (contexts.includes('content') && !isContent()) { // Content cannot access chrome.tabs API (background forwards).
     const destinations = await getTabMessageDestinations(message);
 
-    for (const { tabId, frameId } of destinations) {
+    for (const { tabId, documentId, frameId } of destinations) {
       responsePromises.push(
         chrome.tabs.sendMessage(
           tabId,
           message,
-          frameId ? { frameId } : {}
-        ).catch(() => undefined) // Ignore errors if frame does not have the content script.
+          (documentId || frameId) ? { documentId, frameId } : {}
+        ).catch((err) => {
+          console.error(err);
+          return undefined; // Ignore errors if frame does not have the content script.
+        })
       );
     }
   }
@@ -109,23 +112,18 @@ function toMessage<T>(request: ExtensionRequest<T>): ExtensionRequestMessage<T> 
  */
 async function getTabMessageDestinations(
   message: ExtensionRequestMessage
-): Promise<{ tabId: number; frameId?: number; }[]> {
+): Promise<(Partial<GetAllFrameResultDetails> & { tabId: number })[]> {
   const { tabsQueryInfo } = message;
-  const destinations: { tabId: number; frameId?: number; }[] = [];
+  const destinations: (Partial<GetAllFrameResultDetails> & { tabId: number })[] = [];
 
   const tabs = await queryTabs(tabsQueryInfo);
   for (const tab of tabs) {
     if (tab?.id == null) continue;
 
     if (chrome.webNavigation) {
-      const frames = await getAllFrames({
-        tabId: tab.id,
-        filter: message.frameLocations.length
-          ? frame => !!message.frameLocations.find(loc => isSameBaseUrl(loc, frame.url))
-          : undefined,
-      });
+      const frames = await getAllFrames({ tabId: tab.id });
       for (const frame of frames) {
-        destinations.push({ tabId: tab.id, frameId: frame.frameId });
+        destinations.push({ ...frame, tabId: tab.id });
       }
     } else {
       destinations.push({ tabId: tab.id }); // No frameId, send to tab in general.
@@ -159,11 +157,11 @@ export function listenExtension<Req = unknown, Resp = void>(
   route: string | RegExp,
   handler: ExtensionRequestHandler<Req, Resp>,
 ): () => void {
-  const listener = async (
+  const listener = (
     message: ExtensionRequestMessage<Req>,
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
-  ) => {
+  ): boolean => {
     // Does message route match this listener's route?
     const routeMatch = message.route && ((typeof route === 'string')
       ? ['*', message.route.trim()].includes(route.trim())
@@ -171,23 +169,29 @@ export function listenExtension<Req = unknown, Resp = void>(
 
     // Should listener handle the message based on route and context match?
     if (routeMatch && testContextMatch(message)) {
-      console.log('Handling message:', message);
-      const result = await handler(message, sender);
+      (async () => {
+        const result = await handler(message, sender);
 
-      const forwardedMessages = (message.forward && isBackground())
-        ? (await sendExtension<Req, Resp>(message)).messages
-        : [];
+        const forwardedMessages = (message.forward && isBackground())
+          ? (await sendExtension<Req, Resp>({
+              ...message,
+              contexts: ['content'],
+            })).messages
+          : [];
 
-      const responseMessage: ExtensionResponseMessage<Resp> = {
-        ...message,
-        forwardedMessages,
-        payload: result,
-        responderContext: getExtensionContext(),
-        responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
-      };
-      sendResponse(responseMessage);
-      return true; // Signal that the sender should wait for the response.
+        const responseMessage: ExtensionResponseMessage<Resp> = {
+          ...message,
+          forwardedMessages,
+          payload: result,
+          responderContext: getExtensionContext(),
+          responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
+        };
+        sendResponse(responseMessage);
+      })();
+      return true; // Sender should wait for the response.
     }
+
+    return false; // Sender should not wait for the response.
   };
 
   chrome.runtime.onMessage.addListener(listener);
