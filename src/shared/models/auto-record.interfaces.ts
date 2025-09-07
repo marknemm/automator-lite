@@ -67,12 +67,12 @@ export interface AutoRecordAction {
   actionType: AutoRecordActionType;
 
   /**
-   * The {@link Location} of the {@link Window} where the action was recorded.
+   * The `href` of the {@link Window} where the action was recorded.
    * Determines the context in which the action will be replayed.
    *
    * This can be from a top-level {@link Window} or an embedded {@link HTMLIFrameElement}.
    */
-  frameLocation: Location;
+  frameHref: string;
 
   /**
    * The timestamp (ms since epoch) of when the action was recorded.

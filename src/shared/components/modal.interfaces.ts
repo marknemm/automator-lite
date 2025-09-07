@@ -68,7 +68,7 @@ export interface ModalOptions<D = unknown, R = D> {
  * @template D - The type of data that can be passed to the modal when it is opened.
  * @template R - The type of result that can be passed back when the modal is closed.
  */
-export type StaticModalOptions<D, R> = Omit<ModalOptions<D, R>, 'content'>;
+export type StaticModalOptions<D = unknown, R = D> = Omit<ModalOptions<D, R>, 'content'>;
 
 /**
  * Contextual data for controlling the modal.

@@ -114,14 +114,19 @@ export type ExtensionRequestHandler<Req = unknown, Resp = void> =
 export interface ExtensionResponseMessage<T> {
 
   /**
-   * The payload of the response message.
+   * The {@link Error} that occurred while processing the message.
    */
-  payload?: T;
+  error?: any;
 
   /**
    * The {@link ExtensionResponseMessage} objects rendered by any forwarded messages.
    */
   forwardedMessages: ExtensionResponseMessage<T>[];
+
+  /**
+   * The payload of the response message.
+   */
+  payload?: T;
 
   /**
    * The {@link ExtensionContext} from which the response originated.

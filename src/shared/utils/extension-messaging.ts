@@ -170,23 +170,35 @@ export function listenExtension<Req = unknown, Resp = void>(
     // Should listener handle the message based on route and context match?
     if (routeMatch && testContextMatch(message)) {
       (async () => {
-        const result = await handler(message, sender);
+        try {
+          const result = await handler(message, sender);
 
-        const forwardedMessages = (message.forward && isBackground())
-          ? (await sendExtension<Req, Resp>({
-              ...message,
-              contexts: ['content'],
-            })).messages
-          : [];
+          const forwardedMessages = (message.forward && isBackground())
+            ? (await sendExtension<Req, Resp>({
+                ...message,
+                contexts: ['content'],
+              })).messages
+            : [];
 
-        const responseMessage: ExtensionResponseMessage<Resp> = {
-          ...message,
-          forwardedMessages,
-          payload: result,
-          responderContext: getExtensionContext(),
-          responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
-        };
-        sendResponse(responseMessage);
+          const responseMessage: ExtensionResponseMessage<Resp> = {
+            ...message,
+            forwardedMessages,
+            payload: result,
+            responderContext: getExtensionContext(),
+            responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
+          };
+          sendResponse(responseMessage);
+        } catch (error) {
+          const errorMessage: ExtensionResponseMessage<Resp> = {
+            ...message,
+            error,
+            forwardedMessages: [],
+            payload: undefined,
+            responderContext: getExtensionContext(),
+            responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
+          };
+          sendResponse(errorMessage);
+        }
       })();
       return true; // Sender should wait for the response.
     }

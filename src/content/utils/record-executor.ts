@@ -3,7 +3,7 @@ import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
 import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { onStateChange, type AutoRecordState } from '~shared/utils/state.js';
-import { isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
+import { getBaseURL, isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
 import { ScriptInterpreter } from './script-interpreter.js';
 
 /**
@@ -172,11 +172,11 @@ export class RecordExecutor {
     if (!action) return;
 
     // If the action is not in the current frame, send a message to execute it in the correct frame.
-    if (!isSameBaseUrl(action.frameLocation)) {
+    if (!isSameBaseUrl(action.frameHref)) {
       await sendExtension({
         route: 'executeRecordAction',
         contexts: ['content'],
-        frameLocations: action.frameLocation,
+        frameLocations: getBaseURL(action.frameHref),
         payload: action,
       });
       return; // Do not execute in current frame.

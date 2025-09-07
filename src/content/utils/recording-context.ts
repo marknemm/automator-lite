@@ -9,7 +9,7 @@ import { type MountContext } from '~shared/utils/mount.js';
 import { isTopWindow } from '~shared/utils/window.js';
 import { ActionParser } from './action-parser.js';
 import { deriveElementSelector } from './element-analysis.js';
-import { ScriptingModal } from '~content/components/scripting-modal.js';
+import { ScriptingModal, ScriptingModalData } from '~content/components/scripting-modal.js';
 import { ScriptCompiler } from './script-compiler.js';
 
 /**
@@ -149,7 +149,7 @@ export class RecordingContext {
 
   async #startScripting() {
     if (isTopWindow()) {
-      const code = await ScriptingModal.open<string>();
+      const code = await ScriptingModal.open();
       if (code) {
         this.#stageScriptAction(code);
       }
@@ -252,7 +252,7 @@ export class RecordingContext {
         y: event.y,
       },
       eventType: event.type as MouseEventType,
-      frameLocation: JSON.parse(JSON.stringify(window.location)),
+      frameHref: window.location.href,
       modifierKeys: {
         alt: event.altKey,
         ctrl: event.ctrlKey,
@@ -271,17 +271,18 @@ export class RecordingContext {
   /**
    * Stages a {@link ScriptAction} that can later be committed to a saved {@link AutoRecord}.
    *
-   * @param code - The script code to stage.
+   * @param code - The script code to compile and stage.
+   * @param frameHref - The href of the frame where the code will be executed.
    * @return A {@link Promise} that resolves when the action is staged.
    */
-  async #stageScriptAction(code: string): Promise<void> {
+  async #stageScriptAction({ code, frameHref }: ScriptingModalData): Promise<void> {
     const compiledCode = this.#scriptCompiler.compile(code);
 
     const scriptAction: ScriptAction = {
       actionType: 'Script',
       code,
       compiledCode,
-      frameLocation: JSON.parse(JSON.stringify(window.location)),
+      frameHref,
       name: '', // Can be filled within AutoRecordConfigModal.
       timestamp: new Date().getTime(),
     };
@@ -326,7 +327,7 @@ export class RecordingContext {
     const keyAction: KeyboardAction = {
       actionType: 'Keyboard',
       eventType: event.type as KeyboardEventType,
-      frameLocation: JSON.parse(JSON.stringify(window.location)),
+      frameHref: window.location.href,
       key: event.key,
       modifierKeys: {
         alt: event.altKey,
