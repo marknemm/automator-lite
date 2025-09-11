@@ -87,7 +87,7 @@ export class RecordExecutor {
       : [];
 
     RecordExecutor.#instance = new RecordExecutor(records);
-    RecordExecutor.#instance.#scriptInterpreter = ScriptInterpreter.init();
+    RecordExecutor.#instance.#scriptInterpreter = await ScriptInterpreter.init();
     return RecordExecutor.#instance;
   }
 
