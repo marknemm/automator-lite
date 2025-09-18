@@ -5,7 +5,6 @@ export default [
     ignores: [
       'dist/',
       'node_modules/',
-      'js-interpreter.js',
     ],
   },
   ...tseslint.configs.recommended,

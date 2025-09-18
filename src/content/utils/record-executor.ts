@@ -4,7 +4,6 @@ import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAct
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { onStateChange, type AutoRecordState } from '~shared/utils/state.js';
 import { getBaseURL, isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
-import { ScriptInterpreter } from './script-interpreter.js';
 
 /**
  * Executes and schedules {@link AutoRecord} instances in the current document.
@@ -29,11 +28,6 @@ export class RecordExecutor {
    * The key is the {@link AutoRecordUid}, and the value is the interval ID.
    */
   readonly #recordScheduleRegistry = new Map<AutoRecordUid, number>();
-
-  /**
-   * The {@link ScriptInterpreter} instance used to execute user scripts.
-   */
-  #scriptInterpreter!: ScriptInterpreter;
 
   /**
    * Constructs a new {@link RecordExecutor} instance.
@@ -86,8 +80,12 @@ export class RecordExecutor {
       ? await AutoRecord.loadMany()
       : [];
 
+    await chrome.userScripts.configureWorld({
+      // csp: '',
+      messaging: true,
+    });
+
     RecordExecutor.#instance = new RecordExecutor(records);
-    RecordExecutor.#instance.#scriptInterpreter = await ScriptInterpreter.init();
     return RecordExecutor.#instance;
   }
 
@@ -244,7 +242,23 @@ export class RecordExecutor {
    * @return A {@link Promise} that resolves when the script is finished executing.
    */
   async #execScriptAction(action: ScriptAction): Promise<void> {
-    await this.#scriptInterpreter.run(action.compiledCode);
+    const script = (await chrome.userScripts.getScripts({ ids: [action.name] }))[0];
+
+    if (!script) {
+      await chrome.userScripts.register([{
+        allFrames: true,
+        id: action.name,
+        js: [{ code: action.compiledCode }],
+        matches: [action.frameHref],
+        world: 'MAIN',
+      }]);
+    } else {
+      await chrome.userScripts.update([{
+        ...script,
+        js: [{ code: action.compiledCode }],
+        matches: [action.frameHref],
+      }]);
+    }
   }
 
 }
