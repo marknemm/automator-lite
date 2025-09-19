@@ -184,8 +184,14 @@ export class RecordExecutor {
     switch (action.actionType) {
       case 'Mouse':    await this.#execMouseAction(action as MouseAction);       break;
       case 'Keyboard': await this.#execKeyboardAction(action as KeyboardAction); break;
-      case 'Script':   await this.#execScriptAction(action as ScriptAction);     break;
-      default:         throw new Error(`Unsupported action type: ${action.actionType}`);
+      case 'Script': // Script actions must be executed from background context due to userScripts API.
+        await sendExtension({
+          route: 'execScriptAction',
+          contexts: ['background'],
+          payload: action,
+        });
+        break;
+      default: throw new Error(`Unsupported action type: ${action.actionType}`);
     }
   }
 
@@ -233,32 +239,6 @@ export class RecordExecutor {
 
     const keydownEvent = new KeyboardEvent(action.eventType, eventOptions);
     target.dispatchEvent(keydownEvent);
-  }
-
-  /**
-   * Executes a script action by injecting a script element into the DOM.
-   *
-   * @param action - The {@link ScriptAction} to execute.
-   * @return A {@link Promise} that resolves when the script is finished executing.
-   */
-  async #execScriptAction(action: ScriptAction): Promise<void> {
-    const script = (await chrome.userScripts.getScripts({ ids: [action.name] }))[0];
-
-    if (!script) {
-      await chrome.userScripts.register([{
-        allFrames: true,
-        id: action.name,
-        js: [{ code: action.compiledCode }],
-        matches: [action.frameHref],
-        world: 'MAIN',
-      }]);
-    } else {
-      await chrome.userScripts.update([{
-        ...script,
-        js: [{ code: action.compiledCode }],
-        matches: [action.frameHref],
-      }]);
-    }
   }
 
 }

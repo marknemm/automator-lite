@@ -1,5 +1,6 @@
-import { getExtensionContext, isBackground, isContent, getAllFrames, queryTabs, GetAllFrameResultDetails } from './extension.js';
-import type { ExtensionContext, ExtensionRequestMessage, ExtensionRequest, ExtensionRequestHandler, ExtensionResponseMessage, ExtensionResponse } from './extension-messaging.interfaces.js';
+import type { ExtensionContext, ExtensionRequest, ExtensionRequestHandler, ExtensionRequestMessage, ExtensionResponse, ExtensionResponseMessage } from './extension-messaging.interfaces.js';
+import { GetAllFrameResultDetails, getAllFrames, getExtensionContext, isBackground, isContent, queryTabs } from './extension.js';
+import { sendTopWindow, WindowMessageRoutes } from './window-messaging.js';
 import { getBaseURL, isSameBaseUrl, isTopWindow } from './window.js';
 
 /**
@@ -26,7 +27,7 @@ export async function sendExtension<Req = unknown, Resp = void>(
   const responsePromises: Promise<ExtensionResponseMessage<Resp>>[] = [];
 
   // Normalize the request to a message.
-  const message = toMessage(request);
+  const message = await toMessage(request);
   const { contexts } = message;
 
   // Send message to background, options, and popup contexts.
@@ -76,7 +77,7 @@ export async function sendExtension<Req = unknown, Resp = void>(
  *
  * @template T The type of the request/message payload.
  */
-function toMessage<T>(request: ExtensionRequest<T>): ExtensionRequestMessage<T> {
+async function toMessage<T>(request: ExtensionRequest<T>): Promise<ExtensionRequestMessage<T>> {
   // Normalize to array of contexts.
   const contexts: ExtensionContext[] = request.contexts?.length
     ? [request.contexts].flat()
@@ -96,9 +97,12 @@ function toMessage<T>(request: ExtensionRequest<T>): ExtensionRequestMessage<T> 
       ? [request.frameLocations].flat().map(getBaseURL)
       : [],
     senderContext: getExtensionContext(),
-    senderFrameLocation: isBackground()
+    senderFrameHref: isBackground()
       ? 'background'
-      : getBaseURL(),
+      : document.location.href,
+    senderTopHref: isBackground()
+      ? 'background'
+      : await sendTopWindow<never, string>(WindowMessageRoutes.GET_HREF) ?? document.location.href,
     tabsQueryInfo: request.tabsQueryInfo
       ?? { active: true, currentWindow: true }, // Default to active tab in current window.
   };

@@ -14,7 +14,7 @@ export class ScriptingModal extends Modal<ScriptingModalData> {
 
   static styles = [unsafeCSS(styles)];
 
-  #frameUrl = window.location.href;
+  #frameHref = window.location.href;
   #code = '';
 
   /** @default '80vw' */
@@ -62,7 +62,7 @@ export class ScriptingModal extends Modal<ScriptingModalData> {
       </div>
       <div class="body">
         <div>
-          <select @change="${(event: Event) => this.#frameUrl = (event.target as HTMLSelectElement).value}">
+          <select @change="${(event: Event) => this.#frameHref = (event.target as HTMLSelectElement).value}">
             ${this.#windowLocationTask.render({
               pending: () => html`<option>${window.location.href}</option>`,
               complete: ({ payload }) => repeat(payload, (href) => html`
@@ -94,7 +94,7 @@ export class ScriptingModal extends Modal<ScriptingModalData> {
           shape="rectangle"
           color="success"
           title="Save"
-          @click="${() => this.close({ code: this.#code, frameHref: this.#frameUrl })}"
+          @click="${() => this.close({ code: this.#code, frameHref: this.#frameHref })}"
         ></button>
       </div>
     `;

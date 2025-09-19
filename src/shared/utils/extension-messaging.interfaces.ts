@@ -94,9 +94,14 @@ export interface ExtensionRequestMessage<T = unknown> extends ExtensionRequest<T
   senderContext: ExtensionContext;
 
   /**
-   * The {@link FrameLocation} from which the message originated.
+   * The `href` of the frame from which the message originated.
    */
-  senderFrameLocation: string;
+  senderFrameHref: string;
+
+  /**
+   * The `href` of the top-level window from which the message originated.
+   */
+  senderTopHref: string;
 
   tabsQueryInfo: TabsQueryInfo;
 
