@@ -1,6 +1,6 @@
 import type { Nullish } from 'utility-types';
 import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
-import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
+import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction } from '~shared/models/auto-record.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { onStateChange, type AutoRecordState } from '~shared/utils/state.js';
 import { getBaseURL, isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
@@ -79,11 +79,6 @@ export class RecordExecutor {
     const records = isTopWindow()
       ? await AutoRecord.loadMany()
       : [];
-
-    await chrome.userScripts.configureWorld({
-      // csp: '',
-      messaging: true,
-    });
 
     RecordExecutor.#instance = new RecordExecutor(records);
     return RecordExecutor.#instance;

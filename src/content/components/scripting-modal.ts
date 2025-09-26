@@ -26,15 +26,10 @@ export class ScriptingModal extends Modal<ScriptingModalData> {
   accessor height: string = '80vh';
 
   #windowLocationTask = new Task(this, {
-    task: async () => {
-      const hrefs = await sendExtension<undefined, string>({
-        route: 'getHref',
-        contexts: ['content'],
-      });
-
-      console.log('Got getHrefs response: ', hrefs);
-      return hrefs;
-    },
+    task: async () => sendExtension<undefined, string>({
+      route: 'getHref',
+      contexts: ['content'],
+    }),
     args: () => [], // runs once
   });
 

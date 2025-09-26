@@ -1,16 +1,13 @@
 import type { Nullish } from 'utility-types';
 import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
-import { isContent } from './extension.js';
 import { WindowMessageRoutes } from './window-messaging.constants.js';
 import type { WindowRequestMessage, WindowRequestEvent, WindowRequest, WindowResponseMessage, WindowsResponseEvent, WindowResponse, WindowRequestHandler } from './window-messaging.interfaces.js';
 import { getWindow, isTopWindow } from './window.js';
 
 // Register default listeners for responding with standard window info.
-if (isContent()) {
-  listenWindow(WindowMessageRoutes.GET_BASE_URL, () => window.location.hostname + window.location.pathname);
-  listenWindow(WindowMessageRoutes.GET_HOST, () => window.location.host);
-  listenWindow(WindowMessageRoutes.GET_HREF, () => window.location.href);
-}
+listenWindow(WindowMessageRoutes.GET_BASE_URL, () => window.location.hostname + window.location.pathname);
+listenWindow(WindowMessageRoutes.GET_HOST, () => window.location.host);
+listenWindow(WindowMessageRoutes.GET_HREF, () => window.location.href);
 
 /**
  * Sends a request message to the top {@link Window} and returns a promise that resolves to the response data.

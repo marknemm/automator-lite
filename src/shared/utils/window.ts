@@ -73,7 +73,7 @@ export function isTopWindow(win: Window | Nullish = getWindow()): boolean {
 export function isSameOrigin(frame: Frame | Nullish): boolean {
   try {
     return !!(
-      frame instanceof HTMLIFrameElement
+      isFrameElement(frame)
         ? frame.contentDocument
         : frame?.document
     );
@@ -104,6 +104,19 @@ export function isSameBaseUrl(
       && comparePathname === baselinePathname;
 }
 
+export function startsWithBaseUrl(
+  compare: Frame | FrameLocation | Nullish,
+  baseline: Frame | FrameLocation | Nullish = getWindow(),
+): boolean {
+  if (!compare || !baseline) return false;
+
+  const comparePathname = getBaseURL(compare);
+  const baselinePathname = getBaseURL(baseline);
+
+  return !!baselinePathname
+      && comparePathname.startsWith(baselinePathname);
+}
+
 /**
  * Converts a given {@link frame} to a string representation.
  *
@@ -115,9 +128,9 @@ export function getBaseURL(
   frame: Frame | FrameLocation | Nullish = getWindow()
 ): string {
   try {
-    const url: URL | Location | Nullish = (frame instanceof Window)
+    const url: URL | Location | Nullish = isWindowInstance(frame)
       ? new URL(frame.location.href)
-      : (frame instanceof HTMLIFrameElement)
+      : isFrameElement(frame)
         ? new URL(frame.contentWindow?.location.href ?? '')
         : typeof frame === 'string'
           ? new URL(frame)
@@ -126,7 +139,23 @@ export function getBaseURL(
     return url
       ? url.host + url.pathname
       : '';
-  } catch { return ''; }
+  } catch (error) { console.error('Error getting base URL:', error); return ''; }
+}
+
+export function isFrameElement(frame: any): frame is HTMLIFrameElement {
+  return isWindowDefined()
+      && frame instanceof HTMLIFrameElement;
+}
+
+/**
+ * Checks if the given object is an instance of the Window class.
+ *
+ * @param win The object to check.
+ * @returns `true` if the object is an instance of the Window class, otherwise `false`.
+ */
+export function isWindowInstance(win: any): win is Window {
+  return isWindowDefined()
+      && win instanceof Window;
 }
 
 export type * from './window.interfaces.js';

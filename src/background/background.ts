@@ -10,7 +10,13 @@ listenExtension<ScriptAction>('execScriptAction', async (message) => {
   const action = message.payload;
   if (!action) { return; }
 
-  const [tab] = await queryTabs({ url: getBaseURL(message.senderTopHref) });
+  const senderTopBaseUrl = getBaseURL(message.senderTopHref);
+  const [tab] = await queryTabs({
+    url: [
+      `https://${senderTopBaseUrl}*`,
+      `http://${senderTopBaseUrl}*`,
+    ],
+  });
   if (!tab?.id) { return; }
 
   const [frame] = await getAllFrames({
@@ -24,7 +30,6 @@ listenExtension<ScriptAction>('execScriptAction', async (message) => {
     target: {
       tabId: tab.id,
       frameIds: [frame.frameId],
-      documentIds: [frame.documentId],
     },
     world: 'MAIN',
   });
