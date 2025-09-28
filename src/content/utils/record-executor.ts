@@ -1,6 +1,8 @@
+import { html } from 'lit';
 import type { Nullish } from 'utility-types';
+import { AlertModal } from '~content/components/alert-modal.js';
 import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
-import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction } from '~shared/models/auto-record.js';
+import { AutoRecord, ScriptAction, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction } from '~shared/models/auto-record.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { onStateChange, type AutoRecordState } from '~shared/utils/state.js';
 import { getBaseURL, isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
@@ -102,7 +104,12 @@ export class RecordExecutor {
     const intervalId = setInterval(async () => {
       if (record.paused) return; // Do not execute if paused.
 
-      await this.execRecord(record);
+      try {
+        await this.execRecord(record);
+      } catch (err) {
+        console.error(err);
+        this.unscheduleRecord(record);
+      }
     }, record.frequency ?? 5000);
 
     // Store the interval ID in the registry
@@ -179,13 +186,7 @@ export class RecordExecutor {
     switch (action.actionType) {
       case 'Mouse':    await this.#execMouseAction(action as MouseAction);       break;
       case 'Keyboard': await this.#execKeyboardAction(action as KeyboardAction); break;
-      case 'Script': // Script actions must be executed from background context due to userScripts API.
-        await sendExtension({
-          route: 'execScriptAction',
-          contexts: ['background'],
-          payload: action,
-        });
-        break;
+      case 'Script':   await this.#execScriptAction(action as ScriptAction);     break;
       default: throw new Error(`Unsupported action type: ${action.actionType}`);
     }
   }
@@ -234,6 +235,63 @@ export class RecordExecutor {
 
     const keydownEvent = new KeyboardEvent(action.eventType, eventOptions);
     target.dispatchEvent(keydownEvent);
+  }
+
+  /**
+   * Executes a script action via background script and `chrome.userScripts` API.
+   *
+   * @param action - The {@link ScriptAction} to execute.
+   * @throws An {@link Error} if the script execution results in an error.
+   */
+  async #execScriptAction(action: ScriptAction): Promise<void> {
+    const response = await sendExtension({
+      route: 'execScriptAction',
+      contexts: ['background'],
+      payload: action,
+    });
+
+    if (response?.errors?.length) {
+      const error = response.errors[0].includes('userScripts API not available')
+                 || response.errors[0].includes('\'userScripts.execute\' is not available in this context')
+        ? html`
+          <p>
+            You must turn on "Allow User Scripts" in the
+            <a href="#" @click="${() => sendExtension({ contexts: ['background'], route: 'settings' })}">
+              Automator Lite Settings
+            </a>
+            to run script actions.
+          </p>
+          <p>
+            After enabling, please reload all tabs where you want the scripts to run.
+          </p>
+          <br><br>
+          <img
+            src="chrome-extension://${chrome.runtime.id}/dist/public/images/allow-user-scripts.gif"
+            alt="Allow user scripts visualization"
+            width="500"/>
+          <br><br>
+          <p class="faint italic">
+            Please note that the "userScripts" API is only available in
+            Chrome, Edge, and Opera.
+          </p>
+        `
+        : html`
+          <p>
+            ${response.errors[0].replaceAll('\n', '<br>') ?? 'Unknown error'}
+          </p>
+        `;
+
+      AlertModal.open({
+        data: {
+          type: 'error',
+          title: 'Automator Lite - Script Error',
+          message: error,
+        },
+        width: '530px',
+      });
+
+      throw new Error(response.errors[0]);
+    }
   }
 
 }

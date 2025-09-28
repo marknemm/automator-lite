@@ -87,16 +87,10 @@ const ctx = await esbuild.context({
     }),
     copy({
       assets: {
-        from: ['./src/shared/fonts/*.{woff2,woff,ttf,svg}'],
-        to: ['./fonts'],
+        from: ['./public/**/*'],
+        to: ['./public'],
       },
       watch,
-    }),
-    copy({
-      assets: {
-        from: ['./src/content/inline-script-executor.js'],
-        to: ['./scripts'],
-      },
     }),
   ],
   treeShaking: true,
@@ -109,10 +103,12 @@ try {
   if (analyze) {
     const buildResult = await ctx.rebuild();
     await ctx.dispose();
-    await writeFile('dist/meta.json', JSON.stringify(buildResult.metafile, null, 2));
-    const { visualizer } = await import('esbuild-visualizer');
-    const visualizerResult = await visualizer(buildResult.metafile);
-    await writeFile('dist/visualizer.html', visualizerResult);
+    if (buildResult.metafile) {
+      await writeFile('dist/meta.json', JSON.stringify(buildResult.metafile, null, 2));
+      const { visualizer } = await import('esbuild-visualizer');
+      const visualizerResult = await visualizer(buildResult.metafile);
+      await writeFile('dist/visualizer.html', visualizerResult);
+    }
   } else if (watch) {
     await ctx.watch();
   } else {

@@ -3,34 +3,21 @@
 import type { ScriptAction } from '~shared/models/auto-record.interfaces.js';
 import '~shared/utils/extension-messaging.js'; // Init content -> content script message forwarding.
 import { listenExtension } from '~shared/utils/extension-messaging.js';
-import { getAllFrames, queryTabs } from '~shared/utils/extension.js';
-import { getBaseURL, isSameBaseUrl } from '~shared/utils/window.js';
+import { execScriptAction } from './user-scripts.js';
 
-listenExtension<ScriptAction>('execScriptAction', async (message) => {
+listenExtension<ScriptAction, chrome.userScripts.InjectionResult>('execScriptAction', async (message) => {
   const action = message.payload;
-  if (!action) { return; }
+  if (!action) throw new Error('ScriptAction required for execution.');
 
-  const senderTopBaseUrl = getBaseURL(message.senderTopHref);
-  const [tab] = await queryTabs({
-    url: [
-      `https://${senderTopBaseUrl}*`,
-      `http://${senderTopBaseUrl}*`,
-    ],
-  });
-  if (!tab?.id) { return; }
+  return await execScriptAction(action);
+});
 
-  const [frame] = await getAllFrames({
-    tabId: tab.id,
-    filter: frameDetails => isSameBaseUrl(frameDetails.url, action.frameHref),
-  });
-  if (!frame) { return; }
+listenExtension('options', () => {
+  return chrome.runtime.openOptionsPage();
+});
 
-  await chrome.userScripts.execute({
-    js: [{ code: action.compiledCode }],
-    target: {
-      tabId: tab.id,
-      frameIds: [frame.frameId],
-    },
-    world: 'MAIN',
+listenExtension('settings', () => {
+  return chrome.tabs.create({
+    url: `chrome://extensions/?id=${chrome.runtime.id}`,
   });
 });

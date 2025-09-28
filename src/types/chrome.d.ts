@@ -3,7 +3,7 @@ declare namespace chrome {
     /**
      * Injects a script into a target context. By default, the script will be run at `document_idle`, or immediately if the page has already loaded. If the `injectImmediately` property is set, the script will inject without waiting, even if the page has not finished loading. If the script evaluates to a promise, the browser will wait for the promise to settle and return the resulting value.
      * @since Chrome 135
-     * 
+     *
      * @param injection The script to inject.
      * @returns A promise that resolves to an array of {@link InjectionResult} objects, one for each frame the script was injected into.
      */
@@ -25,17 +25,17 @@ declare namespace chrome {
 
       /** Specifies the user script world ID to execute in. If omitted, the script will execute in the default user script world. Only valid if `world` is omitted or is `USER_SCRIPT`. Values with leading underscores (`_`) are reserved. */
       worldId?: string;
-      
+
     }
 
     interface InjectionResult {
-      
+
       /** The document associated with the injection. */
       documentId: string;
 
       /** The error, if any. `error` and `result` are mutually exclusive. */
       error?: string;
-      
+
       /** The frame associated with the injection. */
       frameId: number;
 

@@ -44,11 +44,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["dist/fonts/*"],
-      "matches": ["<all_urls>"]
-    },
-    {
-      "resources": ["dist/scripts/*"],
+      "resources": ["dist/public/**/*"],
       "matches": ["<all_urls>"]
     }
   ],

@@ -75,6 +75,14 @@ export interface AutoRecordAction {
   frameHref: string;
 
   /**
+   * The `href` of the top-level {@link Window} where the action was recorded.
+   * This is used to locate the correct browser tab when executing the action from the background context.
+   *
+   * This is always that of a top-level {@link Window} and never an embedded {@link HTMLIFrameElement}.
+   */
+  tabHref: string;
+
+  /**
    * The timestamp (ms since epoch) of when the action was recorded.
    */
   timestamp: number;

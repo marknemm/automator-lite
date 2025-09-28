@@ -3,11 +3,13 @@
 import '@webcomponents/custom-elements'; // MUST be first!
 
 import { type AutoRecordAction, type AutoRecordState, type RecordingType } from '~shared/models/auto-record.js';
+import type { Alert } from '~shared/utils/alert.interfaces.js';
 import { listenExtension, type ExtensionRequestMessage } from '~shared/utils/extension-messaging.js';
 import fontStyles from '../shared/styles/fonts.scss?inline';
 import './content.scss';
 import RecordExecutor from './utils/record-executor.js';
 import RecordingContext from './utils/recording-context.js';
+import { AlertModal } from './components/alert-modal.js';
 
 /**
  * Initializes the content script.
@@ -18,7 +20,7 @@ async function init() {
   // Inject the font styles into the document head - must use chrome extension ID to reference font files.
   // Unlike popup, content scripts cannot directly access the extension's resources.
   const style = document.createElement('style');
-  style.textContent = fontStyles.replaceAll('../fonts/', `chrome-extension://${chrome.runtime.id}/dist/fonts/`);
+  style.textContent = fontStyles.replaceAll('../public/fonts/', `chrome-extension://${chrome.runtime.id}/dist/public/fonts/`);
   document.head.appendChild(style);
 
   /** Per-frame singleton auto-record executor for scheduling and executing records. */
@@ -28,6 +30,10 @@ async function init() {
   const recordingCtx = await RecordingContext.init();
 
   // Listen for messages from popup or background script.
+  listenExtension('alert', ({ payload }: ExtensionRequestMessage<Alert>) => {
+    return AlertModal.open({ data: payload });
+  });
+
   listenExtension('configureRecord', ({ payload }: ExtensionRequestMessage<AutoRecordState>) => {
     recordingCtx.configureAndSave(payload);
   });
@@ -40,16 +46,16 @@ async function init() {
     recordExecutor.execAction(payload);
   });
 
+  listenExtension('getHref', () => {
+    return window.location.href;
+  });
+
   listenExtension('startRecording', ({ payload }: ExtensionRequestMessage<RecordingType>) => {
     recordingCtx.start(payload);
   });
 
   listenExtension('stopRecording', () => {
     recordingCtx.stop();
-  });
-
-  listenExtension('getHref', () => {
-    return window.location.href;
   });
 }
 

@@ -56,16 +56,25 @@ export async function sendExtension<Req = unknown, Resp = void>(
   }
 
   const responseMessages = await Promise.all(responsePromises);
-  const unpackResponsePayload = (responseMsg: ExtensionResponseMessage<Resp>[]): Resp[] => {
+
+  const unpackResponsePayloads = (responseMsg: ExtensionResponseMessage<Resp>[]): Resp[] => {
     return [
       ...responseMsg.map((r) => r?.payload),
-      ...(responseMsg.flatMap((r) => unpackResponsePayload(r?.forwardedMessages ?? []))),
+      ...(responseMsg.flatMap((r) => unpackResponsePayloads(r?.forwardedMessages ?? []))),
     ].filter(r => r !== undefined);
+  };
+
+  const unpackResponseErrors = (responseMsg: ExtensionResponseMessage<Resp>[]): any[] => {
+    return [
+      ...responseMsg.map((r) => r?.error),
+      ...(responseMsg.flatMap((r) => unpackResponseErrors(r?.forwardedMessages ?? []))),
+    ].filter(e => e !== undefined);
   };
 
   return {
     messages: responseMessages,
-    payload: unpackResponsePayload(responseMessages),
+    payloads: unpackResponsePayloads(responseMessages),
+    errors: unpackResponseErrors(responseMessages),
   };
 }
 
@@ -166,18 +175,20 @@ export function listenExtension<Req = unknown, Resp = void>(
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
   ): boolean => {
-    // Does message route match this listener's route?
-    const routeMatch = message.route && ((typeof route === 'string')
-      ? ['*', message.route.trim()].includes(route.trim())
-      : route.test(message.route.trim()));
+    const shouldHandle = (testRouteMatch(message.route, route) && testContextMatch(message));
+    const shouldForward = (route === '__forward' && message.forward && isBackground());
 
-    // Should listener handle the message based on route and context match?
-    if (routeMatch && testContextMatch(message)) {
-      (async () => {
+    // Check if route/ctx destination match or if message should be forwarded via background script.
+    if (shouldHandle || shouldForward) {
+      (async () => { // Wrap in async function to return true immediately (below) to sender to signal async.
         try {
-          const result = await handler(message, sender);
+          // Handle message in current context.
+          const result = shouldHandle
+            ? await handler(message, sender)
+            : undefined;
 
-          const forwardedMessages = (message.forward && isBackground())
+          // Forward message to content frames from background script.
+          const forwardedMessages = shouldForward
             ? (await sendExtension<Req, Resp>({
                 ...message,
                 contexts: ['content'],
@@ -195,7 +206,7 @@ export function listenExtension<Req = unknown, Resp = void>(
         } catch (error) {
           const errorMessage: ExtensionResponseMessage<Resp> = {
             ...message,
-            error,
+            error: error instanceof Error ? error.message : error,
             forwardedMessages: [],
             payload: undefined,
             responderContext: getExtensionContext(),
@@ -206,12 +217,24 @@ export function listenExtension<Req = unknown, Resp = void>(
       })();
       return true; // Sender should wait for the response.
     }
-
     return false; // Sender should not wait for the response.
   };
 
   chrome.runtime.onMessage.addListener(listener);
   return () => chrome.runtime.onMessage.removeListener(listener);
+}
+
+/**
+ * Tests if a message route matches a given route.
+ *
+ * @param messageRoute The message route to test.
+ * @param route The route to match against.
+ * @returns `true` if the message route matches the given route, otherwise `false`.
+ */
+function testRouteMatch(messageRoute: string, route: string | RegExp): boolean {
+  return !!messageRoute && ((typeof route === 'string')
+    ? ['*', messageRoute.trim()].includes(route.trim())
+    : route.test(messageRoute.trim()));
 }
 
 /**
@@ -240,7 +263,7 @@ function testContextMatch(message: ExtensionRequestMessage): boolean {
  * since content scripts do not have access to the `chrome.tabs` API.
  */
 if (isBackground()) {
-  listenExtension('*', () => {});
+  listenExtension('__forward', () => {});
 }
 
 export type * from './extension-messaging.interfaces.js';

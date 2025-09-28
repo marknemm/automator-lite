@@ -9,6 +9,13 @@ import { Task } from '@lit/task';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import type { ScriptingModalData } from './scripting-modal.interfaces.js';
 
+/**
+ * A {@link Modal} dialog for editing and saving user scripts.
+ * The modal allows users to select the target frame and edit the script code.
+ *
+ * @element spark-scripting-modal
+ * @extends Modal<ScriptingModalData>
+ */
 @customElement('spark-scripting-modal')
 export class ScriptingModal extends Modal<ScriptingModalData> {
 
@@ -60,7 +67,7 @@ export class ScriptingModal extends Modal<ScriptingModalData> {
           <select @change="${(event: Event) => this.#frameHref = (event.target as HTMLSelectElement).value}">
             ${this.#windowLocationTask.render({
               pending: () => html`<option>${window.location.href}</option>`,
-              complete: ({ payload }) => repeat(payload, (href) => html`
+              complete: ({ payloads: payload }) => repeat(payload, (href) => html`
                 <option value="${href}">${href}</option>
               `),
             })}

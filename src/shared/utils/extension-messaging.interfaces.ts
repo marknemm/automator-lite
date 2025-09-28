@@ -150,10 +150,26 @@ export interface ExtensionResponseMessage<T> {
 
 }
 
+/**
+ * All responses from an {@link ExtensionRequest} sent via the intra-extension messaging system.
+ *
+ * @template T The type of the response payload.
+ */
 export interface ExtensionResponse<T = unknown> {
 
-  payload: T[];
+  /**
+   * The payloads from all response messages.
+   */
+  payloads: T[];
 
+  /**
+   * The errors from all response messages.
+   */
+  errors: string[];
+
+  /**
+   * The individual response messages.
+   */
   messages: ExtensionResponseMessage<T>[];
 
 }

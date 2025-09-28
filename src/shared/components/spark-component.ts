@@ -1,6 +1,7 @@
 import { LitElement, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
-import type { SparkColor, SparkUpdatedWatch } from './spark-component.interfaces.js';
+import type { SparkUpdatedWatch } from './spark-component.interfaces.js';
+import { themeColors, type SparkColor } from '~shared/utils/spark-theme.js';
 
 /**
  * Abstract {@link SparkComponent} class that provides common properties and methods for theming and behavior.
@@ -14,15 +15,7 @@ export abstract class SparkComponent extends LitElement {
    *
    * @see {@link color} for the color property.
    */
-  static readonly COLORS = [
-    'primary',
-    'secondary',
-    'tertiary',
-    'info',
-    'success',
-    'warn',
-    'danger',
-  ] as const;
+  static readonly COLORS = themeColors;
 
   /**
    * The color to apply to this {@link SparkComponent}.

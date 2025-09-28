@@ -1,15 +1,16 @@
 import type { Nullish } from 'utility-types';
 import { AutoRecordConfigModal } from '~content/components/auto-record-config-modal.js';
 import { RecordingInfoPanel } from '~content/components/recording-info-panel.js';
+import { ScriptingModal, ScriptingModalData } from '~content/components/scripting-modal.js';
 import type { AutoRecordAction, AutoRecordState, KeyboardAction, KeyboardEventType, MouseAction, MouseEventType, RecordingType, ScriptAction } from '~shared/models/auto-record.interfaces.js';
 import { AutoRecord } from '~shared/models/auto-record.js';
 import { ExtensionOptions } from '~shared/models/extension-options.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { type MountContext } from '~shared/utils/mount.js';
+import { sendTopWindow } from '~shared/utils/window-messaging.js';
 import { isTopWindow } from '~shared/utils/window.js';
 import { ActionParser } from './action-parser.js';
 import { deriveElementSelector } from './element-analysis.js';
-import { ScriptingModal, ScriptingModalData } from '~content/components/scripting-modal.js';
 import { ScriptCompiler } from './script-compiler.js';
 
 /**
@@ -261,6 +262,7 @@ export class RecordingContext {
       },
       selector,
       shadowAncestors: [],
+      tabHref: await sendTopWindow('getHref') ?? '',
       textContent,
       timestamp: new Date().getTime(),
     };
@@ -284,6 +286,7 @@ export class RecordingContext {
       compiledCode,
       frameHref,
       name: '', // Can be filled within AutoRecordConfigModal.
+      tabHref: await sendTopWindow('getHref') ?? '',
       timestamp: new Date().getTime(),
     };
 
@@ -337,6 +340,7 @@ export class RecordingContext {
       },
       selector,
       shadowAncestors: [],
+      tabHref: await sendTopWindow('getHref') ?? '',
       textContent,
       timestamp: new Date().getTime(),
     };
