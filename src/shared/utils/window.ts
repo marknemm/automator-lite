@@ -128,6 +128,11 @@ export function getBaseURL(
   frame: Frame | FrameLocation | Nullish = getWindow()
 ): string {
   try {
+    // Add protocol if missing.
+    if (typeof frame === 'string' && !/^http.*/.test(frame)) {
+      frame = `https://${frame}`;
+    }
+
     const url: URL | Location | Nullish = isWindowInstance(frame)
       ? new URL(frame.location.href)
       : isFrameElement(frame)

@@ -5,7 +5,7 @@ import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
 import { AutoRecord, ScriptAction, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction } from '~shared/models/auto-record.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { onStateChange, type AutoRecordState } from '~shared/utils/state.js';
-import { getBaseURL, isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
+import { isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
 
 /**
  * Executes and schedules {@link AutoRecord} instances in the current document.
@@ -176,7 +176,7 @@ export class RecordExecutor {
       await sendExtension({
         route: 'executeRecordAction',
         contexts: ['content'],
-        frameLocations: getBaseURL(action.frameHref),
+        frameLocations: action.frameHref,
         payload: action,
       });
       return; // Do not execute in current frame.
