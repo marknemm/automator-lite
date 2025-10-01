@@ -130,7 +130,7 @@ export class Popup extends LitElement {
                 ${sparkButton()}
                 class="add-record"
                 icon="add"
-                raised
+                flat
                 color="success"
                 title="Add New Record"
                 @click=${() => this.#openActionSheet()}

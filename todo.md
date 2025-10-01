@@ -52,6 +52,11 @@ These provide a roadmap for the development of the app.
 - [ ] Update Sheet to animate out when closed (popup).
 
 ### Medium
+- [ ] Add ability to click and drag, resize, and minimize `SparkModal` components (shared).
+- [ ] Create utility for displaying `Alert` notification data in either a `SparkModal` or `SparkToast`.
+  - [x] Create `AlertModal`.
+  - [ ] Create `AlertToast`.
+  - [ ] Create `Alert` utility for multiplexing between the `AlertModal` and `AlertToast`.
 - [ ] Add global option for customizing stop recording key combo (options).
 - [ ] Add global option for pausing all records on all pages (options).
 - [ ] Add global options for defaults for new record configuration values (options).
@@ -78,10 +83,6 @@ These are often not user-facing and can be thought of as behind the scenes featu
 ### Medium
 - [x] Create `SparkComponent` abstract class that extends `LitElement` and forms uniform theming and support for all components.
 - [ ] Create `SparkToast` component for auto-dismissing popup messages.
-- [ ] Create utility for displaying `Alert` notification data in either a `SparkModal` or `SparkToast`.
-  - [x] Create `AlertModal`.
-  - [ ] Create `AlertToast`.
-  - [ ] Create `Alert` utility for multiplexing between the `AlertModal` and `AlertToast`.
 - [ ] Replace all callback input properties with standard CustomEvent emitters.
   - [x] Replaced a portion of properties
   - [ ] Replaced all properties
