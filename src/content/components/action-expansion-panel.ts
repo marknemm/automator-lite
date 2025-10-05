@@ -1,7 +1,7 @@
 import { html, TemplateResult, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import type { Nullish } from 'utility-types';
-import '~shared/components/code-editor.js';
+import '~shared/components/code-editor/code-editor.js';
 import { ExpansionPanel } from '~shared/components/expansion-panel.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import type { AutoRecordAction, KeyboardAction, MouseAction, ScriptAction, UserInputAction } from '~shared/models/auto-record.interfaces.js';

@@ -2,15 +2,16 @@ import { javascript } from '@codemirror/lang-javascript';
 import { EditorState, type Text } from '@codemirror/state';
 import { type ViewUpdate } from '@codemirror/view';
 import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
-import { EditorView, basicSetup } from 'codemirror';
+import { basicSetup, EditorView } from 'codemirror';
 import { html, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
+import pDebounce from 'p-debounce';
+import { SparkComponent } from '../spark-component.js';
+import { browserAutocompletion } from './autocomplete.js';
 import { CodeEditorChangeEvent, CodeEditorUpdateEvent } from './code-editor.events.js';
-import { editorTextChanged, editorUpdated } from './code-editor.extensions.js';
 import { CodeEditorConfig } from './code-editor.interfaces.js';
 import styles from './code-editor.scss?inline';
-import { SparkComponent } from './spark-component.js';
-import pDebounce from 'p-debounce';
+import { editorTextChanged, editorUpdated } from './extensions.js';
 
 /**
  * A custom code editor component built on top of `CodeMirror`.
@@ -43,7 +44,7 @@ export class CodeEditor extends SparkComponent {
   @query('#editor')
   protected accessor editorContainer!: HTMLDivElement;
 
-  #editor!: EditorView;
+  #editorView!: EditorView;
 
   /**
    * Track last internally set value so external value state update does not trigger unnecessary re-render.
@@ -53,8 +54,8 @@ export class CodeEditor extends SparkComponent {
   /**
    * The `codemirror` {@link EditorView} instance.
    */
-  get editor(): EditorView {
-    return this.#editor;
+  get editorView(): EditorView {
+    return this.#editorView;
   }
 
   protected override firstUpdated(props: PropertyValues): void {
@@ -74,7 +75,7 @@ export class CodeEditor extends SparkComponent {
         ? [this.config.extensions]
         : [];
 
-    this.#editor = new EditorView({
+    this.#editorView = new EditorView({
       parent: this.editorContainer,
       state: EditorState.create({
         ...this.config,
@@ -82,7 +83,8 @@ export class CodeEditor extends SparkComponent {
         extensions: [
           basicSetup,
           theme,
-          javascript(),
+          javascript({ typescript: true }),
+          browserAutocompletion(),
           editorUpdated((update: ViewUpdate) => {
             this.dispatchEvent(new CodeEditorUpdateEvent(update));
           }),
@@ -100,16 +102,21 @@ export class CodeEditor extends SparkComponent {
   protected override updated(props: PropertyValues): void {
     super.updated(props);
     if (props.has('value') && this.value !== this.#lastInternalValue) { // No unnecessary re-render.
-      this.setValue(this.value);
+      this.setValue(this.value); // Update the code editor on value prop change.
     }
   }
 
+  /**
+   * Sets a given {@link value} within the editor.
+   *
+   * @param value The value to set within the editor.
+   */
   setValue(value: string | Text = this.value) {
     this.value = value;
-    this.editor.state.update({
+    this.editorView.state.update({
       changes: {
         from: 0,
-        to: this.editor.state.doc.length,
+        to: this.editorView.state.doc.length,
         insert: this.value || '',
       },
     });
@@ -122,5 +129,6 @@ export class CodeEditor extends SparkComponent {
 }
 
 export * from './code-editor.events.js';
-export * from './code-editor.extensions.js';
 export type * from './code-editor.interfaces.js';
+export * from './extensions.js';
+

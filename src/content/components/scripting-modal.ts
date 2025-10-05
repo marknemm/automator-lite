@@ -1,6 +1,6 @@
 import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { type CodeEditorChangeEvent } from '~shared/components/code-editor.events.js';
+import { type CodeEditorChangeEvent } from '~shared/components/code-editor/code-editor.events.js';
 import { Modal, ModalContext, StaticModalOptions } from '~shared/components/modal.js';
 import { sparkButton } from '~shared/directives/spark-button.js';
 import styles from './scripting-modal.scss?inline';
