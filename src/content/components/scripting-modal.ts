@@ -44,6 +44,7 @@ export class ScriptingModal extends Modal<ScriptingModalData> {
    * Opens an {@link ScriptingModal} for editing a script.
    *
    * @param options - The {@link StaticModalOptions} for the modal.
+   * @return A {@link ModalContext} for the opened modal.
    */
   static open<D = ScriptingModalData, R = D>(
     options: StaticModalOptions<D, R> = {}
@@ -74,7 +75,7 @@ export class ScriptingModal extends Modal<ScriptingModalData> {
           </select>
         </div>
         <spark-code-editor
-          .value="${this.data ?? ''}"
+          .value="${this.data?.code ?? ''}"
           @change="${(event: CodeEditorChangeEvent) => this.#code = event.detail}"
         ></spark-code-editor>
       </div>

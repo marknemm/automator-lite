@@ -201,7 +201,7 @@ export class ActionExpansionPanel extends ExpansionPanel {
           color="primary"
           icon="edit"
           title="Edit Action: ${name}"
-          @click="${async () => await this.#openScriptingModal()}"
+          @click="${() => this.#openScriptingModal()}"
         ></button>
       </div>
     `;
@@ -209,12 +209,13 @@ export class ActionExpansionPanel extends ExpansionPanel {
 
   async #openScriptingModal(): Promise<void> {
     if (!this.action) return;
-    const { code } = this.action as ScriptAction;
+    const { code, frameHref } = this.action as ScriptAction;
     // Open the scripting modal with the action's code
-    const updatedCode = await ScriptingModal.open({ data: code });
-    if (updatedCode) {
-      (this.action as ScriptAction).code = updatedCode;
-      (this.action as ScriptAction).compiledCode = this.#compiler.compile(updatedCode);
+    const updatedScript = await ScriptingModal.open({ data: { code, frameHref } });
+    if (updatedScript) {
+      (this.action as ScriptAction).frameHref = updatedScript.frameHref;
+      (this.action as ScriptAction).code = updatedScript.code;
+      (this.action as ScriptAction).compiledCode = this.#compiler.compile(updatedScript.code);
     }
   }
 
