@@ -4,9 +4,9 @@
   "description": "A Chrome extension that automates repetitive tasks in the browser.",
   "type": "module",
   "scripts": {
-    "build": "node esbuild.config.mjs -- --minify",
-    "build:analyze": "node esbuild.config.mjs -- --analyze",
-    "build:watch": "node esbuild.config.mjs -- --watch",
+    "build": "node esbuild.config.mjs --minify",
+    "build:analyze": "node esbuild.config.mjs --analyze",
+    "build:watch": "node esbuild.config.mjs --watch",
     "clean": "rimraf dist",
     "clean:all": "npm run clean && rimraf node_modules",
     "lint": "eslint . --ext .ts,.js,.mjs",
