@@ -3,12 +3,14 @@ import type { DeepQueryOptions, DeepTreeWalkerOptions } from './deep-query.inter
 import { Nullish } from 'utility-types';
 
 /**
- * Performs a deep query for an element matching the given selector within the document, including iframes and shadow DOMs.
+ * Performs a deep query for an element matching the given selector within the document.
  * Will search through the entire page, including iframes and shadow DOMs, returning the first match found.
  *
  * NOTE: This does not preserve the order of elements in the DOM.
  * It performs a depth-first search in each document, but does not access any nested iframes or shadow DOMs
- * until the full containing document has been searched. Performs more of a layered depth-first search.
+ * until the full containing document has been searched. Performs more of a layered depth-first search
+ * where each layer segmented by iframe or Shadow DOM boundary is searched in its entirety before proceeding
+ * to the next layer.
  *
  * @param selector The selector to match elements against. Cannot cross shadow DOM or iframe boundaries.
  * @param opts {@link DeepQueryOptions} to customize the deep query behavior.

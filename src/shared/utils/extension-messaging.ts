@@ -4,16 +4,17 @@ import { sendTopWindow, WindowMessageRoutes } from './window-messaging.js';
 import { getBaseURL, isSameBaseUrl, isTopWindow } from './window.js';
 
 /**
- * Broadcasts a {@link request} to all frames in the current {@link chrome.tabs.Tab Tab}.
+ * Sends a {@link request} to all specified extension contexts.
  *
- * @param request The {@link BroadcastMessage} to broadcast to all frames in the current {@link chrome.tabs.Tab Tab}.
+ * @param request The {@link BroadcastMessage} to send to all specified extension contexts.
  * Only the {@link ExtensionRequestMessage.route route} property is required, and all other metadata is generated internally as needed.
  * @returns A {@link Promise} that resolves to an array of responses from the message handlers.
  *
  * @usage
  * ```ts
- * const responses = await broadcast({
+ * const responses = await sendExtension({
  *   route: 'my-message-route',
+ *   contexts: ['background', 'content', 'options', 'popup'],
  *   payload: { key: 'value' },
  * });
  * ```
@@ -157,7 +158,7 @@ async function getTabMessageDestinations(
  *
  * @usage
  * ```ts
- * onMessage('my-message-route', (message, sender) => {
+ * listenExtension('my-message-route', (message, sender) => {
  *   console.log('Received message:', message);
  *   return 'Response data';
  * });

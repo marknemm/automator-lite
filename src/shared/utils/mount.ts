@@ -174,7 +174,7 @@ export function injectStyles(
   for (const styleStr of styles) {
     if (!styleStr) continue; // Skip empty styles
 
-    // Check if the browser supports adoptedStyleSheets (Chromium or Safari).
+    // Check if the browser supports adoptedStyleSheets (Chromium or Safari - maybe Firefox).
     if ('adoptedStyleSheets' in Document.prototype) {
       let sheet = cachedStyleSheets.get(styleStr);
       if (!sheet) {
@@ -185,7 +185,7 @@ export function injectStyles(
       if (!root.adoptedStyleSheets.includes(sheet)) {
         root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
       }
-    } else { // Light DOM or fallback for browsers that do not support adoptedStyleSheets (Firefox).
+    } else { // Light DOM or fallback for browsers that do not support adoptedStyleSheets (old browsers).
       if (!Array.from(root.querySelectorAll('>style')).some(child => child.textContent === styleStr)) {
         const style = document.createElement('style');
         style.textContent = styleStr;

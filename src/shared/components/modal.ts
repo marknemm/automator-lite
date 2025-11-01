@@ -137,13 +137,6 @@ export class Modal<D = unknown, R = D> extends SparkComponent {
   }
 
   /**
-   * Opens the modal dialog.
-   */
-  show(): void {
-    this.open = true;
-  }
-
-  /**
    * Closes the modal dialog and executes the {@link onClose} callback.
    *
    * @param data - Optional data to pass to the {@link onClose} callback.

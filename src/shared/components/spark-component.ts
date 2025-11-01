@@ -55,6 +55,12 @@ export abstract class SparkComponent extends LitElement {
     this.#updatedWatch = []; // Avoid any potential memory leaks
   }
 
+  /**
+   * Registers a callback to be invoked when the specified Lit property is updated.
+   *
+   * @param property The Lit property to watch for updates.
+   * @param cb The callback function to invoke when the Lit property is updated.
+   */
   onUpdated(
     property: keyof this,
     cb: (oldValue: this[typeof property]) => void
@@ -62,6 +68,12 @@ export abstract class SparkComponent extends LitElement {
     this.#updatedWatch.push({ property, callback: cb });
   }
 
+  /**
+   * Unregisters a previously registered update callback for the specified Lit property.
+   *
+   * @param property The Lit property to stop watching for updates.
+   * @param cb The callback function to remove.
+   */
   offUpdated(
     property: keyof this,
     cb: (oldValue: this[typeof property]) => void

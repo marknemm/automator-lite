@@ -40,15 +40,16 @@ export async function sendTopWindow<Req = unknown, Resp = void>(
 /**
  * Sends a request message to specific {@link Window}(s) and returns a promise that resolves to the response data.
  *
- * @param route The type of the message to request.
- * @param payload The payload to send with the request.
- * @param windows The {@link Window}(s) to send the request to.
+ * @param request The {@link WindowRequest} to send.
+ * @param request.route The type of the message to request.
+ * @param request.payload The payload to send with the request.
+ * @param request.windows The {@link Window}(s) to send the request to.
  * If no windows are provided, it defaults to all of the current document's iframes.
- * @param targetOrigin The origin to send the request to. Defaults to `'*'` for all origins.
- * @returns A {@link Promise} that resolves with the response payload from each {@link Window}.
+ * @param request.targetOrigin The origin to send the request to. Defaults to `'*'` for all origins.
+ * @returns A {@link Promise} that resolves with the {@link WindowResponse} payload.
  *
- * @template Req The type of the request payload.
- * @template Resp The type of the response payload.
+ * @template Req The type of the request payload. Defaults to `unknown`.
+ * @template Resp The type of the response payload. Defaults to `void`.
  */
 export async function sendWindow<Req = unknown, Resp = void>(
   request: WindowRequest<Req>
@@ -115,10 +116,10 @@ export async function sendWindow<Req = unknown, Resp = void>(
  * @param route The route that the listener shall listen to.
  * @param handler The request handler callback to invoke when a message is received.
  * This callback receives the message event and can optionally return a promise with the response data.
- * @returns A function to unbind the listener.
+ * @returns A function, which when invoked, unbinds the listener.
  *
- * @template Req The type of the request payload.
- * @template Resp The type of the response payload.
+ * @template Req The type of the request payload. Defaults to `unknown`.
+ * @template Resp The type of the response payload. Defaults to `void`.
  */
 export function listenTopWindow<Req = unknown, Resp = void>(
   route: string,
@@ -135,10 +136,10 @@ export function listenTopWindow<Req = unknown, Resp = void>(
  * @param handler The request handler callback to invoke when a message of the given type is received.
  * This callback receives the message event and can optionally return a promise with the response data.
  * @param win The {@link Window} to bind the listener to. Defaults to the current {@link window}.
- * @returns A function to unbind the listener.
+ * @returns A function, which when invoked, unbinds the listener.
  *
- * @template Req The type of the request payload.
- * @template Resp The type of the response payload.
+ * @template Req The type of the request payload. Defaults to `unknown`.
+ * @template Resp The type of the response payload. Defaults to `void`.
  */
 export function listenWindow<Req = unknown, Resp = void>(
   route: string,

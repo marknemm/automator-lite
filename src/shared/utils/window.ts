@@ -40,6 +40,8 @@ export function getParentWindow(win: Window | Nullish = getWindow()): Window | u
  * This is a safe way to access the {@link window} object,
  * as it checks if the {@link window} object is defined before accessing it.
  *
+ * `Note:` The {@link window} object will not be defined in background scripts or service workers.
+ *
  * @returns The current {@link window} object if it is defined, otherwise `undefined`.
  */
 export function getWindow(): Window | undefined {
@@ -84,6 +86,7 @@ export function isSameOrigin(frame: Frame | Nullish): boolean {
 
 /**
  * Checks if the given {@link compare} has the same base URL as a given {@link baseline}.
+ * The base URL consists of the host and pathname of the URL.
  *
  * @param compare The {@link Frame} or {@link FrameLocation} to compare.
  * @param baseline The {@link Frame} or {@link FrameLocation} baseline to compare against.
@@ -118,10 +121,11 @@ export function startsWithBaseUrl(
 }
 
 /**
- * Converts a given {@link frame} to a string representation.
+ * Gets the base URL of a given {@link frame}, which consists of the host and pathname.
  *
- * @param frame The {@link Frame} or {@link FrameLocation} to convert. Defaults to the current {@link window}.
- * @returns The string representation of the given {@link frame}.
+ * @param frame The {@link Frame} or {@link FrameLocation} to get the base URL of.
+ * Defaults to the current {@link window}.
+ * @returns The base URL of the given {@link frame}.
  * If the {@link frame} is not defined or its pathname is inaccessible, `''` is returned.
  */
 export function getBaseURL(
@@ -147,6 +151,12 @@ export function getBaseURL(
   } catch (error) { console.error('Error getting base URL:', error); return ''; }
 }
 
+/**
+ * Checks if the given object is an instance of the HTMLIFrameElement class.
+ *
+ * @param frame The object to check.
+ * @returns `true` if the object is an instance of the HTMLIFrameElement class, otherwise `false`.
+ */
 export function isFrameElement(frame: any): frame is HTMLIFrameElement {
   return isWindowDefined()
       && frame instanceof HTMLIFrameElement;
