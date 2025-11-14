@@ -12,6 +12,7 @@ import { isTopWindow } from '~shared/utils/window.js';
 import { ActionParser } from './action-parser.js';
 import { deriveElementSelector } from './element-analysis.js';
 import { ScriptCompiler } from './script-compiler.js';
+import { AutoRecordStore } from '~shared/models/auto-record-store.js';
 
 /**
  * Context for managing the recording state and interactions.
@@ -34,6 +35,11 @@ export class RecordingContext {
    * @see {@link RecordingContext.activeRecordingType activeRecordingType}
    */
   #activeRecordingType: RecordingType | Nullish;
+
+  /**
+   * The {@link AutoRecordStore} for saving configured records.
+   */
+  #autoRecordStore = AutoRecordStore.getInstance();
 
   /**
    * The {@link ExtensionOptions} for the current extension installation.
@@ -108,7 +114,8 @@ export class RecordingContext {
   ): Promise<AutoRecord | undefined> {
     if (!recordData || (recordData instanceof Array && !recordData.length)) return; // No valid record to config.
     const saveState = await AutoRecordConfigModal.open(recordData);
-    if (saveState) return new AutoRecord(saveState)?.save();
+    console.log('Configured record state:', saveState);
+    if (saveState) return this.#autoRecordStore.init(saveState).save();
   }
 
   /**

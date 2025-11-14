@@ -83,6 +83,7 @@ These are often not user-facing and can be thought of as behind the scenes featu
 
 ### Medium
 - [x] Create `SparkComponent` abstract class that extends `LitElement` and forms uniform theming and support for all components.
+- [x] Create `SparkModel` abstract class for defining a common interface for CRUD Models.
 - [ ] Create `SparkToast` component for auto-dismissing popup messages.
 - [ ] Replace all callback input properties with standard CustomEvent emitters.
   - [x] Replaced a portion of properties

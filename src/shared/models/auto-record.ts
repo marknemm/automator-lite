@@ -1,40 +1,38 @@
-import deepFreeze from 'deep-freeze';
-import type { DeepReadonly, Nullish } from 'utility-types';
-import { loadState, saveState } from '~shared/utils/state.js';
-import type { AutoRecordAction, AutoRecordState, AutoRecordUid, LoadRecordOptions } from './auto-record.interfaces.js';
+import type { Nullish } from 'utility-types';
+import { SparkModel } from '~shared/models/spark-model.js';
+import type { AutoRecordAction, AutoRecordState } from './auto-record.interfaces.js';
+import { SparkModelStore } from './spark-model-store.js';
 
 /**
- * Represents an {@link AutoRecord} that contains actions that are replayable on a webpage.
+ * {@link AutoRecord} model data that contains actions that are replayable on a webpage.
  *
+ * @extends SparkModel<AutoRecordState>
  * @implements {AutoRecordState}
  */
-export class AutoRecord implements AutoRecordState {
-
-  readonly createTimestamp: number;
+export class AutoRecord extends SparkModel<AutoRecordState> {
 
   #actions: AutoRecordAction[] = [];
   #autoRun = false;
+  #executing = false;
   #frequency: number | Nullish;
-  #frozenState: DeepReadonly<Partial<AutoRecordState>>;
   #name = '';
   #paused = false;
-  #state: Partial<AutoRecordState>;
-  #updateTimestamp: number;
 
   /**
    * Creates a new {@link AutoRecord} instance from raw {@link AutoRecordState} data.
    *
    * @param state The raw {@link AutoRecordState} data.
    */
-  constructor(state: Partial<AutoRecordState> | AutoRecordAction[]) {
-    state = state instanceof Array
-      ? { actions: state }
-      : state;
-    this.#state = state;
-    this.#frozenState = deepFreeze(state);
-    this.createTimestamp = state.createTimestamp ?? new Date().getTime();
-    this.#updateTimestamp = state.updateTimestamp ?? this.createTimestamp;
-    this.reset(state);
+  constructor(
+    store: SparkModelStore,
+    state: Partial<AutoRecordState> | AutoRecordAction[]
+  ) {
+    super(
+      store,
+      (state instanceof Array)
+        ? { actions: state }
+        : state
+    );
   }
 
   get actions(): AutoRecordAction[] { return this.#actions; }
@@ -42,6 +40,9 @@ export class AutoRecord implements AutoRecordState {
 
   get autoRun(): boolean { return this.#autoRun; }
   set autoRun(autoRun: boolean | Nullish) { this.#autoRun = autoRun ?? false; }
+
+  get executing(): boolean { return this.#executing; }
+  set executing(executing: boolean | Nullish) { this.#executing = executing ?? false; }
 
   get frequency(): number | Nullish { return this.#frequency; }
   set frequency(frequency: number | Nullish) {
@@ -55,182 +56,6 @@ export class AutoRecord implements AutoRecordState {
 
   get paused(): boolean { return this.#paused ?? false; }
   set paused(paused: boolean | Nullish) { this.#paused = paused ?? false; }
-
-  /**
-   * The raw {@link AutoRecordState} data.
-   *
-   * Will become desynchronized from any unsaved changes to this {@link AutoRecord}'s properties.
-   * This is by design, since the state data is meant to reflect the saved state of the record.
-   *
-   * @return The raw {@link AutoRecordState} data.
-   */
-  get state(): DeepReadonly<Partial<AutoRecordState>> {
-    return this.#frozenState;
-  }
-
-  /**
-   * The unique identifier for this {@link AutoRecord}.
-   */
-  get uid(): AutoRecordUid { return `${this.createTimestamp}`; }
-
-  get updateTimestamp(): number { return this.#updateTimestamp; }
-
-  /**
-   * Loads an {@link AutoRecord} instance from the state storage by its unique identifier.
-   *
-   * @param uid The unique identifier of the {@link AutoRecord} to load.
-   * Can be a string representing the timestamp or a partial {@link AutoRecordState}.
-   * If `null` or `undefined`, no action is taken.
-   * @returns A promise that resolves to the loaded {@link AutoRecord} instance, or `undefined` if not found.
-   */
-  static async load(
-    uid: AutoRecordUid | Partial<AutoRecordState> | Nullish,
-  ): Promise<AutoRecord | undefined> {
-    if (!uid) return undefined; // No-op if no uid is provided.
-
-    // If uid is a string, treat it as a timestamp.
-    const createTimestamp = (typeof uid === 'string')
-      ? parseInt(uid, 10)
-      : uid.createTimestamp;
-
-    return (await this.loadMany({
-      filter: record => record.createTimestamp === createTimestamp,
-    }))[0];
-  }
-
-  /**
-   * Loads many {@link AutoRecord} instances from the state storage.
-   *
-   * @param options - {@link LoadRecordOptions} for configuring how to load records.
-   * @param options.filter - A filter function to apply to the records. Defaults to no filtering.
-   * @param options.sort - A sort function to apply to the records. Defaults to sorting by name.
-   * @returns A promise that resolves to an array of loaded {@link AutoRecord} instances.
-   */
-  static async loadMany({
-    filter,
-    sort = (a, b) => a.name.localeCompare(b.name),
-  }: LoadRecordOptions = {}): Promise<AutoRecord[]> {
-    let records = await loadState('records');
-    if (filter) records = records.filter(filter);
-    return records
-      .sort(sort)
-      .map(recordState => new AutoRecord(recordState));
-  }
-
-  /**
-   * Saves the current state of this {@link AutoRecord} to state storage.
-   * This will update the record in the state storage, or create a new one if it doesn't exist.
-   *
-   * @param mergeData - Optional partial {@link AutoRecordState} data to {@link merge} with the
-   * record before saving. Will leave unspecified properties unchanged and save them as-is.
-   * @returns A {@link Promise} that resolves to this {@link AutoRecord} instance after saving.
-   */
-  async save(mergeData: Partial<AutoRecordState> = {}): Promise<this> {
-    const records = await loadState('records');
-    const recordStateIdx = records.findIndex(record =>
-      record.createTimestamp === this.createTimestamp
-    );
-
-    this.merge(mergeData); // Merges any given data into the record before saving.
-    this.#updateTimestamp = Date.now();
-
-    // Either add new record or update existing one.
-    const state = await saveState({
-      records: (recordStateIdx === -1)
-        ? records.concat(this.#toSaveData())
-        : records.slice(0, recordStateIdx)
-          .concat(this.#toSaveData())
-          .concat(records.slice(recordStateIdx + 1)),
-    });
-
-    // Update the local copy of the record state save data.
-    this.#state = state.records.find(record =>
-      record.createTimestamp === this.createTimestamp
-    ) as AutoRecordState;
-    this.#frozenState = deepFreeze(this.#state);
-
-    return this;
-  }
-
-  /**
-   * Deletes this {@link AutoRecord} from state storage.
-   * If the record does not exist, nothing happens.
-   *
-   * @returns A {@link Promise} that resolves to `true` if the record was deleted,
-   * or `false` if it was not found.
-   */
-  async delete(): Promise<boolean> {
-    const records = await loadState('records');
-    const recordStateIdx = records.findIndex(record =>
-      record.createTimestamp === this.createTimestamp
-    );
-
-    // Record not found?
-    if (recordStateIdx === -1) return false;
-
-    records.splice(recordStateIdx, 1);
-    await saveState({ records });
-    return true; // Record deleted successfully.
-  }
-
-  /**
-   * Resets this {@link AutoRecord} instance to its initial state.
-   *
-   * @param mergeData The {@link AutoRecordState} Partial containing explicit reset data.
-   * Will {@link merge} the provided data into the initial state. Useful for retaining some properties.
-   * @return This {@link AutoRecord} instance with the reset state applied.
-   */
-  reset(mergeData: Partial<AutoRecordState> = {}): this {
-    const state = mergeData
-      ? Object.assign({}, this.#state, mergeData)
-      : this.#state;
-    this.merge(state);
-    this.#updateTimestamp = this.#state.updateTimestamp ?? this.createTimestamp;
-    return this;
-  }
-
-  /**
-   * Merges the given {@link data} into this {@link AutoRecord} instance.
-   *
-   * @param data The {@link AutoRecordState} Partial containing the new state values.
-   * Will only set the state of included properties.
-   * @return This {@link AutoRecord} instance with the given {@link data} merged in.
-   */
-  merge(data: Partial<AutoRecordState>): this {
-    if (Object.hasOwn(data, 'actions'))    this.actions = data.actions;
-    if (Object.hasOwn(data, 'autoRun'))    this.autoRun = data.autoRun;
-    if (Object.hasOwn(data, 'frequency'))  this.frequency = data.frequency;
-    if (Object.hasOwn(data, 'name'))       this.name = data.name;
-    if (Object.hasOwn(data, 'paused'))     this.paused = data.paused;
-    return this;
-  }
-
-  /**
-   * Converts this {@link AutoRecord} instance to a format suitable for saving.
-   *
-   * @returns The {@link AutoRecordState} data to be saved.
-   */
-  #toSaveData(): AutoRecordState {
-    const saveData: any = { ...this };
-    let proto: any = Object.getPrototypeOf(this);
-
-    while (proto && proto !== Object.prototype) {
-      const descriptors = Object.getOwnPropertyDescriptors(proto);
-      for (const [key, descriptor] of Object.entries(descriptors)) {
-        if (typeof descriptor.get === 'function' && !(key in saveData)) {
-          try {
-            saveData[key] = this[key as keyof this]; // Invokes the getter
-          } catch (error) {
-            saveData[key] = undefined; // Handle any errors gracefully
-            console.error(`Error getting property ${key}:`, error);
-          }
-        }
-      }
-      proto = Object.getPrototypeOf(proto);
-    }
-
-    return saveData;
-  }
 
 }
 

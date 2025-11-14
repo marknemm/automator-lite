@@ -1,12 +1,11 @@
+import type { SparkModelState } from './spark-model.interfaces.js';
+
 /**
  * Options for the extension.
+ *
+ * @extends SparkModelState
  */
-export interface ExtensionOptionsState {
-
-  /**
-   * The timestamp when the options were created.
-   */
-  createTimestamp: number;
+export interface ExtensionOptionsState extends SparkModelState {
 
   /**
    * The key that stops the recording when pressed in combination with the stop modifier.
@@ -17,10 +16,5 @@ export interface ExtensionOptionsState {
    * The modifiers that stop the recording when pressed in combination with the stop key.
    */
   stopRecordingModifier: string;
-
-  /**
-   * The timestamp of the last update to the options.
-   */
-  updateTimestamp: number;
 
 }

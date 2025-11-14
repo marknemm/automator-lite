@@ -1,10 +1,13 @@
 import type { Nullish } from 'utility-types';
+import type { SparkModelState } from './spark-model.interfaces.js';
 
 /**
  * The saved state of an {@link AutoRecord}.
  * This is the state that is stored in `Chrome storage`.
+ *
+ * @extends SparkModelState
  */
-export interface AutoRecordState {
+export interface AutoRecordState extends SparkModelState {
 
   /**
    * The actions to be performed by the record.
@@ -21,9 +24,9 @@ export interface AutoRecordState {
   autoRun: boolean;
 
   /**
-   * The timestamp of when the record was created.
+   * Whether the record is currently being executed.
    */
-  createTimestamp: number;
+  executing?: boolean;
 
   /**
    * The frequency of the action.
@@ -43,11 +46,6 @@ export interface AutoRecordState {
    * Whether the record is currently paused.
    */
   paused?: boolean;
-
-  /**
-   * The timestamp of the last update to the record.
-   */
-  updateTimestamp: number;
 
 }
 
@@ -220,31 +218,6 @@ export interface ScriptAction extends AutoRecordAction {
    * The name of the script action.
    */
   name: string;
-
-}
-
-/**
- * Options for loading an {@link AutoRecord}.
- */
-export interface LoadRecordOptions {
-
-  /**
-   * A filter function to determine which records to load.
-   *
-   * @param record The record to load.
-   * @returns `true` if the record should be loaded, `false` otherwise.
-   */
-  filter?: (record: AutoRecordState) => boolean;
-
-  /**
-   * A function to sort the loaded records.
-   *
-   * @param a The first record to compare.
-   * @param b The second record to compare.
-   * @returns A negative number if `a` should come before `b`, a positive number if `a` should come after `b`, or `0` if they are equal.
-   * @default `(a, b) => a.name.localeCompare(b.name)`.
-   */
-  sort?: (a: AutoRecordState, b: AutoRecordState) => number;
 
 }
 

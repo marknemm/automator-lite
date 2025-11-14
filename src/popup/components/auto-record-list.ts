@@ -4,7 +4,6 @@ import '~shared/components/button-list-item.js';
 import DataListBase from '~shared/components/data-list-base.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import type AutoRecord from '~shared/models/auto-record.js';
-
 import styles from './auto-record-list.scss?inline';
 
 /**
@@ -43,7 +42,7 @@ export class AutoRecordList extends DataListBase<AutoRecord> {
   accessor onTogglePause!: (record: AutoRecord) => Promise<void>;
 
   protected override renderItem(record: AutoRecord): TemplateResult {
-    const name = record.name || record.uid;
+    const name = record.name || record.id;
     const playPauseIcon = record.paused ? 'play' : 'pause';
     const playPauseColor = record.paused ? 'success' : 'primary';
     const playPauseTitle = `${record.paused ? 'Play Record:' : 'Pause Record:'} ${name}`;

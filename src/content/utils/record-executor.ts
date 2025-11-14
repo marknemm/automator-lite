@@ -2,9 +2,10 @@ import { html } from 'lit';
 import type { Nullish } from 'utility-types';
 import { AlertModal } from '~content/components/alert-modal.js';
 import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
-import { AutoRecord, ScriptAction, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction } from '~shared/models/auto-record.js';
+import { AutoRecordStore } from '~shared/models/auto-record-store.js';
+import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
-import { onStateChange, type AutoRecordState } from '~shared/utils/state.js';
+import { type AutoRecordState } from '~shared/utils/state.js';
 import { isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
 
 /**
@@ -24,6 +25,8 @@ export class RecordExecutor {
    * The singleton instance of the {@link RecordExecutor}.
    */
   static #instance: RecordExecutor | undefined;
+
+  readonly #autoRecordStore = AutoRecordStore.getInstance();
 
   /**
    * A map to keep track of scheduled auto-records.
@@ -48,23 +51,6 @@ export class RecordExecutor {
           : setTimeout(() => this.execRecord(record), 1000);
       }
     }
-
-    // Listen for 'records' state changes and schedule / unschedule records accordingly.
-    onStateChange((change) => {
-      const { oldState: oldValue, newState: newValue } = change;
-      const oldRecords = oldValue.records.map((record) => new AutoRecord(record));
-      const newRecords = newValue.records.map((record) => new AutoRecord(record));
-
-      // Unschedule all previously scheduled records.
-      for (const oldRecord of oldRecords) {
-        this.unscheduleRecord(oldRecord);
-      }
-
-      // Schedule all new records.
-      for (const newRecord of newRecords) {
-        this.scheduleRecord(newRecord);
-      }
-    }, 'records');
   }
 
   /**
@@ -79,7 +65,7 @@ export class RecordExecutor {
 
     // Only load records for scheduling in the top window.
     const records = isTopWindow()
-      ? await AutoRecord.loadMany()
+      ? await AutoRecordStore.getInstance().loadMany()
       : [];
 
     RecordExecutor.#instance = new RecordExecutor(records);
@@ -113,7 +99,7 @@ export class RecordExecutor {
     }, record.frequency ?? 5000);
 
     // Store the interval ID in the registry
-    this.#recordScheduleRegistry.set(record.uid, intervalId);
+    this.#recordScheduleRegistry.set(record.id, intervalId);
     return intervalId;
   }
 
@@ -126,7 +112,7 @@ export class RecordExecutor {
    * @see {@link scheduleRecord} for scheduling a record.
    */
   unscheduleRecord(record: AutoRecord | AutoRecordUid): boolean {
-    const uid = record instanceof AutoRecord ? record.uid : record;
+    const uid = record instanceof AutoRecord ? record.id : record;
 
     if (!this.#recordScheduleRegistry.has(uid)) {
       return false; // No action was taken, as the record was not scheduled.
@@ -151,11 +137,11 @@ export class RecordExecutor {
 
     // Wrap in AutoRecord for better type safety.
     if (!(record instanceof AutoRecord)) {
-      record = new AutoRecord(record as AutoRecordState);
+      record = await this.#autoRecordStore.load(record);
     }
 
     // Iterate through each action in the record and execute each one.
-    for (const action of record.actions) {
+    for (const action of record?.actions ?? []) {
       await this.execAction(action);
     }
   }

@@ -11,6 +11,7 @@ import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
 import './popup-root.scss'; // Light DOM (root) CSS.
 import styles from './popup.scss?inline';
+import { AutoRecordStore } from '~shared/models/auto-record-store.js';
 
 /**
  * The main popup component for the Automator Lite extension.
@@ -23,7 +24,12 @@ export class Popup extends LitElement {
 
   static styles = [unsafeCSS(styles)];
 
-  #loadRecordsTask = new Task(this, { task: () => AutoRecord.loadMany() });
+  readonly #autoRecordStore = AutoRecordStore.getInstance();
+  readonly #loadRecordsTask = new Task(this, { task: async () => {
+    const records = await this.#autoRecordStore.loadMany();
+    console.log('Loaded records:', records);
+    return records;
+  } });
 
   @state()
   private accessor addActionSheetOpened = false;
