@@ -5,13 +5,13 @@ import { html, LitElement, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import AutoRecord, { type RecordingType } from '~shared/models/auto-record.js';
+import { SparkStore } from '~shared/models/spark-store.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
 import './popup-root.scss'; // Light DOM (root) CSS.
 import styles from './popup.scss?inline';
-import { AutoRecordStore } from '~shared/models/auto-record-store.js';
 
 /**
  * The main popup component for the Automator Lite extension.
@@ -24,7 +24,7 @@ export class Popup extends LitElement {
 
   static styles = [unsafeCSS(styles)];
 
-  readonly #autoRecordStore = AutoRecordStore.getInstance();
+  readonly #autoRecordStore = SparkStore.getInstance(AutoRecord);
   readonly #loadRecordsTask = new Task(this, { task: async () => {
     const records = await this.#autoRecordStore.loadMany();
     console.log('Loaded records:', records);

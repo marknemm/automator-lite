@@ -9,7 +9,7 @@ import { rm, writeFile } from 'fs/promises';
 import * as sass from 'sass';
 
 // Resolve the environment and build options
-const prod = process.env.NODE_ENV === 'production';
+const prod = ['production', 'prod'].includes(process.env.NODE_ENV ?? '');
 const analyze = process.argv.includes('--analyze');
 const minify = process.argv.includes('--minify') || prod;
 const watch = process.argv.includes('--watch');
@@ -39,6 +39,9 @@ const ctx = await esbuild.context({
     // Exclude lazy loaded JS scripts from being bundled - built and bundled separately.
     'lazy/*',
   ],
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(prod ? 'production' : 'development'),
+  },
   bundle: true,
   write: true,
   logLevel: 'info',

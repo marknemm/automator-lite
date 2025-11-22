@@ -5,14 +5,15 @@ import { ScriptingModal, ScriptingModalData } from '~content/components/scriptin
 import type { AutoRecordAction, AutoRecordState, KeyboardAction, KeyboardEventType, MouseAction, MouseEventType, RecordingType, ScriptAction } from '~shared/models/auto-record.interfaces.js';
 import { AutoRecord } from '~shared/models/auto-record.js';
 import { ExtensionOptions } from '~shared/models/extension-options.js';
+import { SparkStore } from '~shared/models/spark-store.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
+import { log } from '~shared/utils/logger.js';
 import { type MountContext } from '~shared/utils/mount.js';
 import { sendTopWindow } from '~shared/utils/window-messaging.js';
 import { isTopWindow } from '~shared/utils/window.js';
 import { ActionParser } from './action-parser.js';
 import { deriveElementSelector } from './element-analysis.js';
 import { ScriptCompiler } from './script-compiler.js';
-import { AutoRecordStore } from '~shared/models/auto-record-store.js';
 
 /**
  * Context for managing the recording state and interactions.
@@ -37,9 +38,9 @@ export class RecordingContext {
   #activeRecordingType: RecordingType | Nullish;
 
   /**
-   * The {@link AutoRecordStore} for saving configured records.
+   * The {@link SparkStore} for saving configured records.
    */
-  #autoRecordStore = AutoRecordStore.getInstance();
+  #autoRecordStore = SparkStore.getInstance(AutoRecord);
 
   /**
    * The {@link ExtensionOptions} for the current extension installation.
@@ -114,8 +115,8 @@ export class RecordingContext {
   ): Promise<AutoRecord | undefined> {
     if (!recordData || (recordData instanceof Array && !recordData.length)) return; // No valid record to config.
     const saveState = await AutoRecordConfigModal.open(recordData);
-    console.log('Configured record state:', saveState);
-    if (saveState) return this.#autoRecordStore.init(saveState).save();
+    log.debug('Configured record state:', saveState);
+    if (saveState) return this.#autoRecordStore.initModel(saveState).save();
   }
 
   /**

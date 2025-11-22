@@ -2,8 +2,8 @@ import { html } from 'lit';
 import type { Nullish } from 'utility-types';
 import { AlertModal } from '~content/components/alert-modal.js';
 import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
-import { AutoRecordStore } from '~shared/models/auto-record-store.js';
 import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
+import { SparkStore } from '~shared/models/spark-store.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { type AutoRecordState } from '~shared/utils/state.js';
 import { isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
@@ -26,7 +26,10 @@ export class RecordExecutor {
    */
   static #instance: RecordExecutor | undefined;
 
-  readonly #autoRecordStore = AutoRecordStore.getInstance();
+  /**
+   * The {@link SparkStore} instance for loading {@link AutoRecord} models.
+   */
+  readonly #autoRecordStore = SparkStore.getInstance(AutoRecord);
 
   /**
    * A map to keep track of scheduled auto-records.
@@ -65,7 +68,7 @@ export class RecordExecutor {
 
     // Only load records for scheduling in the top window.
     const records = isTopWindow()
-      ? await AutoRecordStore.getInstance().loadMany()
+      ? await SparkStore.getInstance(AutoRecord).loadMany()
       : [];
 
     RecordExecutor.#instance = new RecordExecutor(records);

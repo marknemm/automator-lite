@@ -1,10 +1,10 @@
-import deepFreeze from 'deep-freeze';
 import { detailedDiff, type DetailedDiff } from 'deep-object-diff';
-import { omitBy, toPlainObject } from 'lodash-es';
+import { cloneDeep, omitBy, toPlainObject } from 'lodash-es';
 import type { DeepPartial, DeepReadonly } from 'utility-types';
+import { log } from '~shared/utils/logger.js';
 import { deepMerge, DeepMergeOptions } from '~shared/utils/object.js';
-import { SparkModelStore } from './spark-model-store.js';
-import type { SparkModelId, SparkModelState, SparkPersistenceAction } from './spark-model.interfaces.js';
+import type { SparkModelEventHandler, SparkModelEventType, SparkModelId, SparkModelState } from './spark-model.interfaces.js';
+import { SparkStore } from './spark-store.js';
 
 /**
  * An abstract base class for Create, Read, Update, Delete (`CRUD`) models.
@@ -14,7 +14,7 @@ import type { SparkModelId, SparkModelState, SparkPersistenceAction } from './sp
  * @implements {SparkModelState}
  */
 export abstract class SparkModel<
-  TState extends SparkModelState = any,
+  TState extends SparkModelState = SparkModelState,
 > implements SparkModelState {
 
   /**
@@ -23,14 +23,6 @@ export abstract class SparkModel<
    * Used internally for type inference without deep type expansion via inference.
    */
   declare readonly _stateBrand: TState;
-
-  /**
-   * The frozen raw saved {@link SparkModelState} data for this {@link SparkModel}.
-   *
-   * Will become desynchronized from any unsaved changes to this {@link SparkModel}'s properties.
-   * This is by design, since the {@link SparkModelState} data is meant to reflect the saved {@link SparkModelState} of the {@link SparkModel}.
-   */
-  #frozenState: DeepReadonly<Partial<TState>>;
 
   /**
    * The raw saved {@link SparkModelState} data for this {@link SparkModel}.
@@ -42,34 +34,40 @@ export abstract class SparkModel<
    */
   #state: Partial<TState>;
 
-  #store: SparkModelStore<this>;
+  /**
+   * The {@link SparkStore} instance that manages persistence for this {@link SparkModel} instance.
+   */
+  readonly #store: SparkStore<this>;
 
-  constructor(
-    store: SparkModelStore,
-    state: Partial<TState> = {}
-  ) {
-    this.#store = store as SparkModelStore<this>;
-    if (!this.store.constructing) {
-      throw new Error(
-        `SparkModel instances must be created via their corresponding SparkModelStore (${this.store.constructor.name}).`
-      );
-    }
+  /**
+   * All unregister callbacks for removing event listeners on delete.
+   */
+  readonly #unregisterCbs: (() => void)[] = [];
 
-    // If state is new and hasn't been saved, will need to init timestamp.
+  protected constructor(state: Partial<TState> = {}) {
+    this.#store = SparkStore.getInstance(this.constructor as any);
+
     state.createTimestamp ??= Date.now();
+    this.#state = cloneDeep(state);
 
-    this.#frozenState = deepFreeze(state) as any;
-    this.#state = state;
+    // Keep the saved state in sync on save events detected by the store.
+    this.on('save', (_, savedState) => {
+      if ((this.#state.updateTimestamp ?? 0) < savedState!.updateTimestamp!) {
+        this.#state = cloneDeep(savedState!);
+      }
+    });
 
-    // Listen for save events to update internal state.
-    this.on('save', (savedState) => {
-      this.#state = savedState || {};
-      this.#frozenState = deepFreeze(this.#state) as any;
+    // Auto-unregister all callbacks on delete to prevent memory leaks.
+    this.on('delete', () => {
+      setTimeout(() => { // Defer so that delete callbacks can still run.
+        this.#unregisterCbs.forEach((unregister) => unregister());
+        this.#unregisterCbs.length = 0;
+      });
     });
   }
 
   get createTimestamp(): number {
-    return this.#state.createTimestamp!;
+    return this.state.createTimestamp!;
   }
 
   /**
@@ -85,15 +83,8 @@ export abstract class SparkModel<
    * Will become desynchronized from any unsaved changes to this {@link SparkModel}'s properties.
    * This is by design, since the {@link SparkModelState} data is meant to reflect the saved {@link SparkModelState} of the {@link SparkModel}.
    */
-  get state(): DeepReadonly<Partial<TState>> {
-    return this.#frozenState;
-  }
-
-  /**
-   * The {@link SparkModelStore} for managing persistence data for this {@link SparkModel}.
-   */
-  get store(): SparkModelStore<this> {
-    return this.#store;
+  get state(): Partial<DeepReadonly<TState>> {
+    return this.#state as Partial<DeepReadonly<TState>>;
   }
 
   /**
@@ -120,7 +111,7 @@ export abstract class SparkModel<
    * This is a convenience method that calls the store's delete method, and should not contain custom delete logic.
    */
   delete(): Promise<boolean> {
-    return this.store.delete(this);
+    return this.#store.delete(this);
   }
 
   /**
@@ -172,35 +163,35 @@ export abstract class SparkModel<
   }
 
   /**
-   * Unregisters a previously registered persistence callback for `this` {@link SparkModel} instance.
-   *
-   * @param persistAction The {@link SparkPersistenceAction} to stop monitoring.
-   * @param persistCb The callback function to unregister.
-   *
-   * @final Override {@link SparkModelStore.off} to define how the model persistence callbacks are unregistered.
-   * This is a convenience method that calls the store's off method, and should not contain custom logic.
-   */
-  off(
-    persistAction: SparkPersistenceAction,
-    persistCb: (state?: TState) => void
-  ): void {
-    this.store.off(persistAction, this, persistCb);
-  }
-
-  /**
    * Registers a callback to be invoked whenever `this` {@link SparkModel} instance changes.
    *
-   * @param persistAction The {@link SparkPersistenceAction} to monitor.
+   * @param persistAction The {@link SparkModelEventType} to monitor.
    * @param persistCb The callback function to be invoked on persistence change.
    *
-   * @final Override {@link SparkModelStore.on} to define how the model persistence callbacks are registered.
+   * @final Override {@link SparkStore.on} to define how the model persistence callbacks are registered.
    * This is a convenience method that calls the store's on method, and should not contain custom logic.
    */
-  on(
-    persistAction: SparkPersistenceAction,
-    persistCb: (state?: TState) => void
-  ): void {
-    this.store.on(persistAction, this, persistCb);
+  on<TEvent extends SparkModelEventType>(
+    persistAction: TEvent,
+    persistCb: SparkModelEventHandler<TEvent, this>
+  ): () => void {
+    // Create a wrapper callback to filter events for this instance.
+    const wrappedCb: SparkModelEventHandler<'persist', this> = (model, state, oldState) => {
+      if (model !== this) return;
+      (persistCb as SparkModelEventHandler<'persist', this>)(model, state, oldState);
+    };
+
+    // Register the callback.
+    const unregisterCb = this.#store.on(persistAction, wrappedCb as SparkModelEventHandler<TEvent, this>);
+
+    // Wrap the unregister callback to also remove it from our internal list on unregister.
+    const wrappedUnregisterCb = () => {
+      unregisterCb();
+      this.#unregisterCbs.splice(this.#unregisterCbs.indexOf(wrappedUnregisterCb), 1);
+    };
+    this.#unregisterCbs.push(wrappedUnregisterCb);
+
+    return wrappedUnregisterCb;
   }
 
   /**
@@ -211,9 +202,9 @@ export abstract class SparkModel<
    * @return `this` {@link SparkModel} instance with the reset state applied.
    */
   reset(mergeData?: DeepPartial<TState>): this {
-    console.log('Resetting model to saved state:', this.#state);
+    log.debug('Resetting model to saved state:', this.#state);
     this.set(this.#state as TState);
-    console.log('Model after reset:', this);
+    log.debug('Model after reset:', this);
     if (mergeData) this.merge(mergeData);
     return this;
   }
@@ -225,12 +216,12 @@ export abstract class SparkModel<
    * Any data not specified in {@link mergeData} will be saved as-is.
    * @returns A {@link Promise} that resolves to `this` {@link SparkModel} instance when the save is complete.
    *
-   * @final Override {@link SparkModelStore.save} to define how the model is saved.
+   * @final Override {@link SparkStore.save} to define how the model is saved.
    * This is a convenience method that calls the store's save method, and should not contain custom save logic.
    */
   save(mergeData?: DeepPartial<TState>): Promise<this> {
     if (mergeData) this.merge(mergeData);
-    return this.store.save(this) as Promise<this>;
+    return this.#store.save(this) as Promise<this>;
   }
 
   /**
@@ -266,4 +257,6 @@ export abstract class SparkModel<
 
 }
 
+export * from '~shared/decorators/model.js';
 export type * from './spark-model.interfaces.js';
+export default SparkModel;

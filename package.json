@@ -4,7 +4,7 @@
   "description": "A Chrome extension that automates repetitive tasks in the browser.",
   "type": "module",
   "scripts": {
-    "build": "node esbuild.config.mjs --minify",
+    "build": "NODE_ENV=production node esbuild.config.mjs --minify",
     "build:analyze": "node esbuild.config.mjs --analyze",
     "build:watch": "node esbuild.config.mjs --watch",
     "clean": "rimraf dist",

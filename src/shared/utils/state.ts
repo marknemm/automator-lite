@@ -54,14 +54,16 @@ export async function saveState(state: Partial<State>): Promise<State> {
  * @param callback - The callback function to execute when the {@link State} changes.
  * This function will be called with the {@link StateChange} object containing the old and new state
  * @param properties The specific properties to listen for changes on.
+ *
+ * @returns A {@link Promise} that resolves to a function which can be called to unregister the listener.
  */
 export async function onStateChange<Props extends (keyof State)[]>(
   callback: (change: StateChange<StateSubset<Props>>) => void,
   ...properties: Props
-): Promise<void> {
+): Promise<() => void> {
   const stateUid = await getStateUid();
 
-  chrome.storage.local.onChanged.addListener((changes) => {
+  const listener = (changes: { [key: string]: chrome.storage.StorageChange; }) => {
     if (changes[stateUid]) {
       const { oldValue, newValue } = changes[stateUid];
 
@@ -72,7 +74,10 @@ export async function onStateChange<Props extends (keyof State)[]>(
         } as StateChange<StateSubset<Props>>);
       }
     }
-  });
+  };
+
+  chrome.storage.local.onChanged.addListener(listener);
+  return () => chrome.storage.local.onChanged.removeListener(listener);
 }
 
 function getStateSubset<Props extends (keyof State)[]>(

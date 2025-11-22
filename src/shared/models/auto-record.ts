@@ -1,14 +1,17 @@
 import type { Nullish } from 'utility-types';
+import { model } from '~shared/decorators/model.js';
 import { SparkModel } from '~shared/models/spark-model.js';
 import type { AutoRecordAction, AutoRecordState } from './auto-record.interfaces.js';
-import { SparkModelStore } from './spark-model-store.js';
+import { AutoRecordStateManager } from './auto-record-state-manager.js';
 
 /**
  * {@link AutoRecord} model data that contains actions that are replayable on a webpage.
  *
  * @extends SparkModel<AutoRecordState>
- * @implements {AutoRecordState}
  */
+@model({
+  stateManager: AutoRecordStateManager,
+})
 export class AutoRecord extends SparkModel<AutoRecordState> {
 
   #actions: AutoRecordAction[] = [];
@@ -24,11 +27,9 @@ export class AutoRecord extends SparkModel<AutoRecordState> {
    * @param state The raw {@link AutoRecordState} data.
    */
   constructor(
-    store: SparkModelStore,
-    state: Partial<AutoRecordState> | AutoRecordAction[]
+    state?: Partial<AutoRecordState>
   ) {
     super(
-      store,
       (state instanceof Array)
         ? { actions: state }
         : state
