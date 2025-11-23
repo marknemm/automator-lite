@@ -72,6 +72,7 @@ export class AutoRecordStateManager extends SparkReactiveStateManager<AutoRecord
   }: LoadSparkModelOptions<AutoRecordState> = {}): Promise<AutoRecordState[]> {
     let records = await loadState('records');
     if (filter) records = records.filter(filter);
+    log.debug('AutoRecordStateManager.loadMany - loaded records:', records);
     return records.sort(sort);
   }
 
@@ -92,7 +93,7 @@ export class AutoRecordStateManager extends SparkReactiveStateManager<AutoRecord
     );
 
     // Either add new record or update existing one.
-    log.debug('Saving record state:', saveData);
+    log.debug('AutoRecordStateManager.save - saving record:', saveData);
     const state = await saveState({
       records: (recordStateIdx === -1)
         ? records.concat(saveData)

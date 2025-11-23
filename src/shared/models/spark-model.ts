@@ -1,8 +1,7 @@
 import { detailedDiff, type DetailedDiff } from 'deep-object-diff';
-import { cloneDeep, omitBy, toPlainObject } from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 import type { DeepPartial, DeepReadonly } from 'utility-types';
-import { log } from '~shared/utils/logger.js';
-import { deepMerge, DeepMergeOptions } from '~shared/utils/object.js';
+import { deepMerge, DeepMergeOptions, serializeObject } from '~shared/utils/object.js';
 import type { SparkModelEventHandler, SparkModelEventType, SparkModelId, SparkModelState } from './spark-model.interfaces.js';
 import { SparkStore } from './spark-store.js';
 
@@ -20,7 +19,7 @@ export abstract class SparkModel<
   /**
    * A branding property to associate the model with its state type.
    *
-   * Used internally for type inference without deep type expansion via inference.
+   * Used internally for type inference without deep type expansion.
    */
   declare readonly _stateBrand: TState;
 
@@ -94,7 +93,7 @@ export abstract class SparkModel<
    * Otherwise, {@link createTimestamp} is used as a string.
    */
   get id(): SparkModelId {
-    return `${(this.#state as any)['id']}` || `${this.createTimestamp}`;
+    return `${(this.#state as any)['id'] || this.createTimestamp}`;
   }
 
   get updateTimestamp(): number | undefined {
@@ -202,9 +201,7 @@ export abstract class SparkModel<
    * @return `this` {@link SparkModel} instance with the reset state applied.
    */
   reset(mergeData?: DeepPartial<TState>): this {
-    log.debug('Resetting model to saved state:', this.#state);
     this.set(this.#state as TState);
-    log.debug('Model after reset:', this);
     if (mergeData) this.merge(mergeData);
     return this;
   }
@@ -234,7 +231,6 @@ export abstract class SparkModel<
     if (!data) return this;
 
     // Total replacement of state, while avoiding functions and non-writable properties.
-    debugger;
     deepMerge(this, data, {
       arrayBehavior: 'replace',
       filter: (key, dest, src) => (typeof src[key] !== 'function'),
@@ -251,8 +247,7 @@ export abstract class SparkModel<
    * @returns The {@link SparkModelState} data to be saved.
    */
   toSaveData(): TState {
-    const plainObj = toPlainObject(this);
-    return omitBy(plainObj, (val) => typeof val === 'function') as TState;
+    return serializeObject(this) as TState;
   }
 
 }

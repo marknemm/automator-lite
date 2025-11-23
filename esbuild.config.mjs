@@ -9,7 +9,7 @@ import { rm, writeFile } from 'fs/promises';
 import * as sass from 'sass';
 
 // Resolve the environment and build options
-const prod = ['production', 'prod'].includes(process.env.NODE_ENV ?? '');
+const prod = ['production', 'prod'].includes(process.env.NODE_ENV ?? '') || process.argv.includes('--prod') || process.argv.includes('--production');
 const analyze = process.argv.includes('--analyze');
 const minify = process.argv.includes('--minify') || prod;
 const watch = process.argv.includes('--watch');
@@ -19,6 +19,8 @@ const sassLoadPaths = [
   './src/shared/styles',
   './src/shared/components',
 ];
+
+console.log(`Building for ${prod ? 'production' : 'development'}${analyze ? ' with analysis' : ''}${watch ? ' in watch mode' : ''}...`);
 
 // Clean the output directory before building
 await rm('dist', { recursive: true, force: true });

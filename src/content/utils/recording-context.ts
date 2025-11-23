@@ -116,7 +116,7 @@ export class RecordingContext {
     if (!recordData || (recordData instanceof Array && !recordData.length)) return; // No valid record to config.
     const saveState = await AutoRecordConfigModal.open(recordData);
     log.debug('Configured record state:', saveState);
-    if (saveState) return this.#autoRecordStore.initModel(saveState).save();
+    if (saveState) return this.#autoRecordStore.newModel(saveState).save();
   }
 
   /**

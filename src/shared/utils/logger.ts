@@ -12,35 +12,29 @@ export const log = {
    *
    * @param args The arguments to log.
    */
-  debug: (...args: any[]): void => {
-    if (DEBUG) console.debug(...args);
-  },
+  debug: DEBUG ? console.debug.bind(console) : () => {},
 
   /**
    * Logs an informational message.
    *
    * @param args The arguments to log.
    */
-  info: (...args: any[]): void => {
-    console.info(...args);
-  },
+  info: console.info.bind(console),
 
   /**
    * Logs a warning message.
    *
    * @param args The arguments to log.
    */
-  warn: (...args: any[]): void => {
-    console.warn(...args);
-  },
+  warn: console.warn.bind(console),
 
   /**
    * Logs an error message.
    *
    * @param args The arguments to log.
    */
-  error: (...args: any[]): void => {
-    console.error(...args);
-  },
+  error: console.error.bind(console),
 
 };
+
+export default log;

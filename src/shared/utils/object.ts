@@ -1,3 +1,5 @@
+import { Nullish } from 'utility-types';
+import { log } from './logger.js';
 import type { DeepMergeOptions } from './object.interfaces.js';
 
 /**
@@ -173,6 +175,58 @@ export function isPlainObject(value: any): boolean {
   if (!value || typeof value !== 'object') return false;
   const proto = Object.getPrototypeOf(value);
   return proto === Object.prototype || proto === null;
+}
+
+/**
+ * Serializes an object into a plain object by recursively extracting its enumerable properties.
+ *
+ * @param obj The object to serialize.
+ * @returns A plain object representing the serialized data.
+ */
+export function serializeObject<T extends object>(obj: T | Nullish): object {
+  const data: any = {};
+  if (!obj) return data;
+
+  // Get all property descriptors from the prototype chain
+  let proto = obj;
+  while (proto && proto !== Object.prototype) {
+    for (const key of Object.getOwnPropertyNames(proto)) {
+      // Skip constructor, private fields, functions, and already-processed keys
+      if (key === 'constructor' || key.startsWith('_') || key.startsWith('#') || key in data) {
+        continue;
+      }
+
+      try {
+        // Get value via getter if available
+        const value = (obj as any)[key];
+
+        // Skip functions and undefined values
+        if (typeof value === 'function' || value === undefined) {
+          continue;
+        }
+
+        // Recursively serialize nested objects
+        if (Array.isArray(value)) {
+          data[key] = value.map(item =>
+            (typeof item === 'object' && item !== null)
+              ? serializeObject(item)
+              : item
+          );
+        } else if (value && typeof value === 'object') {
+          data[key] = serializeObject(value);
+        } else {
+          data[key] = value;
+        }
+      } catch (error) {
+        // Skip properties that throw on access
+        log.debug(`Failed to access property '${key}' during serialization:`, error);
+      }
+    }
+
+    proto = Object.getPrototypeOf(proto);
+  }
+
+  return data;
 }
 
 export type * from './object.interfaces.js';

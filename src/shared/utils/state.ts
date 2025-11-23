@@ -65,7 +65,7 @@ export async function onStateChange<Props extends (keyof State)[]>(
 
   const listener = (changes: { [key: string]: chrome.storage.StorageChange; }) => {
     if (changes[stateUid]) {
-      const { oldValue, newValue } = changes[stateUid];
+      const { oldValue, newValue }: { oldValue: State; newValue: State } = changes[stateUid] as any;
 
       if (!properties || properties.some((property) => !isEqual(newValue[property], oldValue[property]))) {
         callback({

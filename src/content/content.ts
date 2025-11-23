@@ -30,8 +30,8 @@ async function init() {
   /** Per-frame singleton recording context for recording new records. */
   const recordingCtx = await RecordingContext.init();
 
-  /** Singleton {@link SparkStore} instance for managing {@link AutoRecord} persistence. */
-  const autoRecordStore = await SparkStore.getInstance(AutoRecord);
+  /** Per-frame singleton {@link SparkStore} instance for managing {@link AutoRecord} persistence. */
+  const autoRecordStore = SparkStore.getInstance(AutoRecord);
 
   // Listen for messages from popup or background script.
   listenExtension('alert', ({ payload }: ExtensionRequestMessage<Alert>) => {

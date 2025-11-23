@@ -7,6 +7,7 @@ import sparkButton from '~shared/directives/spark-button.js';
 import AutoRecord, { type RecordingType } from '~shared/models/auto-record.js';
 import { SparkStore } from '~shared/models/spark-store.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
+import { log } from '~shared/utils/logger.js';
 import { onStateChange } from '~shared/utils/state.js';
 import './components/add-action-sheet.js';
 import './components/auto-record-list.js';
@@ -25,11 +26,13 @@ export class Popup extends LitElement {
   static styles = [unsafeCSS(styles)];
 
   readonly #autoRecordStore = SparkStore.getInstance(AutoRecord);
-  readonly #loadRecordsTask = new Task(this, { task: async () => {
-    const records = await this.#autoRecordStore.loadMany();
-    console.log('Loaded records:', records);
-    return records;
-  } });
+  readonly #loadRecordsTask = new Task(this, {
+    task: async () => {
+      const records = await this.#autoRecordStore.loadMany();
+      log.debug('Loaded records:', records);
+      return records;
+    },
+  });
 
   @state()
   private accessor addActionSheetOpened = false;

@@ -117,7 +117,7 @@ export class SparkStore<
    * @param state The initial state for the {@link SparkModel}.
    * @returns The initialized {@link SparkModel} instance.
    */
-  initModel(state: Partial<TState>): TModel {
+  newModel(state: Partial<TState>): TModel {
     const ModelCtor = this.#ModelCtor as SparkModelCtor<TModel>;
     const model = new ModelCtor(state);
     return model.reset();
@@ -207,7 +207,7 @@ export class SparkStore<
     if (this.#loadedModels.has(id)) {
       this.#emit('update', this.#loadedModels.get(id)!, state);
     } else {
-      const model = new this.#ModelCtor(state);
+      const model = this.newModel(state);
       this.#loadedModels.set(model.id, model);
     }
 
@@ -233,7 +233,7 @@ export class SparkStore<
       const stateId = this.toModelId(state);
       const model = (stateId && this.#loadedModels.has(stateId))
         ? this.#loadedModels.get(stateId)!
-        : new this.#ModelCtor(state);
+        : this.newModel(state);
 
       if (!this.#loadedModels.has(model.id)) {
         this.#loadedModels.set(model.id, model);
