@@ -30,6 +30,7 @@ export class AutoRecordStateManager extends SparkReactiveStateManager<AutoRecord
     // Record not found?
     if (recordStateIdx === -1) return false;
 
+    log.debug('AutoRecordStateManager.delete - deleting record:', records[recordStateIdx]);
     records.splice(recordStateIdx, 1);
     await saveState({ records });
     return true; // Record deleted successfully.
@@ -53,9 +54,12 @@ export class AutoRecordStateManager extends SparkReactiveStateManager<AutoRecord
       ? parseInt(id, 10)
       : id.createTimestamp;
 
-    return (await this.loadMany({
+    const record = (await this.loadMany({
       filter: record => record.createTimestamp === createTimestamp,
     }))[0];
+
+    log.debug('AutoRecordStateManager.load - loaded record:', record);
+    return record;
   }
 
   /**
@@ -72,6 +76,7 @@ export class AutoRecordStateManager extends SparkReactiveStateManager<AutoRecord
   }: LoadSparkModelOptions<AutoRecordState> = {}): Promise<AutoRecordState[]> {
     let records = await loadState('records');
     if (filter) records = records.filter(filter);
+
     log.debug('AutoRecordStateManager.loadMany - loaded records:', records);
     return records.sort(sort);
   }
@@ -120,6 +125,7 @@ export class AutoRecordStateManager extends SparkReactiveStateManager<AutoRecord
       );
 
       for (const record of createdRecords) {
+        log.debug('AutoRecordStateManager.listenCreate - detected record creation:', record);
         emit(record);
       }
     }, 'records');
@@ -138,6 +144,7 @@ export class AutoRecordStateManager extends SparkReactiveStateManager<AutoRecord
       );
 
       for (const record of deletedRecords) {
+        log.debug('AutoRecordStateManager.listenDelete - detected record deletion:', record);
         emit(record);
       }
     }, 'records');
@@ -162,6 +169,7 @@ export class AutoRecordStateManager extends SparkReactiveStateManager<AutoRecord
         const oldRecord = oldRecords.find(
           oldRec => oldRec.createTimestamp === newRecord.createTimestamp
         )!;
+        log.debug('AutoRecordStateManager.listenUpdate - detected record update:', { newRecord, oldRecord });
         emit(newRecord, oldRecord);
       }
     }, 'records');

@@ -1,4 +1,4 @@
-import type { SparkModelEventType, SparkModelState, SparkStateCreateEmitter, SparkStateDeleteEmitter, SparkStateEventHandler, SparkStateUpdateEmitter } from './spark-model.interfaces.js';
+import type { SparkModelEmitEventType, SparkModelEventType, SparkModelState, SparkStateCreateEmitter, SparkStateDeleteEmitter, SparkStateEventHandler, SparkStateUpdateEmitter } from './spark-model.interfaces.js';
 import { SparkStateManager } from './spark-state-manager.js';
 
 /**
@@ -12,9 +12,9 @@ export abstract class SparkReactiveStateManager<
   TState extends SparkModelState
 > extends SparkStateManager<TState> {
 
-  readonly #createListeners: Array<SparkStateEventHandler<'create', TState>> = [];
-  readonly #deleteListeners: Array<SparkStateEventHandler<'delete', TState>> = [];
-  readonly #updateListeners: Array<SparkStateEventHandler<'update', TState>> = [];
+  readonly #createCbs: Array<SparkStateEventHandler<'create', TState>> = [];
+  readonly #deleteCbs: Array<SparkStateEventHandler<'delete', TState>> = [];
+  readonly #updateCbs: Array<SparkStateEventHandler<'update', TState>> = [];
 
   /**
    * Starts listening for all {@link SparkModelState} change events.
@@ -76,40 +76,38 @@ export abstract class SparkReactiveStateManager<
     cb: SparkStateEventHandler<TEvent, TState>
   ): () => void {
     switch (eventType) {
-      case 'create':  this.#createListeners.push(cb as SparkStateEventHandler<'create', TState>);   break;
-      case 'delete':  this.#deleteListeners.push(cb as SparkStateEventHandler<'delete', TState>);   break;
-      case 'persist': this.#deleteListeners.push(cb as SparkStateEventHandler<'persist', TState>);
-      case 'save':    this.#createListeners.push(cb as SparkStateEventHandler<'save', TState>);
-      case 'update':  this.#updateListeners.push(cb as SparkStateEventHandler<'update', TState>);   break;
+      case 'create':  this.#createCbs.push(cb as SparkStateEventHandler<'create', TState>);   break;
+      case 'delete':  this.#deleteCbs.push(cb as SparkStateEventHandler<'delete', TState>);   break;
+      case 'persist': this.#deleteCbs.push(cb as SparkStateEventHandler<'persist', TState>);
+      case 'save':    this.#createCbs.push(cb as SparkStateEventHandler<'save', TState>);
+      case 'update':  this.#updateCbs.push(cb as SparkStateEventHandler<'update', TState>);   break;
       default:
         throw new Error(`SparkReactiveStateManager.on: Unsupported event type: ${eventType}`);
     }
 
     return () => {
-      const createIdx = this.#createListeners.indexOf(cb as SparkStateEventHandler<'create', TState>);
-      if (createIdx !== -1) this.#createListeners.splice(createIdx, 1);
+      const createIdx = this.#createCbs.indexOf(cb as SparkStateEventHandler<'create', TState>);
+      if (createIdx !== -1) this.#createCbs.splice(createIdx, 1);
 
-      const deleteIdx = this.#deleteListeners.indexOf(cb as SparkStateEventHandler<'delete', TState>);
-      if (deleteIdx !== -1) this.#deleteListeners.splice(deleteIdx, 1);
+      const deleteIdx = this.#deleteCbs.indexOf(cb as SparkStateEventHandler<'delete', TState>);
+      if (deleteIdx !== -1) this.#deleteCbs.splice(deleteIdx, 1);
 
-      const updateIdx = this.#updateListeners.indexOf(cb as SparkStateEventHandler<'update', TState>);
-      if (updateIdx !== -1) this.#updateListeners.splice(updateIdx, 1);
+      const updateIdx = this.#updateCbs.indexOf(cb as SparkStateEventHandler<'update', TState>);
+      if (updateIdx !== -1) this.#updateCbs.splice(updateIdx, 1);
     };
   }
 
-  #emit<TEvent extends SparkModelEventType>(
-    eventType: TEvent,
+  #emit(
+    eventType: SparkModelEmitEventType,
     state: Partial<TState>,
     oldState?: Partial<TState>
   ): void {
     let listeners: Array<SparkStateEventHandler<any, TState>> = [];
 
     switch (eventType) {
-      case 'create':  listeners = this.#createListeners; break;
-      case 'delete':  listeners = this.#deleteListeners; break;
-      case 'persist': listeners = this.#deleteListeners;
-      case 'save':    listeners = this.#createListeners;
-      case 'update':  listeners = this.#updateListeners; break;
+      case 'create': listeners = this.#createCbs; break;
+      case 'delete': listeners = this.#deleteCbs; break;
+      case 'update': listeners = this.#updateCbs; break;
       default:
         throw new Error(`SparkReactiveStateManager.#emit: Unsupported event type: ${eventType}`);
     }

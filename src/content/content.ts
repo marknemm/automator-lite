@@ -6,6 +6,7 @@ import AutoRecord, { type AutoRecordAction, type AutoRecordState, type Recording
 import { SparkStore } from '~shared/models/spark-store.js';
 import type { Alert } from '~shared/utils/alert.interfaces.js';
 import { listenExtension, type ExtensionRequestMessage } from '~shared/utils/extension-messaging.js';
+import log from '~shared/utils/logger.js';
 import fontStyles from '../shared/styles/fonts.scss?inline';
 import { AlertModal } from './components/alert-modal.js';
 import './content.scss';
@@ -62,17 +63,16 @@ async function init() {
     recordingCtx.stop();
   });
 
-  // Listen for 'records' state changes and schedule / unschedule records accordingly.
+  // Listen for 'records' state changes and unschedule / reschedule records accordingly.
   autoRecordStore.on('save', async (model: AutoRecord) => {
-    if (model.paused) return;
-
-    // Unschedule any existing scheduled record, and reschedule if it has a frequency.
     recordExecutor.unscheduleRecord(model);
-    if (model.frequency) {
+    console.log('AutoRecord schedule potential: ', model);
+    if (!model.paused && model.frequency) {
       recordExecutor.scheduleRecord(model);
     }
   });
 
+  // On delete, unschedule the record.
   autoRecordStore.on('delete', async (model: AutoRecord) => {
     // Unschedule the deleted record.
     recordExecutor.unscheduleRecord(model);
@@ -80,5 +80,5 @@ async function init() {
 }
 
 init().then().catch((error) => {
-  console.error('Error initializing content script:', error);
+  log.error('Error initializing content script:', error);
 });

@@ -1,6 +1,7 @@
 import { LitElement, type ReactiveController } from 'lit';
-import type { DecoratedComponent, DecoratorBinding, DecoratorContext, DecoratorLifecycleHooks, LitMemberDecorator } from './decorator-controller.interfaces.js';
+import log from '~shared/utils/logger.js';
 import type { Key } from '~shared/utils/types.js';
+import type { DecoratedComponent, DecoratorBinding, DecoratorContext, DecoratorLifecycleHooks, LitMemberDecorator } from './decorator-controller.interfaces.js';
 
 /**
  * A controller for enabling decorators on a {@link LitElement} component
@@ -95,7 +96,7 @@ export class DecoratorController<E extends LitElement = LitElement> implements R
       try {
         lifecycleHooks.hostConnected?.(ctx);
       } catch (error) {
-        console.error('Error in hostConnected lifecycle hook:', error);
+        log.error('Error in hostConnected lifecycle hook:', error);
       }
     }
   }
@@ -108,7 +109,7 @@ export class DecoratorController<E extends LitElement = LitElement> implements R
       try {
         lifecycleHooks.hostDisconnected?.(ctx);
       } catch (error) {
-        console.error('Error in hostDisconnected lifecycle hook:', error);
+        log.error('Error in hostDisconnected lifecycle hook:', error);
       }
     }
   }
@@ -121,7 +122,7 @@ export class DecoratorController<E extends LitElement = LitElement> implements R
       try {
         lifecycleHooks.hostUpdate?.(ctx);
       } catch (error) {
-        console.error('Error in hostUpdate lifecycle hook:', error);
+        log.error('Error in hostUpdate lifecycle hook:', error);
       }
     }
   }
@@ -136,14 +137,14 @@ export class DecoratorController<E extends LitElement = LitElement> implements R
           try {
             lifecycleHooks.hostFirstUpdated?.(ctx);
           } catch (error) {
-            console.error('Error in hostFirstUpdated lifecycle hook:', error);
+            log.error('Error in hostFirstUpdated lifecycle hook:', error);
           }
         }
 
         try {
           lifecycleHooks.hostUpdated?.(ctx);
         } catch (error) {
-          console.error('Error in hostUpdated lifecycle hook:', error);
+          log.error('Error in hostUpdated lifecycle hook:', error);
         }
       }
     } finally {

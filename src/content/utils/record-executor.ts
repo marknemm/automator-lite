@@ -5,6 +5,7 @@ import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
 import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
 import { SparkStore } from '~shared/models/spark-store.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
+import log from '~shared/utils/logger.js';
 import { type AutoRecordState } from '~shared/utils/state.js';
 import { isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
 
@@ -96,7 +97,7 @@ export class RecordExecutor {
       try {
         await this.execRecord(record);
       } catch (err) {
-        console.error(err);
+        log.error(err);
         this.unscheduleRecord(record);
       }
     }, record.frequency ?? 5000);
@@ -202,7 +203,7 @@ export class RecordExecutor {
 
     target
       ? target.dispatchEvent(mouseEvent)
-      : console.warn(`Could not find Mouse Event target: ${action.selector}`);
+      : log.warn(`Could not find Mouse Event target: ${action.selector}`);
   }
 
   /**

@@ -35,6 +35,19 @@ export const log = {
    */
   error: console.error.bind(console),
 
+  /**
+   * Logs and throws an error.
+   *
+   * @param err The error to log and throw.
+   * @throws The provided error after logging it to the console.
+   */
+  throw: (err: any): never => {
+    log.error(err);
+    throw (err instanceof Error)
+      ? err
+      : new Error(String(err));
+  },
+
 };
 
 export default log;

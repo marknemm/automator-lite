@@ -42,7 +42,7 @@ export class AutoRecordList extends DataListBase<AutoRecord> {
   accessor onTogglePause!: (record: AutoRecord) => Promise<void>;
 
   protected override renderItem(record: AutoRecord): TemplateResult {
-    const name = record.name;
+    const name = record.name || record.id;
     const playPauseIcon = record.paused ? 'play' : 'pause';
     const playPauseColor = record.paused ? 'success' : 'primary';
     const playPauseTitle = `${record.paused ? 'Play Record:' : 'Pause Record:'} ${name}`;

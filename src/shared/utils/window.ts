@@ -1,4 +1,5 @@
 import type { Nullish } from 'utility-types';
+import log from './logger.js';
 import type { Frame, FrameLocation } from './window.interfaces.js';
 
 /**
@@ -148,7 +149,7 @@ export function getBaseURL(
     return url
       ? url.host + url.pathname
       : '';
-  } catch (error) { console.error('Error getting base URL:', error); return ''; }
+  } catch (error) { log.error('Error getting base URL:', error); return ''; }
 }
 
 /**

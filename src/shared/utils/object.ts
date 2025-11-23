@@ -1,4 +1,4 @@
-import { Nullish } from 'utility-types';
+import type { Nullish } from 'utility-types';
 import { log } from './logger.js';
 import type { DeepMergeOptions } from './object.interfaces.js';
 
@@ -73,12 +73,11 @@ export function deepMerge(
         deepMergeArrays(destValue, srcValue, opts);
         // Else direct assignment for primitives, arrays, or mismatched types
       } else if (srcValue !== undefined || opts?.includeUndefined) {
-        console.log('Merging property:', key, 'Value:', srcValue);
         dest[key] = srcValue;
       }
     } catch (error) {
       // Silently skip properties that throw on assignment
-      console.warn(`Failed to merge property "${key}":`, error);
+      log.warn(`Failed to merge property "${key}":`, error);
     }
   }
 
@@ -91,7 +90,7 @@ export function deepMerge(
         }
       } catch (error) {
         // Silently skip properties that throw on assignment
-        console.warn(`Failed to clear property "${key}":`, error);
+        log.warn(`Failed to clear property "${key}":`, error);
       }
     }
   }

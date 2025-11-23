@@ -1,6 +1,6 @@
 import type { ScriptAction } from '~shared/models/auto-record.interfaces.js';
-import { logAndThrow } from '~shared/utils/error.js';
 import { getAllFrames, queryTabs } from '~shared/utils/extension.js';
+import log from '~shared/utils/logger.js';
 import { getBaseURL, isSameBaseUrl } from '~shared/utils/window.js';
 
 /**
@@ -12,14 +12,14 @@ import { getBaseURL, isSameBaseUrl } from '~shared/utils/window.js';
 export async function execScriptAction(
   action: ScriptAction
 ): Promise<chrome.userScripts.InjectionResult> {
-  if (!chrome.userScripts) logAndThrow('userScripts API not available');
+  if (!chrome.userScripts) log.throw('userScripts API not available');
 
   const target = await getExecutionTarget(action);
-  if (!target) logAndThrow('Could not find target tab or frame for user script action');
+  if (!target) log.throw('Could not find target tab or frame for user script action');
 
   const results = await chrome.userScripts.execute({
     js: [{ code: action.compiledCode }],
-    target,
+    target: target!,
     world: 'MAIN',
   });
 

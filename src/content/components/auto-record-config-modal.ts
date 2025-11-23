@@ -4,6 +4,7 @@ import '~shared/components/field-help.js';
 import { Modal, type ModalContext, type StaticModalOptions } from '~shared/components/modal.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import { AutoRecordState, type AutoRecordAction } from '~shared/models/auto-record.js';
+import log from '~shared/utils/logger.js';
 import { type DeleteActionEvent } from './action-expansion-panel.events.js';
 import './actions-config-menu.js';
 import styles from './auto-record-config-modal.scss?inline';
@@ -160,7 +161,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecordState> {
       this.data!.actions = this.actions;
       this.close(this.data!); // Close the modal and resolve with the updated record
     } catch (error) {
-      console.error(error);
+      log.error(error);
       this.errMsg = 'Error saving record, please try again.';
     }
   }

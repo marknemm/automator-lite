@@ -68,6 +68,8 @@ export class SparkStore<
    */
   readonly #stateManager: SparkStateManager<TState>;
 
+  #privilegeActive = false;
+
   /**
    * Creates a new {@link SparkStore} instance.
    *
@@ -88,6 +90,14 @@ export class SparkStore<
     if (this.#stateManager instanceof SparkReactiveStateManager) {
       this.#stateManager.listen();
     }
+  }
+
+  /**
+   * Whether the store is currently in a privileged state, allowing direct construction of models
+   * and direct manipulation of internal state.
+   */
+  get privilegeActive(): boolean {
+    return this.#privilegeActive;
   }
 
   /**
@@ -119,8 +129,13 @@ export class SparkStore<
    */
   newModel(state: Partial<TState>): TModel {
     const ModelCtor = this.#ModelCtor as SparkModelCtor<TModel>;
-    const model = new ModelCtor(state);
-    return model.reset();
+    try {
+      this.#privilegeActive = true;
+      const model = new ModelCtor(state);
+      return model.reset();
+    } finally {
+      this.#privilegeActive = false;
+    }
   }
 
   /**
@@ -147,8 +162,16 @@ export class SparkStore<
     return deleted;
   }
 
-  #emit<TEvent extends SparkModelEmitEventType>(
-    eventType: TEvent,
+  /**
+   * Emits an event to all listeners registered via {@link on} for the given event type.
+   *
+   * @param eventType The {@link SparkModelEmitEventType} to emit.
+   * @param model The {@link SparkModel} instance associated with the event.
+   * @param state The new {@link SparkModelState} of the model.
+   * @param oldState The previous {@link SparkModelState} of the model, if applicable.
+   */
+  #emit(
+    eventType: SparkModelEmitEventType,
     model: TModel | Nullish,
     state: Partial<StateOf<TModel>> | undefined,
     oldState?: Partial<StateOf<TModel>>,
@@ -158,6 +181,7 @@ export class SparkStore<
       throw new Error(`SparkPersistEventManager.emit: Unsupported event emit type: ${eventType}`);
     }
 
+    // Gather all callbacks of the specific event type (create, delete, update).
     let cbs: SparkModelEventHandler<'persist', TModel>[] = Array.from(
       this.#eventCbs[eventType] as Set<SparkModelEventHandler<'persist', TModel>>
     );
@@ -173,6 +197,8 @@ export class SparkStore<
     cbs = cbs.concat(Array.from(
       this.#eventCbs['persist'] as Set<SparkModelEventHandler<'persist', TModel>>
     ));
+
+    // Invoke all callbacks for the event.
     for (const cb of cbs) {
       cb(model, state, oldState);
     }
@@ -271,7 +297,8 @@ export class SparkStore<
     if (this.#stateManager instanceof SparkReactiveStateManager) {
       return this.#stateManager.on(eventType, ((state: Partial<TState>, oldState?: Partial<TState>) => {
         const model = this.toLoadedModel(state);
-        if (!model) return;
+        if (!model) return; // TODO: Updated loaded Models.
+
         (cb as SparkModelEventHandler<'persist', TModel>)(model, state, oldState);
       }) as SparkStateEventHandler<TEvent, TState>);
     }
@@ -280,7 +307,6 @@ export class SparkStore<
     if (!this.#eventCbs[eventType].has(cb as SparkModelEventHandler<TEvent>)) {
       this.#eventCbs[eventType].add(cb as SparkModelEventHandler<TEvent>);
     }
-
     return () => this.#eventCbs[eventType].delete(cb as SparkModelEventHandler<TEvent>);
   }
 
@@ -295,15 +321,15 @@ export class SparkStore<
   async save(model: TModel): Promise<TModel> {
     const creating = !model.saved;
 
-    // Merge any given data into the Model and refresh update timestamp before saving.
+    // Get the state to save from the model, and set the update timestamp.
     const state = model.toSaveData();
     state.updateTimestamp = Date.now();
 
-    // Actually perform the save operation defined by subclass and update raw saved state data.
+    // Have state manager save the state and cache the model.
     const savedState = await this.#stateManager.save(state);
     this.#loadedModels.set(model.id, model);
 
-    // Emit default create or update event if listenCreate/listenUpdate are not overridden.
+    // Emit the appropriate events.
     this.#emit(creating ? 'create' : 'update', model, savedState);
 
     return model;

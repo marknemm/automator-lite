@@ -24,6 +24,11 @@ export abstract class SparkModel<
   declare readonly _stateBrand: TState;
 
   /**
+   * Whether this {@link SparkModel} has been deleted.
+   */
+  #deleted = false;
+
+  /**
    * The raw saved {@link SparkModelState} data for this {@link SparkModel}.
    *
    * Only used internally to reset the model to its saved state.
@@ -43,16 +48,30 @@ export abstract class SparkModel<
    */
   readonly #unregisterCbs: (() => void)[] = [];
 
-  protected constructor(state: Partial<TState> = {}) {
+  /**
+   * Creates a new {@link SparkModel} instance from raw {@link SparkModelState} data.
+   *
+   * @param state The raw {@link SparkModelState} data.
+   *
+   * @internal Use the static {@link SparkStore.newModel} method instead.
+   */
+  constructor(state: Partial<TState> = {}) {
     this.#store = SparkStore.getInstance(this.constructor as any);
+    if (!this.#store.privilegeActive) {
+      throw new Error(
+        'Direct construction of SparkModel instances is not allowed.\n' +
+        'Use SparkStore.newModel() instead.'
+      );
+    }
 
     state.createTimestamp ??= Date.now();
     this.#state = cloneDeep(state);
 
     // Keep the saved state in sync on save events detected by the store.
     this.on('save', (_, savedState) => {
-      if ((this.#state.updateTimestamp ?? 0) < savedState!.updateTimestamp!) {
-        this.#state = cloneDeep(savedState!);
+      if ((this.#state.updateTimestamp ?? 0) < savedState.updateTimestamp!) {
+        this.#state = cloneDeep(savedState);
+        this.reset();
       }
     });
 
@@ -62,11 +81,23 @@ export abstract class SparkModel<
         this.#unregisterCbs.forEach((unregister) => unregister());
         this.#unregisterCbs.length = 0;
       });
+      this.#deleted = true;
     });
   }
 
   get createTimestamp(): number {
     return this.state.createTimestamp!;
+  }
+
+  /**
+   * Whether this {@link SparkModel} has been deleted.
+   */
+  get deleted(): boolean {
+    return this.#deleted;
+  }
+
+  get id(): SparkModelId {
+    return `${this.#state.id || this.createTimestamp}`;
   }
 
   /**
@@ -84,16 +115,6 @@ export abstract class SparkModel<
    */
   get state(): Partial<DeepReadonly<TState>> {
     return this.#state as Partial<DeepReadonly<TState>>;
-  }
-
-  /**
-   * The unique identifier for this {@link SparkModel} instance.
-   *
-   * If the {@link SparkModelState} contains an `id` property, it is used as the identifier.
-   * Otherwise, {@link createTimestamp} is used as a string.
-   */
-  get id(): SparkModelId {
-    return `${(this.#state as any)['id'] || this.createTimestamp}`;
   }
 
   get updateTimestamp(): number | undefined {

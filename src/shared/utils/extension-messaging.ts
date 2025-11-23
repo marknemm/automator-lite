@@ -1,5 +1,6 @@
 import type { ExtensionContext, ExtensionRequest, ExtensionRequestHandler, ExtensionRequestMessage, ExtensionResponse, ExtensionResponseMessage } from './extension-messaging.interfaces.js';
 import { GetAllFrameResultDetails, getAllFrames, getExtensionContext, isBackground, isContent, queryTabs } from './extension.js';
+import log from './logger.js';
 import { sendTopWindow, WindowMessageRoutes } from './window-messaging.js';
 import { getBaseURL, isSameBaseUrl, isTopWindow } from './window.js';
 
@@ -49,7 +50,7 @@ export async function sendExtension<Req = unknown, Resp = void>(
           message,
           (documentId || frameId) ? { documentId, frameId } : {}
         ).catch((err) => {
-          console.error(err);
+          log.error(err);
           return undefined; // Ignore errors if frame does not have the content script.
         })
       );
