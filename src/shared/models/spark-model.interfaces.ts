@@ -1,49 +1,64 @@
 import type { SparkModel } from './spark-model.js';
+import type { DeepReadonly, Nullish } from 'utility-types';
 
 /**
  * The raw saved state for `Spark Models`.
  */
-export interface SparkModelState {
+export interface SparkState {
 
   /**
-   * The unique identifier for the {@link SparkModelState}.
+   * The unique identifier for the {@link SparkState}.
    *
    * If not provided, the `createTimestamp` is used as the identifier.
    */
-  id?: number | string;
+  id: SparkModelId;
 
   /**
-   * The timestamp when the {@link SparkModelState} was first created.
+   * The timestamp when the {@link SparkState} was first created.
    */
-  createTimestamp?: number;
+  createTimestamp: number;
 
   /**
-   * The timestamp of the last update to the saved {@link SparkModelState} for this {@link SparkModel}.
+   * The timestamp of the last update to the saved {@link SparkState} for this {@link SparkModel}.
    */
-  updateTimestamp?: number;
+  updateTimestamp: number;
 
 }
 
 /**
  * Options for loading a {@link SparkModel}.
  *
- * @template S - The type of the {@link SparkModelState} being loaded.
+ * @template S - The type of the {@link SparkState} being loaded.
  */
-export interface LoadSparkModelOptions<S extends SparkModelState = any> {
+export interface LoadSparkModelOptions<S extends SparkState = any> {
 
   /**
    * A filter function to determine which records to load.
    *
-   * @param state The {@link SparkModelState} to load.
-   * @returns `true` if the {@link SparkModelState} should be loaded, `false` otherwise.
+   * @param state The {@link SparkState} to load.
+   * @returns `true` if the {@link SparkState} should be loaded, `false` otherwise.
    */
   filter?: (state: S) => boolean;
 
   /**
+   * The maximum number of {@link SparkState} instances to load.
+   *
+   * @default Infinity
+   */
+  limit?: number;
+
+  /**
+   * The number of {@link SparkState} instances to skip before starting to load.
+   *
+   * @default 0
+   */
+  offset?: number;
+
+  /**
    * A function to sort the loaded models.
    *
-   * @param a The first {@link SparkModelState} to compare.
-   * @param b The second {@link SparkModelState} to compare.
+   * @param a The first {@link SparkState} to compare.
+   * @param b The second {@link SparkState} to compare.
    * @returns A negative number if `a` should come before `b`, a positive number if `a` should come after `b`, or `0` if they are equal.
    * @default `(a, b) => a.createTimestamp - b.createTimestamp`.
    */
@@ -51,19 +66,21 @@ export interface LoadSparkModelOptions<S extends SparkModelState = any> {
 
   /**
    * Whether to bypass the cache when loading models.
+   *
+   * @default false
    */
   noCache?: boolean;
 
 }
 
 export type SparkModelCtor<TModel extends SparkModel> = new (
-  state?: Partial<SparkModelState>
+  id?: SparkModelId
 ) => TModel;
 
 /**
  * The unique identifier for a {@link SparkModel} instance.
  */
-export type SparkModelId = string;
+export type SparkModelId = number;
 
 /**
  * The actions that can be performed for model persistence.
@@ -74,28 +91,32 @@ export type SparkModelEmitEventType = Exclude<SparkModelEventType, 'save' | 'per
 
 export type SparkStateEventHandler<
   TEvent extends SparkModelEventType,
-  TState extends SparkModelState
-> = TEvent extends 'persist' | 'save'
-  ? (state: Partial<TState>, oldState?: Partial<TState>) => void
-  : TEvent extends 'update'
-    ? (newState: Partial<TState>, oldState: Partial<TState>) => void
-    : (state: Partial<TState>) => void;
+  TState extends SparkState = SparkState
+> = TEvent extends 'persist'
+  ? (state?: Partial<TState>, oldState?: Partial<TState>) => void
+  : TEvent extends 'save'
+    ? (state: Partial<TState>, oldState?: Partial<TState>) => void
+    : TEvent extends 'update'
+      ? (newState: Partial<TState>, oldState: Partial<TState>) => void
+      : TEvent extends 'create'
+        ? (state: Partial<TState>) => void
+        : (state: undefined, oldState: Partial<TState>) => void;
 
 export type SparkStateEventEmitter<
   TEvent extends SparkModelEventType,
-  TState extends SparkModelState
+  TState extends SparkState
 > = SparkStateEventHandler<TEvent, TState>;
 
 export type SparkStateCreateEmitter<
-  TState extends SparkModelState
+  TState extends SparkState
 > = SparkStateEventEmitter<'create', TState>;
 
 export type SparkStateDeleteEmitter<
-  TState extends SparkModelState
+  TState extends SparkState
 > = SparkStateEventEmitter<'delete', TState>;
 
 export type SparkStateUpdateEmitter<
-  TState extends SparkModelState
+  TState extends SparkState
 > = SparkStateEventEmitter<'update', TState>;
 
 export type SparkModelEventHandler<
@@ -125,3 +146,24 @@ export type SparkModelPersistListener<
  * The type of state for a given {@link SparkModel}.
  */
 export type StateOf<TModel extends SparkModel> = TModel['_stateBrand'];
+
+/**
+ * The identifier type for a given {@link SparkState}.
+ *
+ * Can be a unique {@link SparkModelId}, a partial {@link SparkState} object, or `null`/`undefined`.
+ */
+export type SparkStateIdentifier<TState extends SparkState> =
+  | SparkModelId
+  | Partial<TState>
+  | Partial<DeepReadonly<TState>>
+  | Nullish;
+
+/**
+ * The identifier type for a given {@link SparkModel}.
+ *
+ * Can be the {@link SparkModel} instance itself, a unique {@link SparkModelId},
+ * a partial {@link SparkState} object, or `null`/`undefined`.
+ */
+export type SparkModelIdentifier<TModel extends SparkModel<any>> =
+  | TModel
+  | SparkStateIdentifier<StateOf<TModel>>;

@@ -35,6 +35,8 @@ export class ExtensionOptions implements ExtensionOptionsState {
     this.reset(state);
   }
 
+  get id(): number { return 0; }
+
   /**
    * The raw {@link ExtensionOptionsState} data.
    *

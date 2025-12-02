@@ -1,13 +1,13 @@
 import type { Nullish } from 'utility-types';
-import type { SparkModelState } from './spark-model.interfaces.js';
+import type { SparkState } from './spark-model.interfaces.js';
 
 /**
  * The saved state of an {@link AutoRecord}.
  * This is the state that is stored in `Chrome storage`.
  *
- * @extends SparkModelState
+ * @extends SparkState
  */
-export interface AutoRecordState extends SparkModelState {
+export interface AutoRecordState extends SparkState {
 
   /**
    * The actions to be performed by the record.
@@ -240,6 +240,5 @@ export interface ConfigureRecordOptions {
  */
 export type RecordingType = 'Standard' | 'Scripting';
 export type AutoRecordActionType = 'Mouse' | 'Keyboard' | 'Script';
-export type AutoRecordUid = string;
 export type KeyboardEventType = 'keydown' | 'keyup' | 'keypress';
 export type MouseEventType = 'click' | 'dblclick' | 'contextmenu' | 'mousedown' | 'mouseup';

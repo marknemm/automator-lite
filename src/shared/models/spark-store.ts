@@ -1,7 +1,8 @@
-import type { Nullish } from 'utility-types';
-import type { LoadSparkModelOptions, SparkModel, SparkModelCtor, SparkModelEmitEventType, SparkModelEventHandler, SparkModelEventType, SparkModelId, SparkModelState, SparkStateEventHandler, StateOf } from '~shared/models/spark-model.js';
-import { SparkReactiveStateManager } from './spark-reactive-state-manager.js';
-import { SparkStateManager } from './spark-state-manager.js';
+import type { LoadSparkModelOptions, SparkModel, SparkModelCtor, SparkModelEmitEventType, SparkModelEventHandler, SparkModelEventType, SparkModelId, SparkModelIdentifier, SparkState, SparkStateEventHandler, StateOf } from '~shared/models/spark-model.js';
+import { SparkStateObserver } from './spark-state-observer.js';
+import { SparkStatePersister } from './spark-state-persister.js';
+import { toModelId } from './spark-state-utils.js';
+import { DeepPartial } from 'utility-types';
 
 /**
  * Stores and retrieves {@link SparkModel} instances.
@@ -10,53 +11,18 @@ import { SparkStateManager } from './spark-state-manager.js';
  */
 export class SparkStore<
   TModel extends SparkModel<TState>,
-  TState extends SparkModelState = StateOf<TModel>,
+  TState extends SparkState = StateOf<TModel>,
 > {
 
   /**
    * A map of singleton instances of {@link SparkStore} classes.
    */
-  static readonly #instances = new Map<
-    typeof SparkModel,
-    SparkStore<SparkModel>
-  >();
+  static readonly #instances = new Map<typeof SparkModel, SparkStore<SparkModel>>();
 
   /**
-   * A container for registered persistence callbacks.
+   * A map of `singleton` loaded {@link SparkState} instances.
    */
-  readonly #eventCbs: { [K in SparkModelEventType]: Set<SparkModelEventHandler<K>> } = {
-
-    /**
-     * A {@link Set} of registered create callbacks for {@link SparkModel} instances.
-     */
-    create: new Set<SparkModelEventHandler<'create'>>(),
-
-    /**
-     * A {@link Set} of registered delete callbacks for {@link SparkModel} instances.
-     */
-    delete: new Set<SparkModelEventHandler<'delete'>>(),
-
-    /**
-     * A {@link Set} of registered persist callbacks for {@link SparkModel} instances.
-     */
-    persist: new Set<SparkModelEventHandler<'persist'>>(),
-
-    /**
-     * A {@link Set} of registered save callbacks for {@link SparkModel} instances.
-     */
-    save: new Set<SparkModelEventHandler<'save'>>(),
-
-    /**
-     * A {@link Set} of registered update callbacks for {@link SparkModel} instances.
-     */
-    update: new Set<SparkModelEventHandler<'update'>>(),
-
-  };
-
-  /**
-   * A map of loaded {@link SparkModel} instances.
-   */
-  readonly #loadedModels = new Map<SparkModelId, TModel>();
+  readonly #cachedStates = new Map<SparkModelId, TState>();
 
   /**
    * The constructor of the {@link SparkModel} associated with this {@link SparkStore}.
@@ -64,10 +30,19 @@ export class SparkStore<
   readonly #ModelCtor: SparkModelCtor<TModel>;
 
   /**
-   * The {@link SparkStateManager} responsible for persisting this {@link SparkModel}'s state.
+   * The state change listener for the associated {@link SparkModel}'s state.
    */
-  readonly #stateManager: SparkStateManager<TState>;
+  readonly #stateObserver: SparkStateObserver<TState>;
 
+  /**
+   * The {@link SparkStatePersister} responsible for persisting this {@link SparkModel}'s state.
+   */
+  readonly #statePersister: SparkStatePersister<TState>;
+
+  /**
+   * Whether the store is currently in a privileged state, allowing direct construction of models
+   * and direct manipulation of internal state.
+   */
   #privilegeActive = false;
 
   /**
@@ -78,18 +53,18 @@ export class SparkStore<
    */
   protected constructor(ModelCtor: typeof SparkModel) {
     this.#ModelCtor = ModelCtor as SparkModelCtor<TModel>;
-    this.#stateManager = SparkStateManager.getRegisteredManager<TModel>(ModelCtor)!;
+    this.#statePersister = SparkStatePersister.getRegisteredPersister<TModel>(ModelCtor)!;
 
-    if (!this.#stateManager) {
+    if (!this.#statePersister) {
       throw new Error(
-        `${this.constructor.name}: No SparkStateManager registered for model type: ${ModelCtor.name}.`
+        `${this.constructor.name}: No SparkStatePersister registered for model type: ${ModelCtor.name}.`
         + ' Did you forget to add the @model decorator to the model class?'
       );
     }
 
-    if (this.#stateManager instanceof SparkReactiveStateManager) {
-      this.#stateManager.listen();
-    }
+    this.#stateObserver = SparkStateObserver.getRegisteredObserver<TModel>(ModelCtor)!
+                       ?? new DefaultStateObserver<TState>();
+    this.#stateObserver.observe();
   }
 
   /**
@@ -127,12 +102,12 @@ export class SparkStore<
    * @param state The initial state for the {@link SparkModel}.
    * @returns The initialized {@link SparkModel} instance.
    */
-  newModel(state: Partial<TState>): TModel {
+  newModel(state: DeepPartial<TState> | Partial<TState> = {}): TModel {
     const ModelCtor = this.#ModelCtor as SparkModelCtor<TModel>;
     try {
       this.#privilegeActive = true;
-      const model = new ModelCtor(state);
-      return model.reset();
+      const model = new ModelCtor(state.id);
+      return model.reset(state);
     } finally {
       this.#privilegeActive = false;
     }
@@ -147,97 +122,62 @@ export class SparkStore<
    *
    * @final Override {@link deleteState} to define how the model is deleted.
    */
-  async delete(model: TModel | SparkModelId | Nullish): Promise<boolean> {
-    model = this.toLoadedModel(model);
-    if (!model) return false;
+  async delete(id: SparkModelIdentifier<TModel>): Promise<boolean> {
+    id = toModelId(id);
+    if (!id) return false; // Abort - cannot derive valid id for deletion.
 
-    const deleted = await this.#stateManager.delete(model.state);
-    if (deleted) {
-      this.#loadedModels.delete(model.id);
-
-      // Emit default delete event if listenDelete is not overridden.
-      this.#emit('delete', model, undefined);
-    }
+    const deleted = await this.#statePersister.delete(id);
+    if (deleted) this.#deleteCache(id);
 
     return deleted;
   }
 
   /**
-   * Emits an event to all listeners registered via {@link on} for the given event type.
+   * Gets the cached {@link SparkState} for the given {@link SparkModel} identifier.
    *
-   * @param eventType The {@link SparkModelEmitEventType} to emit.
-   * @param model The {@link SparkModel} instance associated with the event.
-   * @param state The new {@link SparkModelState} of the model.
-   * @param oldState The previous {@link SparkModelState} of the model, if applicable.
+   * @param id The {@link SparkModelIdentifier} of the {@link SparkModel}.
+   * @returns The cached {@link SparkState}, or `undefined` if not found.
    */
-  #emit(
-    eventType: SparkModelEmitEventType,
-    model: TModel | Nullish,
-    state: Partial<StateOf<TModel>> | undefined,
-    oldState?: Partial<StateOf<TModel>>,
-  ): void {
-    if (!model) return;
-    if (['create', 'delete', 'update'].indexOf(eventType) === -1) {
-      throw new Error(`SparkPersistEventManager.emit: Unsupported event emit type: ${eventType}`);
-    }
-
-    // Gather all callbacks of the specific event type (create, delete, update).
-    let cbs: SparkModelEventHandler<'persist', TModel>[] = Array.from(
-      this.#eventCbs[eventType] as Set<SparkModelEventHandler<'persist', TModel>>
-    );
-
-    // Create and update are subsets of save.
-    if (eventType !== 'delete') {
-      cbs = cbs.concat(Array.from(
-        this.#eventCbs['save'] as Set<SparkModelEventHandler<'persist', TModel>>
-      ));
-    }
-
-    // All actions are subsets of persist.
-    cbs = cbs.concat(Array.from(
-      this.#eventCbs['persist'] as Set<SparkModelEventHandler<'persist', TModel>>
-    ));
-
-    // Invoke all callbacks for the event.
-    for (const cb of cbs) {
-      cb(model, state, oldState);
-    }
+  getCachedState(id: SparkModelIdentifier<TModel>): TState | undefined {
+    id = toModelId(id);
+    return id
+      ? this.#cachedStates.get(id)
+      : undefined; // Abort - cannot derive valid id.
   }
 
   /**
    * Loads this {@link SparkModel} instance from the state storage.
    *
-   * @param id The unique identifier of the {@link SparkModel} to load.
+   * @param id The {@link SparkModelIdentifier} of the {@link SparkModel} to load.
+   * @param noCache Whether to bypass the {@link SparkState} cache when loading the model.
    *
    * @returns A {@link Promise} that resolves to this {@link SparkModel} instance if found, or `undefined` if not found.
    *
    * @final Override {@link loadModel} to define how the model is loaded.
    */
   async load(
-    id: SparkModelId | TState | Nullish,
+    id: SparkModelIdentifier<TModel>,
     noCache: boolean = false
   ): Promise<TModel | undefined> {
-    id = this.toModelId(id);
-    if (!id) return undefined;
+    id = toModelId(id);
+    if (!id) return undefined; // Abort - cannot derive valid id for loading.
 
-    // Check cache first - only one instance of each Model should exist in memory.
-    if (!noCache && this.#loadedModels.has(id)) {
-      return this.#loadedModels.get(id);
+    // Check state cache first, only singleton state should exist.
+    if (!noCache && this.#cachedStates.has(id)) {
+      const state = this.#cachedStates.get(id)!;
+      const model = this.newModel(state);
+      this.#saveCache(state, model);
+      return model;
     }
 
     // Load the raw state from storage.
-    const state = await this.#stateManager.load(id);
+    const state = await this.#statePersister.load(id);
     if (!state) return undefined;
 
-    // If already loaded, update the existing instance; otherwise, create a new one.
-    if (this.#loadedModels.has(id)) {
-      this.#emit('update', this.#loadedModels.get(id)!, state);
-    } else {
-      const model = this.newModel(state);
-      this.#loadedModels.set(model.id, model);
-    }
-
-    return this.#loadedModels.get(id);
+    // Create and cache the new model.
+    const model = this.newModel(state);
+    this.#saveCache(state, model);
+    return model;
   }
 
   /**
@@ -252,24 +192,16 @@ export class SparkStore<
   async loadMany(
     opts: LoadSparkModelOptions<TState> = {},
   ): Promise<TModel[]> {
-    const loadedModels: TModel[] = [];
-    const states = await this.#stateManager.loadMany(opts);
+    const result: TModel[] = [];
+    const states = await this.#statePersister.loadMany(opts);
 
     for (const state of states) {
-      const stateId = this.toModelId(state);
-      const model = (stateId && this.#loadedModels.has(stateId))
-        ? this.#loadedModels.get(stateId)!
-        : this.newModel(state);
-
-      if (!this.#loadedModels.has(model.id)) {
-        this.#loadedModels.set(model.id, model);
-      } else if (opts.noCache) {
-        this.#emit('update', this.#loadedModels.get(model.id)!, state);
-      }
-      loadedModels.push(this.#loadedModels.get(model.id)!);
+      const model = this.newModel(state);
+      this.#saveCache(state, model);
+      result.push(model);
     }
 
-    return loadedModels;
+    return result;
   }
 
   /**
@@ -287,27 +219,17 @@ export class SparkStore<
    */
   on<TEvent extends SparkModelEventType>(
     eventType: TEvent,
-    cb: SparkModelEventHandler<TEvent, TModel>
+    cb: SparkModelEventHandler<TEvent, TModel>,
   ): () => void {
-    if (!this.#eventCbs[eventType]) {
-      throw new Error(`SparkPersistEventManager.on: Unsupported event type: ${eventType}`);
-    }
-
-    // If using a reactive state manager, delegate to it.
-    if (this.#stateManager instanceof SparkReactiveStateManager) {
-      return this.#stateManager.on(eventType, ((state: Partial<TState>, oldState?: Partial<TState>) => {
-        const model = this.toLoadedModel(state);
-        if (!model) return; // TODO: Updated loaded Models.
-
-        (cb as SparkModelEventHandler<'persist', TModel>)(model, state, oldState);
-      }) as SparkStateEventHandler<TEvent, TState>);
-    }
-
-    // Otherwise, register directly with default listeners internal to this store.
-    if (!this.#eventCbs[eventType].has(cb as SparkModelEventHandler<TEvent>)) {
-      this.#eventCbs[eventType].add(cb as SparkModelEventHandler<TEvent>);
-    }
-    return () => this.#eventCbs[eventType].delete(cb as SparkModelEventHandler<TEvent>);
+    return this.#stateObserver.on(eventType, (
+      (state: Partial<TState> | undefined, oldState?: Partial<TState>) => {
+        const model = this.newModel(state ?? oldState!);
+        (eventType === 'delete')
+          ? this.#deleteCache(model)
+          : this.#saveCache(state!, model);
+        cb(model, state as Partial<TState>, oldState as Partial<TState>);
+      }
+    ) as SparkStateEventHandler<TEvent, TState>);
   }
 
   /**
@@ -319,55 +241,109 @@ export class SparkStore<
    * @final Override {@link saveState} to define how the model state is saved.
    */
   async save(model: TModel): Promise<TModel> {
-    const creating = !model.saved;
-
     // Get the state to save from the model, and set the update timestamp.
     const state = model.toSaveData();
     state.updateTimestamp = Date.now();
+    if (state.createTimestamp < 0) {
+      state.createTimestamp = state.updateTimestamp;
+    }
+    if (state.id < 0) {
+      state.id = state.createTimestamp;
+    }
 
     // Have state manager save the state and cache the model.
-    const savedState = await this.#stateManager.save(state);
-    this.#loadedModels.set(model.id, model);
-
-    // Emit the appropriate events.
-    this.#emit(creating ? 'create' : 'update', model, savedState);
+    const savedState = await this.#statePersister.save(state);
+    this.#saveCache(savedState, model);
 
     return model;
   }
 
   /**
-   * Converts the given input to a {@link SparkModel} instance if possible.
+   * Checks if the given {@link SparkModel} instance has stale state compared to the loaded state.
    *
-   * @param from The input to convert, which can be a {@link SparkModelId},
-   * {@link SparkModelState}, {@link SparkModel}, or `null`/`undefined`.
-   * @returns The corresponding {@link SparkModel} instance, or `undefined` if not found.
+   * @param model The {@link SparkModelIdentifier} of the {@link SparkModel} instance to check.
+   * @param state The {@link SparkState} to compare against.
+   * @returns `true` if the state is stale, `false` otherwise.
    */
-  protected toLoadedModel(
-    from: SparkModelId | Partial<TState> | TModel | Nullish
-  ): TModel | undefined {
-    from = this.toModelId(from);
-    return (from)
-      ? this.#loadedModels.get(from)
-      : undefined;
+  #isStateStale(model: SparkModelIdentifier<TModel>, state: Partial<TState>): boolean {
+    const modelId = toModelId(model);
+    if (!modelId) return false; // Abort - cannot derive valid id.
+
+    const loadedState = this.#cachedStates.get(modelId);
+    return !loadedState
+        || loadedState.updateTimestamp !== state.updateTimestamp;
   }
 
   /**
-   * Converts the given input to a {@link SparkModelId} if possible.
+   * Saves to the internal state cache.
    *
-   * @param from The input to convert, which can be a {@link SparkModelId},
-   * {@link SparkModelState}, {@link SparkModel}, or `null`/`undefined`.
-   * @returns The corresponding {@link SparkModelId}, or `undefined` if not found.
+   * @param state The {@link SparkState} to cache.
+   * @param model The {@link SparkModel} associated with the state.
+   *
+   * @returns `true` if the cache was saved, `false` otherwise.
    */
-  protected toModelId(
-    from: SparkModelId | Partial<TState> | TModel | Nullish
-  ): SparkModelId | undefined {
-    if ((from as TModel).id != null) {
-      return `${(from as TModel).id}`;
+  #saveCache(
+    state: Partial<TState>,
+    model: TModel
+  ): boolean {
+    const modelId = toModelId(state);
+    if (!modelId) return false; // Abort - cannot derive valid id.
+
+    const oldState = this.#cachedStates.get(modelId);
+    this.#cachedStates.set(modelId, state as TState);
+
+    // If using default observer, emit create/update events if state is stale.
+    const defaultObserver = this.#stateObserver instanceof DefaultStateObserver;
+    if (defaultObserver && this.#isStateStale(oldState, state)) {
+      const persistType = model.createTimestamp === model.updateTimestamp ? 'create' : 'update';
+      this.#stateObserver.emit(persistType, state, oldState);
     }
 
-    return (from && typeof from === 'object')
-      ? `${from.createTimestamp}`
-      : from ?? undefined;
+    return true;
+  }
+
+  /**
+   * Deletes the cached state for the given identifier.
+   *
+   * @param id The {@link SparkModelIdentifier} of the state to delete from cache.
+   *
+   * @returns `true` if the cache entry was deleted, `false` otherwise.
+   */
+  #deleteCache(
+    id: SparkModelIdentifier<TModel>
+  ): boolean {
+    id = toModelId(id);
+    if (!id) return false; // Abort - cannot derive valid id.
+
+    const oldState = this.#cachedStates.get(id);
+    this.#cachedStates.delete(id);
+
+    if (this.#stateObserver instanceof DefaultStateObserver) {
+      this.#stateObserver.emit('delete', undefined, oldState);
+    }
+    return true;
+  }
+
+}
+
+/**
+ * A default no-op implementation of {@link SparkStateSubject} for state emit functionality.
+ */
+class DefaultStateObserver<
+  TState extends SparkState
+> extends SparkStateObserver<TState> {
+
+  // No-op custom listeners -- only used for emitting events from store persist methods.
+  protected override observeCreate(): () => void { return () => {}; }
+  protected override observeDelete(): () => void { return () => {}; }
+  protected override observeUpdate(): () => void { return () => {}; }
+
+  override emit( // Expose emit as public
+    eventType: SparkModelEmitEventType,
+    state: Partial<TState> | undefined,
+    oldState?: Partial<TState>
+  ): void {
+    super.emit(eventType, state, oldState);
   }
 
 }

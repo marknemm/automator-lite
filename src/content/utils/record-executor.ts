@@ -2,7 +2,8 @@ import { html } from 'lit';
 import type { Nullish } from 'utility-types';
 import { AlertModal } from '~content/components/alert-modal.js';
 import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
-import { AutoRecord, type AutoRecordAction, type AutoRecordUid, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
+import { AutoRecord, type AutoRecordAction, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
+import { type SparkModelId } from '~shared/models/spark-model.js';
 import { SparkStore } from '~shared/models/spark-store.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import log from '~shared/utils/logger.js';
@@ -36,7 +37,7 @@ export class RecordExecutor {
    * A map to keep track of scheduled auto-records.
    * The key is the {@link AutoRecordUid}, and the value is the interval ID.
    */
-  readonly #recordScheduleRegistry = new Map<AutoRecordUid, number>();
+  readonly #recordScheduleRegistry = new Map<SparkModelId, number>();
 
   /**
    * Constructs a new {@link RecordExecutor} instance.
@@ -115,7 +116,7 @@ export class RecordExecutor {
    * @returns `true` if the record was unscheduled, `false` otherwise.
    * @see {@link scheduleRecord} for scheduling a record.
    */
-  unscheduleRecord(record: AutoRecord | AutoRecordUid): boolean {
+  unscheduleRecord(record: AutoRecord | SparkModelId): boolean {
     const uid = record instanceof AutoRecord ? record.id : record;
 
     if (!this.#recordScheduleRegistry.has(uid)) {

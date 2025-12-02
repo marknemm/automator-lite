@@ -1,20 +1,27 @@
 import { detailedDiff, type DetailedDiff } from 'deep-object-diff';
-import { cloneDeep } from 'lodash-es';
 import type { DeepPartial, DeepReadonly } from 'utility-types';
 import { deepMerge, DeepMergeOptions, serializeObject } from '~shared/utils/object.js';
-import type { SparkModelEventHandler, SparkModelEventType, SparkModelId, SparkModelState } from './spark-model.interfaces.js';
+import type { SparkModelEventHandler, SparkModelEventType, SparkModelId, SparkModelIdentifier, SparkState } from './spark-model.interfaces.js';
+import { isSameId } from './spark-state-utils.js';
 import { SparkStore } from './spark-store.js';
 
 /**
  * An abstract base class for Create, Read, Update, Delete (`CRUD`) models.
  *
- * @param TState - The type of the raw save {@link SparkModelState} object for the {@link SparkModel}.
+ * @param TState - The type of the raw save {@link SparkState} object for the {@link SparkModel}.
  *
- * @implements {SparkModelState}
+ * @implements {SparkState}
  */
 export abstract class SparkModel<
-  TState extends SparkModelState = SparkModelState,
-> implements SparkModelState {
+  TState extends SparkState = SparkState,
+> implements SparkState {
+
+  /**
+   * A temporary counter for generating temporary IDs for unsaved models.
+   *
+   * `Note`: This is negative to avoid collision with real IDs.
+   */
+  static #tempIdCounter = 0;
 
   /**
    * A branding property to associate the model with its state type.
@@ -29,14 +36,9 @@ export abstract class SparkModel<
   #deleted = false;
 
   /**
-   * The raw saved {@link SparkModelState} data for this {@link SparkModel}.
-   *
-   * Only used internally to reset the model to its saved state.
-   *
-   * Will become desynchronized from any unsaved changes to this {@link SparkModel}'s properties.
-   * This is by design, since the {@link SparkModelState} data is meant to reflect the saved {@link SparkModelState} of the {@link SparkModel}.
+   * The unique identifier for this {@link SparkModel} instance.
    */
-  #state: Partial<TState>;
+  #id: number;
 
   /**
    * The {@link SparkStore} instance that manages persistence for this {@link SparkModel} instance.
@@ -44,19 +46,18 @@ export abstract class SparkModel<
   readonly #store: SparkStore<this>;
 
   /**
-   * All unregister callbacks for removing event listeners on delete.
+   * All callbacks for removing observers.
    */
-  readonly #unregisterCbs: (() => void)[] = [];
+  readonly #unregisterObserverCbs: (() => void)[] = [];
 
   /**
-   * Creates a new {@link SparkModel} instance from raw {@link SparkModelState} data.
-   *
-   * @param state The raw {@link SparkModelState} data.
+   * Creates a new {@link SparkModel} instance.
    *
    * @internal Use the static {@link SparkStore.newModel} method instead.
    */
-  constructor(state: Partial<TState> = {}) {
+  constructor(id: number = --SparkModel.#tempIdCounter) {
     this.#store = SparkStore.getInstance(this.constructor as any);
+
     if (!this.#store.privilegeActive) {
       throw new Error(
         'Direct construction of SparkModel instances is not allowed.\n' +
@@ -64,29 +65,11 @@ export abstract class SparkModel<
       );
     }
 
-    state.createTimestamp ??= Date.now();
-    this.#state = cloneDeep(state);
-
-    // Keep the saved state in sync on save events detected by the store.
-    this.on('save', (_, savedState) => {
-      if ((this.#state.updateTimestamp ?? 0) < savedState.updateTimestamp!) {
-        this.#state = cloneDeep(savedState);
-        this.reset();
-      }
-    });
-
-    // Auto-unregister all callbacks on delete to prevent memory leaks.
-    this.on('delete', () => {
-      setTimeout(() => { // Defer so that delete callbacks can still run.
-        this.#unregisterCbs.forEach((unregister) => unregister());
-        this.#unregisterCbs.length = 0;
-      });
-      this.#deleted = true;
-    });
+    this.#id = id;
   }
 
   get createTimestamp(): number {
-    return this.state.createTimestamp!;
+    return this.state.createTimestamp ?? -1;
   }
 
   /**
@@ -97,28 +80,29 @@ export abstract class SparkModel<
   }
 
   get id(): SparkModelId {
-    return `${this.#state.id || this.createTimestamp}`;
+    return this.#id;
   }
 
   /**
    * Whether this {@link SparkModel} has ever been saved.
    */
   get saved(): boolean {
-    return this.updateTimestamp !== undefined;
+    return this.createTimestamp >= 0;
   }
 
   /**
-   * The raw `readonly` saved {@link SparkModelState} data for this {@link SparkModel}.
+   * The raw `readonly` saved {@link SparkState} data for this {@link SparkModel}.
    *
    * Will become desynchronized from any unsaved changes to this {@link SparkModel}'s properties.
-   * This is by design, since the {@link SparkModelState} data is meant to reflect the saved {@link SparkModelState} of the {@link SparkModel}.
+   * This is by design, since the {@link SparkState} data is meant to reflect the saved {@link SparkState} of the {@link SparkModel}.
    */
   get state(): Partial<DeepReadonly<TState>> {
-    return this.#state as Partial<DeepReadonly<TState>>;
+    return this.#store.getCachedState(this.id) as DeepReadonly<TState>
+        ?? { id: this.id, createTimestamp: -1, updateTimestamp: -1 };
   }
 
-  get updateTimestamp(): number | undefined {
-    return this.#state.updateTimestamp;
+  get updateTimestamp(): number {
+    return this.state.updateTimestamp ?? this.createTimestamp;
   }
 
   /**
@@ -127,7 +111,7 @@ export abstract class SparkModel<
    * @returns A promise that resolves to `true` if the instance was deleted, or `false` otherwise
    * (such as in the case where the model was not found in storage).
    *
-   * @final Override {@link SparkModelState.delete} to define how the model is deleted.
+   * @final Override {@link SparkState.delete} to define how the model is deleted.
    * This is a convenience method that calls the store's delete method, and should not contain custom delete logic.
    */
   delete(): Promise<boolean> {
@@ -141,7 +125,7 @@ export abstract class SparkModel<
    * @see https://www.npmjs.com/package/deep-object-diff
    */
   diff(): DetailedDiff {
-    return detailedDiff(this.#state, this.toSaveData());
+    return detailedDiff(this.state, this.toSaveData());
   }
 
   /**
@@ -159,6 +143,17 @@ export abstract class SparkModel<
   }
 
   /**
+   * Determines if this {@link SparkModel} instance corresponds to the given {@link SparkModelIdentifier}.
+   * The identifier can be another model instance, a unique ID, or a partial state object.
+   *
+   * @param id The {@link SparkModelIdentifier} to check against.
+   * @returns `true` if the identifier matches this model, `false` otherwise.
+   */
+  hasId(id: SparkModelIdentifier<this>): boolean {
+    return isSameId(this, id);
+  }
+
+  /**
    * Merges the given data into this {@link SparkModel} object.
    * Ignores functions and `undefined` values in the merge data.
    *
@@ -168,7 +163,10 @@ export abstract class SparkModel<
    *
    * @param T The type of the model object.
    */
-  merge(data: DeepPartial<TState>, opts: DeepMergeOptions = {}): this {
+  merge(
+    data: DeepPartial<TState> | Partial<TState>,
+    opts: DeepMergeOptions = {}
+  ): this {
     if (!data) return this;
 
     deepMerge(this, data, {
@@ -197,7 +195,7 @@ export abstract class SparkModel<
   ): () => void {
     // Create a wrapper callback to filter events for this instance.
     const wrappedCb: SparkModelEventHandler<'persist', this> = (model, state, oldState) => {
-      if (model !== this) return;
+      if (!this.hasId(model)) return;
       (persistCb as SparkModelEventHandler<'persist', this>)(model, state, oldState);
     };
 
@@ -207,9 +205,15 @@ export abstract class SparkModel<
     // Wrap the unregister callback to also remove it from our internal list on unregister.
     const wrappedUnregisterCb = () => {
       unregisterCb();
-      this.#unregisterCbs.splice(this.#unregisterCbs.indexOf(wrappedUnregisterCb), 1);
+      this.#unregisterObserverCbs.splice(this.#unregisterObserverCbs.indexOf(wrappedUnregisterCb), 1);
     };
-    this.#unregisterCbs.push(wrappedUnregisterCb);
+    this.#unregisterObserverCbs.push(wrappedUnregisterCb);
+
+    // Auto-unregister all observer callbacks on delete to prevent memory leaks.
+    if (this.#unregisterObserverCbs.length === 1) { // Only register once.
+      // Defer to allow all observers to be invoked before unregistering.
+      this.on('delete', () => setTimeout(() => this.unregisterAllObservers()));
+    }
 
     return wrappedUnregisterCb;
   }
@@ -217,12 +221,16 @@ export abstract class SparkModel<
   /**
    * Resets `this` {@link SparkModel} instance to its initial state.
    *
-   * @param mergeData The {@link SparkModelState} Partial containing explicit reset data.
+   * @param mergeData The {@link SparkState} Partial containing explicit reset data.
    * Will {@link merge} the provided data into the initial state. Useful for retaining some properties.
    * @return `this` {@link SparkModel} instance with the reset state applied.
    */
-  reset(mergeData?: DeepPartial<TState>): this {
-    this.set(this.#state as TState);
+  reset(mergeData?: DeepPartial<TState> | Partial<TState>): this {
+    const initialState = this.#store.getCachedState(this.id);
+    if (initialState) {
+      this.set(initialState);
+      this.#id = initialState.id;
+    }
     if (mergeData) this.merge(mergeData);
     return this;
   }
@@ -230,7 +238,7 @@ export abstract class SparkModel<
   /**
    * Saves `this` {@link SparkModel} instance to permanent storage.
    *
-   * @param mergeData Optional partial {@link SparkModelState} data to {@link merge} with the current state before saving.
+   * @param mergeData Optional partial {@link SparkState} data to {@link merge} with the current state before saving.
    * Any data not specified in {@link mergeData} will be saved as-is.
    * @returns A {@link Promise} that resolves to `this` {@link SparkModel} instance when the save is complete.
    *
@@ -263,12 +271,20 @@ export abstract class SparkModel<
   }
 
   /**
-   * Converts this {@link SparkModel} instance to serializable {@link SparkModelState} data, which is suitable for saving.
+   * Converts this {@link SparkModel} instance to serializable {@link SparkState} data, which is suitable for saving.
    *
-   * @returns The {@link SparkModelState} data to be saved.
+   * @returns The {@link SparkState} data to be saved.
    */
   toSaveData(): TState {
     return serializeObject(this) as TState;
+  }
+
+  /**
+   * Unregisters all observers registered on this {@link SparkModel} instance
+   * via the {@link SparkModel.on} method.
+   */
+  unregisterAllObservers(): void {
+    this.#unregisterObserverCbs.forEach((unregister) => unregister());
   }
 
 }
