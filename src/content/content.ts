@@ -2,12 +2,11 @@
 
 import '@webcomponents/custom-elements'; // MUST be first!
 
-import AutoRecord, { type AutoRecordAction, type AutoRecordState, type RecordingType } from '~shared/models/auto-record.js';
-import { SparkStore } from '~shared/models/spark-store.js';
+import { type AutoRecordAction, type AutoRecordState, type RecordingType } from '~shared/models/auto-record.js';
 import type { Alert } from '~shared/utils/alert.interfaces.js';
 import { listenExtension, type ExtensionRequestMessage } from '~shared/utils/extension-messaging.js';
 import log from '~shared/utils/logger.js';
-import fontStyles from '../shared/styles/fonts.scss?inline';
+import fontStyles from '../shared/styles/fonts.scss?inline'; // Cannot use '~' alias for CSS imports.
 import { AlertModal } from './components/alert-modal.js';
 import './content.scss';
 import RecordExecutor from './utils/record-executor.js';
@@ -30,9 +29,6 @@ async function init() {
 
   /** Per-frame singleton recording context for recording new records. */
   const recordingCtx = await RecordingContext.init();
-
-  /** Per-frame singleton {@link SparkStore} instance for managing {@link AutoRecord} persistence. */
-  const autoRecordStore = SparkStore.getInstance(AutoRecord);
 
   // Listen for messages from popup or background script.
   listenExtension('alert', ({ payload }: ExtensionRequestMessage<Alert>) => {
@@ -61,21 +57,6 @@ async function init() {
 
   listenExtension('stopRecording', () => {
     recordingCtx.stop();
-  });
-
-  // Listen for 'records' state changes and unschedule / reschedule records accordingly.
-  autoRecordStore.on('save', async (model: AutoRecord) => {
-    recordExecutor.unscheduleRecord(model);
-    console.log('AutoRecord schedule potential: ', model);
-    if (!model.paused && model.frequency) {
-      recordExecutor.scheduleRecord(model);
-    }
-  });
-
-  // On delete, unschedule the record.
-  autoRecordStore.on('delete', async (model: AutoRecord) => {
-    // Unschedule the deleted record.
-    recordExecutor.unscheduleRecord(model);
   });
 }
 

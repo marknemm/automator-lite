@@ -73,8 +73,13 @@ export interface LoadSparkModelOptions<S extends SparkState = any> {
 
 }
 
+/**
+ * The constructor type for a {@link SparkModel}.
+ *
+ * @template TModel The type of `SparkModel`.
+ */
 export type SparkModelCtor<TModel extends SparkModel> = new (
-  id?: SparkModelId
+  ...args: ConstructorParameters<typeof SparkModel>
 ) => TModel;
 
 /**

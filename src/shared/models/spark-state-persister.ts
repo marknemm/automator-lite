@@ -1,4 +1,4 @@
-import type { LoadSparkModelOptions, SparkModel, SparkState, SparkStateIdentifier, StateOf } from './spark-model.js';
+import type { LoadSparkModelOptions, SparkState, SparkStateIdentifier } from './spark-model.js';
 
 /**
  * The abstract base {@link SparkStatePersister} for managing {@link SparkModel} state persistence.
@@ -8,41 +8,6 @@ import type { LoadSparkModelOptions, SparkModel, SparkState, SparkStateIdentifie
 export abstract class SparkStatePersister<
   TState extends SparkState = SparkState
 > {
-
-  /**
-   * A map of registered {@link SparkStatePersister} instances for each {@link SparkModel} type.
-   */
-  static readonly #registeredPersisters = new Map<typeof SparkModel, SparkStatePersister>();
-
-  /**
-   * Registers a {@link SparkStatePersister} for a given {@link SparkModel} type.
-   *
-   * `Note`: This method is typically called by a [model](../decorators/model.ts) decorator.
-   *
-   * @param ModelCtor The constructor of the {@link SparkModel} type.
-   * @param PersisterCtor The constructor of the {@link SparkStatePersister} to register.
-   */
-  static registerPersister<
-    TModel extends SparkModel,
-    TStatePersister extends SparkStatePersister<StateOf<TModel>>
-  >(
-    ModelCtor: typeof SparkModel,
-    PersisterCtor: new () => TStatePersister,
-  ): void {
-    SparkStatePersister.#registeredPersisters.set(ModelCtor, new PersisterCtor());
-  }
-
-  /**
-   * Retrieves the registered {@link SparkStatePersister} for a given {@link SparkModel} type.
-   *
-   * @param ModelCtor The constructor of the {@link SparkModel} type.
-   * @returns The registered {@link SparkStatePersister} instance, or `undefined` if not found.
-   */
-  static getRegisteredPersister<TModel extends SparkModel>(
-    ModelCtor: typeof SparkModel,
-  ): SparkStatePersister<StateOf<TModel>> | undefined {
-    return SparkStatePersister.#registeredPersisters.get(ModelCtor) as SparkStatePersister<StateOf<TModel>> | undefined;
-  }
 
   /**
    * Deletes a {@link SparkState} instance from permanent storage.

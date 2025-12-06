@@ -1,6 +1,5 @@
 import type { Nullish } from 'utility-types';
-import { model } from '~shared/decorators/model.js';
-import { SparkModel } from '~shared/models/spark-model.js';
+import { SparkModel, model } from '~shared/models/spark-model.js';
 import { AutoRecordObserver } from './auto-record-observer.js';
 import { AutoRecordPersister } from './auto-record-persister.js';
 import type { AutoRecordAction, AutoRecordState } from './auto-record.interfaces.js';
@@ -11,7 +10,7 @@ import type { AutoRecordAction, AutoRecordState } from './auto-record.interfaces
  * @extends SparkModel<AutoRecordState>
  */
 @model({
-  stateListener: AutoRecordObserver,
+  stateObserver: AutoRecordObserver,
   statePersister: AutoRecordPersister,
 })
 export class AutoRecord extends SparkModel<AutoRecordState> {

@@ -17,11 +17,11 @@ export class AlertModal extends Modal<Alert, boolean> {
   static styles = [unsafeCSS(styles)];
 
   /**
-   * Opens a {@link AlertModal} for displaying a user alert notification.
+   * Opens an {@link AlertModal} for displaying a user alert notification.
    *
    * @param options - The {@link StaticModalOptions} for the modal.
    */
-  static open<D = Alert, R = boolean>(
+  static override open<D = Alert, R = boolean>(
     options: StaticModalOptions<D, R> = {}
   ): ModalContext<R> {
     return super.open({

@@ -1,8 +1,8 @@
+import { DeepPartial } from 'utility-types';
 import type { LoadSparkModelOptions, SparkModel, SparkModelCtor, SparkModelEmitEventType, SparkModelEventHandler, SparkModelEventType, SparkModelId, SparkModelIdentifier, SparkState, SparkStateEventHandler, StateOf } from '~shared/models/spark-model.js';
 import { SparkStateObserver } from './spark-state-observer.js';
-import { SparkStatePersister } from './spark-state-persister.js';
 import { toModelId } from './spark-state-utils.js';
-import { DeepPartial } from 'utility-types';
+import { SparkStatePersister } from './spark-state-persister.js';
 
 /**
  * Stores and retrieves {@link SparkModel} instances.
@@ -17,7 +17,7 @@ export class SparkStore<
   /**
    * A map of singleton instances of {@link SparkStore} classes.
    */
-  static readonly #instances = new Map<typeof SparkModel, SparkStore<SparkModel>>();
+  static readonly #instances = new Map<SparkModelCtor<SparkModel>, SparkStore<SparkModel>>();
 
   /**
    * A map of `singleton` loaded {@link SparkState} instances.
@@ -30,20 +30,20 @@ export class SparkStore<
   readonly #ModelCtor: SparkModelCtor<TModel>;
 
   /**
-   * The state change listener for the associated {@link SparkModel}'s state.
-   */
-  readonly #stateObserver: SparkStateObserver<TState>;
-
-  /**
-   * The {@link SparkStatePersister} responsible for persisting this {@link SparkModel}'s state.
-   */
-  readonly #statePersister: SparkStatePersister<TState>;
-
-  /**
    * Whether the store is currently in a privileged state, allowing direct construction of models
    * and direct manipulation of internal state.
    */
   #privilegeActive = false;
+
+  /**
+   * The {@link SparkStatePersister} responsible for persisting the {@link SparkModel}'s state.
+   */
+  #statePersister: SparkStatePersister<TState>;
+
+  /**
+   * The {@link SparkStateObserver} responsible for observing changes in the {@link SparkModel}'s state.
+   */
+  #stateObserver: SparkStateObserver<TState>;
 
   /**
    * Creates a new {@link SparkStore} instance.
@@ -51,19 +51,21 @@ export class SparkStore<
    * @throws If instantiated directly.
    * Direct instantiation is not allowed; use {@link getInstance} instead.
    */
-  protected constructor(ModelCtor: typeof SparkModel) {
-    this.#ModelCtor = ModelCtor as SparkModelCtor<TModel>;
-    this.#statePersister = SparkStatePersister.getRegisteredPersister<TModel>(ModelCtor)!;
+  protected constructor(ModelCtor: SparkModelCtor<TModel>) {
+    this.#ModelCtor = ModelCtor;
+    const { config } = (ModelCtor as unknown as typeof SparkModel);
 
-    if (!this.#statePersister) {
+    if (!config.statePersister) {
       throw new Error(
         `${this.constructor.name}: No SparkStatePersister registered for model type: ${ModelCtor.name}.`
         + ' Did you forget to add the @model decorator to the model class?'
       );
     }
+    this.#statePersister = new config.statePersister();
 
-    this.#stateObserver = SparkStateObserver.getRegisteredObserver<TModel>(ModelCtor)!
-                       ?? new DefaultStateObserver<TState>();
+    this.#stateObserver = config.stateObserver
+      ? new config.stateObserver()
+      : new DefaultStateObserver<TState>();
     this.#stateObserver.observe();
   }
 
@@ -86,12 +88,12 @@ export class SparkStore<
   static getInstance<T extends SparkModel>(
     ModelCtor: SparkModelCtor<T>,
   ): SparkStore<T> {
-    if (!SparkStore.#instances.has(ModelCtor as typeof SparkModel)) {
-      const instance = new this(ModelCtor as typeof SparkModel);
-      SparkStore.#instances.set(ModelCtor as typeof SparkModel, instance);
+    if (!SparkStore.#instances.has(ModelCtor)) {
+      const instance = new this(ModelCtor);
+      SparkStore.#instances.set(ModelCtor, instance);
     }
 
-    return SparkStore.#instances.get(ModelCtor as typeof SparkModel)! as SparkStore<T>;
+    return SparkStore.#instances.get(ModelCtor)! as SparkStore<T>;
   }
 
   /**
@@ -103,10 +105,9 @@ export class SparkStore<
    * @returns The initialized {@link SparkModel} instance.
    */
   newModel(state: DeepPartial<TState> | Partial<TState> = {}): TModel {
-    const ModelCtor = this.#ModelCtor as SparkModelCtor<TModel>;
     try {
       this.#privilegeActive = true;
-      const model = new ModelCtor(state.id);
+      const model = new this.#ModelCtor(state.id);
       return model.reset(state);
     } finally {
       this.#privilegeActive = false;
@@ -296,7 +297,7 @@ export class SparkStore<
     const defaultObserver = this.#stateObserver instanceof DefaultStateObserver;
     if (defaultObserver && this.#isStateStale(oldState, state)) {
       const persistType = model.createTimestamp === model.updateTimestamp ? 'create' : 'update';
-      this.#stateObserver.emit(persistType, state, oldState);
+      (this.#stateObserver as DefaultStateObserver<TState>).emit(persistType, state, oldState);
     }
 
     return true;
@@ -333,7 +334,7 @@ class DefaultStateObserver<
   TState extends SparkState
 > extends SparkStateObserver<TState> {
 
-  // No-op custom listeners -- only used for emitting events from store persist methods.
+  // No-op custom listeners -- instead directly emit events from store persist methods.
   protected override observeCreate(): () => void { return () => {}; }
   protected override observeDelete(): () => void { return () => {}; }
   protected override observeUpdate(): () => void { return () => {}; }

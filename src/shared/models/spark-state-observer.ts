@@ -1,4 +1,4 @@
-import type { SparkModel, SparkModelEmitEventType, SparkModelEventType, SparkState, SparkStateCreateEmitter, SparkStateDeleteEmitter, SparkStateEventHandler, SparkStateUpdateEmitter, StateOf } from './spark-model.js';
+import type { SparkModelEmitEventType, SparkModelEventType, SparkState, SparkStateCreateEmitter, SparkStateDeleteEmitter, SparkStateEventHandler, SparkStateUpdateEmitter } from './spark-model.js';
 
 /**
  * Abstract class representing an observer for changes in the {@link SparkState} of a {@link SparkModel}.
@@ -8,41 +8,6 @@ import type { SparkModel, SparkModelEmitEventType, SparkModelEventType, SparkSta
 export abstract class SparkStateObserver<
   TState extends SparkState = SparkState
 > {
-
-  /**
-   * A map of registered {@link SparkStateObserver} instances for each {@link SparkModel} type.
-   */
-  static readonly #registeredObservers = new Map<typeof SparkModel, SparkStateObserver>();
-
-  /**
-   * Registers a {@link SparkStateObserver} for a given {@link SparkModel} type.
-   *
-   * `Note`: This method is typically called by a [model](../decorators/model.ts) decorator.
-   *
-   * @param ModelCtor The constructor of the {@link SparkModel} type.
-   * @param ObserverCtor The constructor of the {@link SparkStateObserver} to register.
-   */
-  static registerObserver<
-    TModel extends SparkModel,
-    TStateObserver extends SparkStateObserver<StateOf<TModel>>
-  >(
-    ModelCtor: typeof SparkModel,
-    ObserverCtor: new () => TStateObserver,
-  ): void {
-    SparkStateObserver.#registeredObservers.set(ModelCtor, new ObserverCtor());
-  }
-
-  /**
-   * Retrieves the registered {@link SparkStateObserver} for a given {@link SparkModel} type.
-   *
-   * @param ModelCtor The constructor of the {@link SparkModel} type.
-   * @returns The registered {@link SparkStateObserver} instance, or `undefined` if not found.
-   */
-  static getRegisteredObserver<TModel extends SparkModel>(
-    ModelCtor: typeof SparkModel,
-  ): SparkStateObserver<StateOf<TModel>> | undefined {
-    return SparkStateObserver.#registeredObservers.get(ModelCtor) as SparkStateObserver<StateOf<TModel>> | undefined;
-  }
 
   readonly #createCbs: Array<SparkStateEventHandler<'create'>> = [];
   readonly #deleteCbs: Array<SparkStateEventHandler<'delete'>> = [];

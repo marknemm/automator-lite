@@ -1,6 +1,5 @@
-import { html } from 'lit';
 import type { Nullish } from 'utility-types';
-import { AlertModal } from '~content/components/alert-modal.js';
+import { ScriptingErrorModal } from '~content/components/scripting-error-modal.js';
 import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
 import { AutoRecord, type AutoRecordAction, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
 import { type SparkModelId } from '~shared/models/spark-model.js';
@@ -56,6 +55,17 @@ export class RecordExecutor {
           : setTimeout(() => this.execRecord(record), 1000);
       }
     }
+
+    this.#autoRecordStore.on('save', (record) => {
+      this.unscheduleRecord(record);
+      if (!record.paused && record.frequency) {
+        this.scheduleRecord(record);
+      }
+    });
+
+    this.#autoRecordStore.on('delete', (record) => {
+      this.unscheduleRecord(record);
+    });
   }
 
   /**
@@ -83,9 +93,12 @@ export class RecordExecutor {
    *
    * @param record - The {@link AutoRecord} instance to schedule.
    * @returns The interval ID of the scheduled action.
+   * @throws If called from a non-top window.
    * @see {@link unscheduleRecord} for unscheduling a record.
    */
   scheduleRecord(record: AutoRecord): number {
+    if (!isTopWindow()) throw new Error('Only the top window can schedule records.');
+
     this.unscheduleRecord(record); // Clear any existing interval for this record.
 
     // If no repeat frequency, do not schedule.
@@ -242,45 +255,7 @@ export class RecordExecutor {
     });
 
     if (response?.errors?.length) {
-      const error = response.errors[0].includes('userScripts API not available')
-                 || response.errors[0].includes('\'userScripts.execute\' is not available in this context')
-        ? html`
-          <p>
-            You must turn on "Allow User Scripts" in the
-            <a href="#" @click="${() => sendExtension({ contexts: ['background'], route: 'settings' })}">
-              Automator Lite Settings
-            </a>
-            to run script actions.
-          </p>
-          <p>
-            After enabling, please reload all tabs where you want the scripts to run.
-          </p>
-          <br><br>
-          <img
-            src="chrome-extension://${chrome.runtime.id}/dist/public/images/allow-user-scripts.gif"
-            alt="Allow user scripts visualization"
-            width="500"/>
-          <br><br>
-          <p class="faint italic">
-            Please note that the "userScripts" API is only available in
-            Chrome, Edge, and Opera.
-          </p>
-        `
-        : html`
-          <p>
-            ${response.errors[0].replaceAll('\n', '<br>') ?? 'Unknown error'}
-          </p>
-        `;
-
-      AlertModal.open({
-        data: {
-          type: 'error',
-          title: 'Automator Lite - Script Error',
-          message: error,
-        },
-        width: '530px',
-      });
-
+      ScriptingErrorModal.open({ data: response.errors });
       throw new Error(response.errors[0]);
     }
   }

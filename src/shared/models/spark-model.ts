@@ -1,5 +1,6 @@
 import { detailedDiff, type DetailedDiff } from 'deep-object-diff';
 import type { DeepPartial, DeepReadonly } from 'utility-types';
+import type { SparkModelConfig } from '~shared/decorators/model.interfaces.js';
 import { deepMerge, DeepMergeOptions, serializeObject } from '~shared/utils/object.js';
 import type { SparkModelEventHandler, SparkModelEventType, SparkModelId, SparkModelIdentifier, SparkState } from './spark-model.interfaces.js';
 import { isSameId } from './spark-state-utils.js';
@@ -22,6 +23,13 @@ export abstract class SparkModel<
    * `Note`: This is negative to avoid collision with real IDs.
    */
   static #tempIdCounter = 0;
+
+  /**
+   * The {@link SparkModelConfig} for this {@link SparkModel} class.
+   *
+   * @note This property is populated by the {@link model} decorator.
+   */
+  static readonly config: SparkModelConfig<any> = {} as any;
 
   /**
    * A branding property to associate the model with its state type.
@@ -55,7 +63,7 @@ export abstract class SparkModel<
    *
    * @internal Use the static {@link SparkStore.newModel} method instead.
    */
-  constructor(id: number = --SparkModel.#tempIdCounter) {
+  constructor(id: SparkModelId = --SparkModel.#tempIdCounter) {
     this.#store = SparkStore.getInstance(this.constructor as any);
 
     if (!this.#store.privilegeActive) {
