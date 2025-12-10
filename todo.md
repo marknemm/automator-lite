@@ -12,6 +12,7 @@ Bugs that should be fixed at some point.
 These may be related to some features, but often are minor standalone issues.
 
 ### Important
+* [ ] Fix issue where content script hasn't loaded, popup script tries to send it a message, and silently fails.
 * [x] Fix duplicate Recording Panel on pages with iframes (content).
 * [x] Fix issue in SPA where auto/repeat record is not finding element on page back because iframe is dynamically added (content).
 * [x] Fix issue where cross-origin iframe records are not working (content).
@@ -35,7 +36,7 @@ Required user-facing features.
 These provide a roadmap for the development of the app.
 
 ### Important
-- [ ] Add ability to manually run a record that isn't scheduled to run on page load.
+- [x] Add ability to manually run a record that isn't scheduled to run on page load.
 - [x] Implement manual (JS) scripting records (content).
   - [-] Allow user to click on target location to designate the frame context the script should run in.
   - [x] Open dialog box for writing or copy/pasting JS script (use lightweight code editor if possible).
@@ -86,16 +87,17 @@ These are often not user-facing and can be thought of as behind the scenes featu
 - [x] Create `SparkModel` abstract class for defining a common interface for CRUD Models.
 - [ ] Create `SparkToast` component for auto-dismissing popup messages.
 - [ ] Replace all callback input properties with standard CustomEvent emitters.
-  - [x] Replaced a portion of properties
-  - [ ] Replaced all properties
+  - [x] Replaced a portion of properties.
+  - [ ] Replaced all properties.
 - [ ] Update Accordion component to be both useable via inheritance in addition to composition.
 - [ ] Update instances of inter-frame communication to use messaging utility instead of window utility.
 - [ ] Merge List and DataListBase so that List forms the basis for both data driven and declarative lists. This makes it possible to extends List and allow extended components to support both styles inherently.
-- [ ] Create README.md
+- [ ] Create README.md.
 - [ ] Add unit test framework (individual unit tests will be added as separate tasks).
 - [ ] Create a utility type for taking a union of all possible parameter subsets for a function.
 
 ### Hard
+- [x] Create `SparkModel` / `SparkStore` abstraction.
 - [ ] Support linter @final jsdoc to finalize inherited methods like in Java/C++; can possibly make a separate npm module.
 
 <br>

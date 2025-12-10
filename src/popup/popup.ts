@@ -79,8 +79,7 @@ export class Popup extends SparkComponent {
    * @returns A {@link Promise} that resolves when the pause state is toggled.
    */
   async #toggleRecordPause(record: AutoRecord): Promise<void> {
-    record.paused = !record.paused;
-    await record.save();
+    await record.save({ paused: !record.paused });
   }
 
   /**

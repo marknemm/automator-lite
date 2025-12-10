@@ -58,8 +58,10 @@ export class RecordExecutor {
 
     this.#autoRecordStore.on('save', (record) => {
       this.unscheduleRecord(record);
-      if (!record.paused && record.frequency) {
-        this.scheduleRecord(record);
+      if (!record.paused) {
+        record.frequency
+          ? this.scheduleRecord(record)
+          : this.execRecord(record);
       }
     });
 
@@ -153,14 +155,21 @@ export class RecordExecutor {
   async execRecord(record: AutoRecord | AutoRecordState | Nullish): Promise<void> {
     if (!record) return; // If no record is provided, do nothing.
 
-    // Wrap in AutoRecord for better type safety.
-    if (!(record instanceof AutoRecord)) {
-      record = await this.#autoRecordStore.load(record);
-    }
+    try {
+      // Wrap in AutoRecord for better type safety.
+      if (!(record instanceof AutoRecord)) {
+        record = await this.#autoRecordStore.load(record) as AutoRecord;
+      }
 
-    // Iterate through each action in the record and execute each one.
-    for (const action of record?.actions ?? []) {
-      await this.execAction(action);
+      // Iterate through each action in the record and execute each one.
+      for (const action of record?.actions ?? []) {
+        await this.execAction(action);
+      }
+    } finally {
+      log.info(`Executed AutoRecord: ${record?.name} (${record?.id})`);
+      if (!record!.frequency || record!.frequency < 0) { // Pause one-time records after execution.
+        await (record as AutoRecord).save({ paused: true });
+      }
     }
   }
 
