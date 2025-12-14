@@ -2,6 +2,7 @@ import { Task } from '@lit/task/task.js';
 import { html, type TemplateResult, unsafeCSS } from 'lit';
 import { property } from 'lit/decorators.js';
 import { repeat } from 'lit/directives/repeat.js';
+import '~shared/components/progress-bar.js';
 import log from '~shared/utils/logger.js';
 import styles from './data-list.scss?inline';
 import { List } from './list.js';
@@ -54,7 +55,11 @@ export abstract class DataListBase<T = unknown> extends List {
    * @returns A {@link TemplateResult} to render when the list is in its initial state.
    */
   protected renderInitial(): TemplateResult {
-    return html`<slot name="initial"></slot>`;
+    return html`
+      <slot name="initial">
+        <spark-progress-bar></spark-progress-bar>
+      </slot>
+    `;
   }
 
   /**
@@ -67,7 +72,11 @@ export abstract class DataListBase<T = unknown> extends List {
   protected renderPending(): TemplateResult {
     return this.task.value
       ? this.renderItems(this.task.value)
-      : html`<slot name="pending"></slot>`;
+      : html`
+        <slot name="pending">
+          <spark-progress-bar></spark-progress-bar>
+        </slot>
+      `;
   }
 
   /**

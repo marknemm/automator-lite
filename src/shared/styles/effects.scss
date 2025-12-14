@@ -1,0 +1,20 @@
+@use "variables" as *;
+@forward "variables";
+
+.shimmer {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(90deg,
+		transparent 0%,
+		color-mix(in srgb, var(--spark-foreground) 10%, transparent) 50%,
+		transparent 100%
+	);
+	transform: translateX(-100%);
+	animation: shimmer var(--spark-progress-bar-shimmer-speed, 2s) linear infinite;
+	pointer-events: none;
+}
+
+@keyframes shimmer {
+	0%   { transform: translateX(-100%); }
+	100% { transform: translateX(100%); }
+}

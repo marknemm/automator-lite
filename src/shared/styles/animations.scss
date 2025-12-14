@@ -1,8 +1,6 @@
 @use "variables" as *;
 @forward "variables";
 
-// ############################## //
-// Animations
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -110,5 +108,14 @@
   }
   to {
     transform: scaleY(var(--grow-start, 0));
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }

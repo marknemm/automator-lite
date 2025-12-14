@@ -1,0 +1,51 @@
+@use "base" as *;
+
+:host {
+	position: relative;
+	display: none;
+	width: 100%;
+	overflow: hidden;
+
+	.bar {
+		position: relative;
+		inset: 0;
+		overflow: hidden;
+		width: 100%;
+		height: var(--spark-progress-bar-height, 4px);
+		overflow: hidden;
+		background: color-mix(in srgb, var(--spark-progress-bar-background, var(--spark-foreground)) 15%, transparent);
+
+		&:before {
+			content: '';
+			position: absolute;
+			display: block;
+			left: 0;
+			top: 0;
+			width: 0%;
+			height: 100%;
+			background: linear-gradient(90deg,
+				color-mix(in srgb, var(--spark-progress-bar-color, var(--spark-primary)) 40%, transparent) 0%,
+				var(--spark-progress-bar-color, var(--spark-primary)) 50%,
+				color-mix(in srgb, var(--spark-progress-bar-color, var(--spark-primary)) 40%, transparent) 100%
+			);
+			animation: indeterminate var(--spark-progress-bar-speed, 1.2s) ease-in-out infinite;
+		}
+	}
+}
+
+:host([show]) {
+	display: block;
+}
+
+:host([aria-valuenow]) .bar:before {
+	animation: none;
+	background: var(--spark-progress-bar-color, var(--spark-primary));
+	width: var(--spark-progress-bar-value, 0%);
+	transition: width 0.3s ease-in-out;
+}
+
+@keyframes indeterminate {
+	0%   { transform: translateX(-10%); width: 0%; }
+	50%  { transform: translateX(60%);  width: 60%; }
+	100% { transform: translateX(333%); width: 30%; }
+}

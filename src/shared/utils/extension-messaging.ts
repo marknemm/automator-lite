@@ -1,3 +1,4 @@
+import { exec, delay } from './async.js';
 import type { ExtensionContext, ExtensionRequest, ExtensionRequestHandler, ExtensionRequestMessage, ExtensionResponse, ExtensionResponseMessage } from './extension-messaging.interfaces.js';
 import { GetAllFrameResultDetails, getAllFrames, getExtensionContext, isBackground, isContent, queryTabs } from './extension.js';
 import log from './logger.js';
@@ -43,22 +44,48 @@ export async function sendExtension<Req = unknown, Resp = void>(
   if (contexts.includes('content') && !isContent()) { // Content cannot access chrome.tabs API (background forwards).
     const destinations = await getTabMessageDestinations(message);
 
-    for (const { tabId, documentId, frameId } of destinations) {
-      responsePromises.push(
-        chrome.tabs.sendMessage(
-          tabId,
-          message,
-          (documentId || frameId) ? { documentId, frameId } : {}
-        ).catch((err) => {
-          log.error(err);
-          return undefined; // Ignore errors if frame does not have the content script.
-        })
-      );
-    }
+    do {
+      for (const { tabId, documentId, frameId } of destinations) {
+        responsePromises.push(
+          chrome.tabs.sendMessage(
+            tabId,
+            message,
+            (documentId || frameId) ? { documentId, frameId } : {}
+          ).catch((err) => {
+            log.error(err);
+            return undefined; // Ignore errors if frame does not have the content script.
+          })
+        );
+      }
+
+      // Wait for all content messages to resolve.
+      const contentResponses = await Promise.all(responsePromises);
+
+      // Remove successful destinations from the retry list.
+      for (let idx = destinations.length - 1; idx >= 0; idx--) {
+        const resp = contentResponses[idx];
+        if (resp !== undefined) {
+          destinations.splice(idx, 1);
+          responsePromises.splice(idx, 1);
+        }
+      }
+
+      if (destinations.length > 0 && message.retryCount < (message.maxRetries ?? 5)) {
+        message.retryCount++;
+        const backoffRetryDelayMs = (message.retryDelayMs ?? 250) * (2 ** (message.retryCount - 1));
+        log.debug(
+          `Retry attempt ${message.retryCount} - sending message to ${destinations.length} failed content frame(s)...`,
+          `\nWill retry in ${backoffRetryDelayMs}ms`,
+          destinations
+        );
+        await delay(backoffRetryDelayMs); // Wait before retrying.
+      }
+    } while (destinations.length > 0); // Retry on failures.
   }
 
   const responseMessages = await Promise.all(responsePromises);
 
+  // Unpack and flatten response payloads.
   const unpackResponsePayloads = (responseMsg: ExtensionResponseMessage<Resp>[]): Resp[] => {
     return [
       ...responseMsg.map((r) => r?.payload),
@@ -66,6 +93,7 @@ export async function sendExtension<Req = unknown, Resp = void>(
     ].filter(r => r !== undefined);
   };
 
+  // Unpack and flatten response errors.
   const unpackResponseErrors = (responseMsg: ExtensionResponseMessage<Resp>[]): any[] => {
     return [
       ...responseMsg.map((r) => r?.error),
@@ -107,6 +135,7 @@ async function toMessage<T>(request: ExtensionRequest<T>): Promise<ExtensionRequ
     frameLocations: request.frameLocations // Normalize to array of URL pathname strings.
       ? [request.frameLocations].flat().map(getBaseURL)
       : [],
+    retryCount: 0,
     senderContext: getExtensionContext(),
     senderFrameHref: isBackground()
       ? 'background'
@@ -180,48 +209,60 @@ export function listenExtension<Req = unknown, Resp = void>(
     const shouldHandle = (testRouteMatch(message.route, route) && testContextMatch(message));
     const shouldForward = (route === '__forward' && message.forward && isBackground());
 
-    // Check if route/ctx destination match or if message should be forwarded via background script.
-    if (shouldHandle || shouldForward) {
-      (async () => { // Wrap in async function to return true immediately (below) to sender to signal async.
-        try {
-          // Handle message in current context.
-          const result = shouldHandle
-            ? await handler(message, sender)
-            : undefined;
-
-          // Forward message to content frames from background script.
-          const forwardedMessages = shouldForward
-            ? (await sendExtension<Req, Resp>({
-                ...message,
-                contexts: ['content'],
-              })).messages
-            : [];
-
-          const responseMessage: ExtensionResponseMessage<Resp> = {
-            ...message,
-            forwardedMessages,
-            payload: result,
-            responderContext: getExtensionContext(),
-            responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
-          };
-          sendResponse(responseMessage);
-        } catch (error) {
-          const errorMessage: ExtensionResponseMessage<Resp> = {
-            ...message,
-            error: error instanceof Error ? error.message : error,
-            forwardedMessages: [],
-            payload: undefined,
-            responderContext: getExtensionContext(),
-            responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
-          };
-          sendResponse(errorMessage);
-        }
-      })();
-      return true; // Sender should wait for the response.
+    // Check if route/context mismatch - if so, send ack response and exit.
+    if (!shouldHandle && !shouldForward) {
+      const ackMessage: ExtensionResponseMessage<Resp> = {
+        ...message,
+        payload: undefined,
+        forwardedMessages: [],
+        responderContext: getExtensionContext(),
+        responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
+      };
+      sendResponse(ackMessage);
+      return false; // Tell sender to not wait for response.
     }
-    return false; // Sender should not wait for the response.
+
+    // Wrap in async closure so true can be returned to sender immediately - tells sender to wait for response.
+    exec(async () => {
+      try {
+        // Handle message in current context.
+        const result = shouldHandle
+          ? await handler(message, sender)
+          : undefined;
+
+        // Forward message to content frames from background script.
+        const forwardedMessages = shouldForward
+          ? (await sendExtension<Req, Resp>({
+              ...message,
+              contexts: ['content'],
+            })).messages
+          : [];
+
+        const responseMessage: ExtensionResponseMessage<Resp> = {
+          ...message,
+          forwardedMessages,
+          payload: result,
+          responderContext: getExtensionContext(),
+          responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
+        };
+        sendResponse(responseMessage);
+      } catch (error) {
+        const errorMessage: ExtensionResponseMessage<Resp> = {
+          ...message,
+          error: error instanceof Error ? error.message : error,
+          forwardedMessages: [],
+          payload: undefined,
+          responderContext: getExtensionContext(),
+          responderFrameLocation: isBackground() ? 'background' : getBaseURL(),
+        };
+        sendResponse(errorMessage);
+      }
+    });
+
+    return true; // Sender should always wait for the response after async handler.
   };
 
+  // Setup the message listener.
   chrome.runtime.onMessage.addListener(listener);
   return () => chrome.runtime.onMessage.removeListener(listener);
 }
@@ -249,13 +290,14 @@ function testContextMatch(message: ExtensionRequestMessage): boolean {
   const { contexts, frameLocations } = message;
 
   // Check if the message is designated for the current context.
-  if (!contexts.includes(getExtensionContext())) {
+  if (!contexts?.length || !contexts.includes(getExtensionContext())) {
     return false; // Context does not match.
   }
 
-  return !isContent()
-      || ((!message.topFrameOnly || isTopWindow())
-      && (!frameLocations.length || !!frameLocations.find(location => isSameBaseUrl(location))));
+  return !isContent() || (
+    (!message.topFrameOnly || isTopWindow())
+    && (!frameLocations?.length || !!frameLocations.find(location => isSameBaseUrl(location)))
+  );
 }
 
 /* Initializes message forwarding from the background script to content scripts.
@@ -265,7 +307,19 @@ function testContextMatch(message: ExtensionRequestMessage): boolean {
  * since content scripts do not have access to the `chrome.tabs` API.
  */
 if (isBackground()) {
-  listenExtension('__forward', () => {});
+  listenExtension('__forward', (message) => {
+    log.debug('Forwarding message to content scripts:', message.route);
+  });
+}
+
+/**
+ * Initializes a ping-pong message listener in content scripts for connectivity checks.
+ */
+if (isContent()) {
+  listenExtension('__ping', () => {
+    log.debug('Received ping message, sending pong response...');
+    return 'pong';
+  });
 }
 
 export type * from './extension-messaging.interfaces.js';

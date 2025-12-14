@@ -12,7 +12,8 @@ Bugs that should be fixed at some point.
 These may be related to some features, but often are minor standalone issues.
 
 ### Important
-* [ ] Fix issue where content script hasn't loaded, popup script tries to send it a message, and silently fails.
+* [ ] Prevent opening duplicate `AutoRecord` config dialogs.
+* [x] Fix issue where content script hasn't loaded, popup script tries to send it a message, and silently fails.
 * [x] Fix duplicate Recording Panel on pages with iframes (content).
 * [x] Fix issue in SPA where auto/repeat record is not finding element on page back because iframe is dynamically added (content).
 * [x] Fix issue where cross-origin iframe records are not working (content).
@@ -36,6 +37,8 @@ Required user-facing features.
 These provide a roadmap for the development of the app.
 
 ### Important
+* [ ] Indicate when an `AutoRecord` is actively playing.
+- [x] Add progress spinner and bar components.
 - [x] Add ability to manually run a record that isn't scheduled to run on page load.
 - [x] Implement manual (JS) scripting records (content).
   - [-] Allow user to click on target location to designate the frame context the script should run in.
@@ -80,6 +83,7 @@ These are often not user-facing and can be thought of as behind the scenes featu
 *EMPTY*
 
 ### Easy
+- [ ] Re-evaluate directly saving state of `AutoRecord` in `RecordExecutor` - too many mod locations for state.
 - [x] In modal.ts, remove content from static open method so derived classes can omit custom content without confusion.
 
 ### Medium

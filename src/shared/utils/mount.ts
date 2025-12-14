@@ -43,18 +43,24 @@ export function getNearestMountCtx(): MountContext | undefined {
  * @returns The {@link MountResult} of the mounted `template`.
  * @example
  * ```typescript
- * import { mountTemplate, host } from '~shared/utils/mount';
- * import myTemplate from './my-template.js';
- * import myStyles from './my-styles.scss?inline';  // Import styles as inline CSS
+ * import { mountTemplate } from '~shared/utils/mount';
+ * import { withStyles } from '~shared/directives/with-styles.js';
+ * import myStandaloneStyles from './my-standalone-styles.scss?inline';
+ * import './my-lit-component.js';
  *
- * // Mount the template to an element with ID 'my-mount-point'
+ * // Mount the template to an element with CSS ID 'mount-point-id'
  * mountTemplate({
- *   mountPoint: 'my-mount-point',
- *   template: (ctx) => html`
- *     <template ${host(myStyles)} class="my-component-host"></template>
+ *   mountPoint: 'mount-point-id',
+ *   template: (ctx) => html` <!-- Can use raw lit-html templates here -->
+ *     ${withStyles(myStandaloneStyles)}  <!-- Inject styles into the mount context (Shadow Root) -->
  *
- *     <div class="my-component-content">
- *       ${myTemplate(ctx)}
+ *     <div class="component-content">
+ *       <h1>Hello World!</h1>
+ *
+ *       <p>This is a mounted template using lit-html.</p>
+ *
+ *       <!-- Can use custom LitElement components within the template -->
+ *       <my-lit-component></my-lit-component>
  *     </div>
  *   `,
  *   mountMode: 'append', // Append the host element to the mount point

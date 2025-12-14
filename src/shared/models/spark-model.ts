@@ -114,6 +114,37 @@ export abstract class SparkModel<
   }
 
   /**
+   * Checks if a given object is an instance of a specific {@link SparkModel} class.
+   *
+   * @param model The object to check.
+   * @param modelClass The {@link SparkModel} class to check against.
+   * @returns `true` if the object is an instance of the specified class, `false` otherwise.
+   */
+  static isModelInstance<TModel extends SparkModel>(
+    this: new (...args: any[]) => TModel,
+    model: unknown,
+  ): model is TModel {
+    return model instanceof this;
+  }
+
+  /**
+   * Converts a {@link SparkModelIdentifier} to a full {@link SparkModel} instance.
+   *
+   * @param model The {@link SparkModelIdentifier} to convert.
+   * Can be a model instance, a unique ID, or a partial state object.
+   * @returns A {@link Promise} that resolves to the corresponding {@link SparkModel} instance,
+   * or `undefined` if the model could not be found.
+   */
+  static async toModel<TModel extends SparkModel>(
+    this: new (...args: any[]) => TModel,
+    model: SparkModelIdentifier<TModel>,
+  ): Promise<TModel | undefined> {
+    return (model instanceof this)
+      ? model
+      : await SparkStore.getInstance<TModel>(this).load(model);
+  }
+
+  /**
    * Deletes this {@link SparkModel} instance from permanent storage.
    *
    * @returns A promise that resolves to `true` if the instance was deleted, or `false` otherwise

@@ -51,6 +51,14 @@ async function init() {
     return window.location.href;
   });
 
+  listenExtension('pauseRecord', ({ payload }: ExtensionRequestMessage<AutoRecordState>) => {
+    return recordExecutor.unscheduleRecord(payload);
+  });
+
+  listenExtension('playRecord', async ({ payload }: ExtensionRequestMessage<AutoRecordState>) => {
+    await recordExecutor.scheduleRecord(payload);
+  });
+
   listenExtension('startRecording', ({ payload }: ExtensionRequestMessage<RecordingType>) => {
     recordingCtx.start(payload);
   });

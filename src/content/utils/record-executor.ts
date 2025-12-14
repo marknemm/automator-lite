@@ -1,12 +1,11 @@
 import type { Nullish } from 'utility-types';
 import { ScriptingErrorModal } from '~content/components/scripting-error-modal.js';
 import { deepQuerySelectorAll } from '~content/utils/deep-query.js';
-import { AutoRecord, type AutoRecordAction, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
+import { AutoRecord, type AutoRecordAction, type AutoRecordIdentifier, type KeyboardAction, type MouseAction, type ScriptAction } from '~shared/models/auto-record.js';
 import { type SparkModelId } from '~shared/models/spark-model.js';
 import { SparkStore } from '~shared/models/spark-store.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import log from '~shared/utils/logger.js';
-import { type AutoRecordState } from '~shared/utils/state.js';
 import { isSameBaseUrl, isTopWindow } from '~shared/utils/window.js';
 
 /**
@@ -93,18 +92,24 @@ export class RecordExecutor {
    * Schedules a given {@link AutoRecord} instance for execution.
    * This function will clear any existing interval for the same record before scheduling a new one.
    *
-   * @param record - The {@link AutoRecord} instance to schedule.
+   * @param record - The {@link AutoRecordIdentifier} of the record to schedule.
    * @returns The interval ID of the scheduled action.
    * @throws If called from a non-top window.
    * @see {@link unscheduleRecord} for unscheduling a record.
    */
-  scheduleRecord(record: AutoRecord): number {
+  async scheduleRecord(record: AutoRecordIdentifier): Promise<number> {
     if (!isTopWindow()) throw new Error('Only the top window can schedule records.');
+
+    record = await AutoRecord.toModel(record);
+    if (!AutoRecord.isModelInstance(record)) return 0;
 
     this.unscheduleRecord(record); // Clear any existing interval for this record.
 
-    // If no repeat frequency, do not schedule.
-    if (!record.frequency || record.frequency < 0) return 0;
+    // If no repeat frequency, then execute instead of schedule.
+    if (!record.frequency || record.frequency < 0) {
+      await this.execRecord(record);
+      return 0;
+    }
 
     // Schedule the auto-record action with a repeat interval.
     const intervalId = setInterval(async () => {
@@ -127,15 +132,21 @@ export class RecordExecutor {
    * Unschedules a previously scheduled {@link AutoRecord}.
    * If the record is not currently scheduled, nothing happens.
    *
-   * @param record - The {@link AutoRecord} instance to unschedule.
+   * @param record - The {@link AutoRecordIdentifier} of the record to unschedule.
    * @returns `true` if the record was unscheduled, `false` otherwise.
    * @see {@link scheduleRecord} for scheduling a record.
    */
-  unscheduleRecord(record: AutoRecord | SparkModelId): boolean {
-    const uid = record instanceof AutoRecord ? record.id : record;
+  async unscheduleRecord(record: AutoRecordIdentifier): Promise<boolean> {
+    if (!record) return false; // No record provided.
 
-    if (!this.#recordScheduleRegistry.has(uid)) {
-      return false; // No action was taken, as the record was not scheduled.
+    // Try best to derive the record ID.
+    const uid = (typeof record === 'object')
+      ? record.id
+      : record;
+
+    // Check if the record is scheduled - if not, no-op.
+    if (!uid || !this.#recordScheduleRegistry.has(uid)) {
+      return false;
     }
 
     // Clear the interval for the scheduled record.
@@ -152,15 +163,14 @@ export class RecordExecutor {
    * @throws If an {@link AutoRecord} action's {@link AutoRecordAction.actionType type} is unsupported
    * or a fatal error occurs during execution.
    */
-  async execRecord(record: AutoRecord | AutoRecordState | Nullish): Promise<void> {
+  async execRecord(record: AutoRecordIdentifier): Promise<void> {
     if (!record) return; // If no record is provided, do nothing.
 
-    try {
-      // Wrap in AutoRecord for better type safety.
-      if (!(record instanceof AutoRecord)) {
-        record = await this.#autoRecordStore.load(record) as AutoRecord;
-      }
+    // Wrap in AutoRecord for better type safety.
+    record = await AutoRecord.toModel(record);
+    if (!AutoRecord.isModelInstance(record)) return;
 
+    try {
       // Iterate through each action in the record and execute each one.
       for (const action of record?.actions ?? []) {
         await this.execAction(action);

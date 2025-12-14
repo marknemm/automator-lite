@@ -4,11 +4,11 @@
 html, body {
   background-color: var(--spark-background);
   color: var(--spark-foreground);
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  padding: var(--spark-gutter);
   font-family: var(--spark-font-family);
   font-size: var(--spark-font-size);
   line-height: var(--spark-line-height);

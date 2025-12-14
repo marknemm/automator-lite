@@ -3,6 +3,7 @@
 import { Task } from '@lit/task';
 import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import '~shared/components/progress-spinner.js';
 import { SparkComponent } from '~shared/components/spark-component.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import AutoRecord, { type RecordingType } from '~shared/models/auto-record.js';
@@ -27,7 +28,7 @@ export class Popup extends SparkComponent {
 
   readonly #autoRecordStore = SparkStore.getInstance(AutoRecord);
   readonly #loadRecordsTask = new Task(this, {
-    task: () => this.#autoRecordStore.loadMany(),
+    task: async () => this.#autoRecordStore.loadMany(),
   });
 
   @state()
@@ -78,8 +79,15 @@ export class Popup extends SparkComponent {
    * @param record - The {@link AutoRecord} to toggle the pause state for.
    * @returns A {@link Promise} that resolves when the pause state is toggled.
    */
-  async #toggleRecordPause(record: AutoRecord): Promise<void> {
-    await record.save({ paused: !record.paused });
+  async #togglePauseRecord(record: AutoRecord): Promise<void> {
+    await sendExtension({
+      route: record.paused ? 'playRecord' : 'pauseRecord',
+      contexts: ['content'],
+      topFrameOnly: true,
+      payload: record.state,
+    });
+
+    window.close();
   }
 
   /**
@@ -146,7 +154,7 @@ export class Popup extends SparkComponent {
             .task=${this.#loadRecordsTask}
             .onConfigure=${(record: AutoRecord) => this.#configureRecord(record)}
             .onDelete=${(record: AutoRecord) => this.#deleteRecord(record)}
-            .onTogglePause=${(record: AutoRecord) => this.#toggleRecordPause(record)}
+            .onTogglePause=${(record: AutoRecord) => this.#togglePauseRecord(record)}
           ></spark-auto-record-list>
 
           <spark-add-action-sheet
@@ -156,6 +164,8 @@ export class Popup extends SparkComponent {
           ></spark-add-action-sheet>
         </div>
       </div>
+
+      <spark-progress-spinner .show=${false}></spark-progress-spinner>
     `;
   }
 

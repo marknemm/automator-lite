@@ -25,9 +25,24 @@ export interface ExtensionRequest<T = unknown> {
   frameLocations?: FrameLocation | FrameLocation[];
 
   /**
+   * The maximum number of retries for sending the message in case of failure.
+   *
+   * @default 5
+   */
+  maxRetries?: number;
+
+  /**
    * The payload of the request message.
    */
   payload?: T;
+
+  /**
+   * The delay in milliseconds between retry attempts.
+   * Each subsequent retry will use an exponential backoff strategy based on this delay.
+   *
+   * @default 250
+   */
+  retryDelayMs?: number;
 
   /**
    * The route of the message, which determines the appropriate handler.
@@ -83,6 +98,11 @@ export interface ExtensionRequestMessage<T = unknown> extends ExtensionRequest<T
    * `Note`: `all_frames` must be configured in `manifest.json` for this to work.
    */
   frameLocations: string[]; // Normalized to base location string array.
+
+  /**
+   * The current retry attempt count for sending the message.
+   */
+  retryCount: number;
 
   /**
    * The {@link ExtensionContext} from which the message originated.

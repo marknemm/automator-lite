@@ -1,5 +1,6 @@
 import type { Nullish } from 'utility-types';
-import type { SparkState } from './spark-model.interfaces.js';
+import type { SparkModelIdentifier, SparkState } from './spark-model.interfaces.js';
+import type { AutoRecord } from './auto-record.js';
 
 /**
  * The saved state of an {@link AutoRecord}.
@@ -231,6 +232,8 @@ export interface ConfigureRecordOptions {
   omitSave?: boolean;
 
 }
+
+export type AutoRecordIdentifier = SparkModelIdentifier<AutoRecord>;
 
 /**
  * The active recording type for this context.
