@@ -2,7 +2,7 @@ import { html } from 'lit';
 import type { ModalContext, StaticModalOptions } from '~shared/components/modal.interfaces.js';
 import type { Alert } from '~shared/utils/alert.interfaces.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
-import { AlertModal } from './alert-modal.js';
+import { AlertModal } from '../../shared/components/alert-modal.js';
 
 /**
  * A {@link AlertModal} dialog for displaying scripting error alerts.

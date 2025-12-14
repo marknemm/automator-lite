@@ -7,7 +7,7 @@ import type { Alert } from '~shared/utils/alert.interfaces.js';
 import { listenExtension, type ExtensionRequestMessage } from '~shared/utils/extension-messaging.js';
 import log from '~shared/utils/logger.js';
 import fontStyles from '../shared/styles/fonts.scss?inline'; // Cannot use '~' alias for CSS imports.
-import { AlertModal } from './components/alert-modal.js';
+import { AlertModal } from '../shared/components/alert-modal.js';
 import './content.scss';
 import RecordExecutor from './utils/record-executor.js';
 import RecordingContext from './utils/recording-context.js';

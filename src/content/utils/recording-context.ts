@@ -114,6 +114,9 @@ export class RecordingContext {
     recordData: AutoRecordState | AutoRecordAction[] | Nullish
   ): Promise<AutoRecord | undefined> {
     if (!recordData || (recordData instanceof Array && !recordData.length)) return; // No valid record to config.
+    if (AutoRecordConfigModal.isMounted()) {
+      throw new Error('An AutoRecordConfigModal is already open.');
+    }
     const saveState = await AutoRecordConfigModal.open(recordData);
     log.debug('Configured record state:', saveState);
     if (saveState) return this.#autoRecordStore.newModel(saveState).save();

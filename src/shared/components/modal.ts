@@ -25,6 +25,14 @@ export class Modal<D = unknown, R = D> extends SparkComponent {
   static styles = [unsafeCSS(styles)];
 
   /**
+   * The statically mounted instances of each Modal subclass.
+   *
+   * When a modal is opened via {@link Modal.open}, its context is stored here.
+   * This allows checking if a modal of a specific type is currently in use.
+   */
+  static mountedInstances = new Map<typeof Modal, ModalContext<any>[]>();
+
+  /**
    * @see [ModalOptions.closedBy](./modal.interfaces.ts)
    * @default 'none'
    */
@@ -117,6 +125,8 @@ export class Modal<D = unknown, R = D> extends SparkComponent {
           const close = onClose?.(result);
           if (close === false) return; // Prevent unmounting if close is prevented.
           unmount();
+          const instances = Modal.mountedInstances.get(this) || [];
+          this.mountedInstances.set(this, instances.filter(ctx => ctx !== modalCtx));
           resolve(result);
         };
 
@@ -133,7 +143,20 @@ export class Modal<D = unknown, R = D> extends SparkComponent {
       },
     });
 
+    const instances = this.mountedInstances.get(this) || [];
+    instances.push(modalCtx);
+    this.mountedInstances.set(this, instances);
     return modalCtx;
+  }
+
+  /**
+   * Checks if a modal of this type is currently mounted.
+   *
+   * @param this The Modal subclass to check.
+   * @returns `true` if a modal of this type is mounted, `false` otherwise.
+   */
+  static isMounted(): boolean {
+    return !!Modal.mountedInstances.get(this)?.length;
   }
 
   /**

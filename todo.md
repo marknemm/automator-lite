@@ -12,7 +12,8 @@ Bugs that should be fixed at some point.
 These may be related to some features, but often are minor standalone issues.
 
 ### Important
-* [ ] Prevent opening duplicate `AutoRecord` config dialogs.
+* [ ] Indicate when an `AutoRecord` is actively playing and prevent duplicate play.
+* [x] Prevent opening duplicate `AutoRecord` config dialogs.
 * [x] Fix issue where content script hasn't loaded, popup script tries to send it a message, and silently fails.
 * [x] Fix duplicate Recording Panel on pages with iframes (content).
 * [x] Fix issue in SPA where auto/repeat record is not finding element on page back because iframe is dynamically added (content).
@@ -37,7 +38,7 @@ Required user-facing features.
 These provide a roadmap for the development of the app.
 
 ### Important
-* [ ] Indicate when an `AutoRecord` is actively playing.
+- [ ] Show error to user when they attempt to open another dialog config when one is opened.
 - [x] Add progress spinner and bar components.
 - [x] Add ability to manually run a record that isn't scheduled to run on page load.
 - [x] Implement manual (JS) scripting records (content).
