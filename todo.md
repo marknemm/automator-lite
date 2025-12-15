@@ -52,17 +52,18 @@ These provide a roadmap for the development of the app.
 - [x] Refine commit actions before saving by combining/removing/splitting where sensible (content).
 
 ### Easy
-- [ ] Add button to pause all records on a pag (popup).
+- [ ] Add button to pause all records on a page (popup).
 - [ ] Update extension icon to signify if recording or record playback is active (popup).
 - [ ] Update behavior of extension icon to not open the extension popup if clicked to stop recording (popup).
 - [ ] Update Sheet to animate out when closed (popup).
 
 ### Medium
-- [ ] Add ability to click and drag, resize, and minimize `SparkModal` components (shared).
+- [x] Create `SparkToast` component for displaying non-blocking auto-dismissing notifications.
 - [ ] Create utility for displaying `Alert` notification data in either a `SparkModal` or `SparkToast`.
   - [x] Create `AlertModal`.
   - [ ] Create `AlertToast`.
   - [ ] Create `Alert` utility for multiplexing between the `AlertModal` and `AlertToast`.
+- [ ] Add ability to click and drag, resize, and minimize `SparkModal` components (shared).
 - [ ] Add global option for customizing stop recording key combo (options).
 - [ ] Add global option for pausing all records on all pages (options).
 - [ ] Add global options for defaults for new record configuration values (options).

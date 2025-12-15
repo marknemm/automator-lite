@@ -1,8 +1,8 @@
 import { html, unsafeCSS } from 'lit';
 import { customElement } from 'lit/decorators.js';
+import { property } from '~shared/decorators/property.js';
 import styles from './progress-spinner.scss?inline';
 import { SparkComponent } from './spark-component.js';
-import { property } from '~shared/decorators/property.js';
 
 /**
  * Generic indefinite progress spinner.
@@ -12,7 +12,7 @@ import { property } from '~shared/decorators/property.js';
  * @slot Default slot for adding content inside the spinner.
  */
 @customElement('spark-progress-spinner')
-export class SparkProgressSpinner extends SparkComponent {
+export class ProgressSpinner extends SparkComponent {
 
   static styles = [unsafeCSS(styles)];
 
@@ -38,7 +38,7 @@ export class SparkProgressSpinner extends SparkComponent {
    * @default 'progressbar'
    */
   @property({ type: String, reflect: true })
-  accessor role = 'progressbar';
+  accessor role: 'progressbar' = 'progressbar';
 
   /**
    * Whether the progress spinner is visible.
@@ -61,3 +61,5 @@ export class SparkProgressSpinner extends SparkComponent {
   }
 
 }
+
+export type * from './progress-spinner.interfaces.js';

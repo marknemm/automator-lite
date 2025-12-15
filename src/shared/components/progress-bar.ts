@@ -1,10 +1,10 @@
 import { html, unsafeCSS } from 'lit';
 import { customElement } from 'lit/decorators.js';
+import type { Nullish } from 'utility-types';
 import { property } from '~shared/decorators/property.js';
+import type { SparkProgressBarType } from './progress-bar.interfaces.js';
 import styles from './progress-bar.scss?inline';
 import { SparkComponent } from './spark-component.js';
-import type { Nullish } from 'utility-types';
-import type { SparkProgressBarType } from './progress-bar.interfaces.js';
 
 /**
  * Generic indefinite progress bar.
@@ -13,7 +13,7 @@ import type { SparkProgressBarType } from './progress-bar.interfaces.js';
  * @extends SparkComponent
  */
 @customElement('spark-progress-bar')
-export class SparkProgressBar extends SparkComponent {
+export class ProgressBar extends SparkComponent {
 
   static styles = [unsafeCSS(styles)];
 
@@ -39,7 +39,7 @@ export class SparkProgressBar extends SparkComponent {
    * @default 'progressbar'
    */
   @property ({ type: String, reflect: true })
-  accessor role = 'progressbar';
+  accessor role: 'progressbar' = 'progressbar';
 
   /**
    * Whether the progress bar is visible.

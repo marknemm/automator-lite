@@ -1,6 +1,6 @@
 import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement } from 'lit/decorators.js';
-import { Modal, ModalContext, StaticModalOptions } from '~shared/components/modal.js';
+import { Modal, ModalContext, InstanceModalOptions } from '~shared/components/modal.js';
 import { sparkButton } from '~shared/directives/spark-button.js';
 import type { Alert } from '~shared/utils/alert.interfaces.js';
 import styles from './alert-modal.scss?inline';
@@ -19,10 +19,10 @@ export class AlertModal extends Modal<Alert, boolean> {
   /**
    * Opens an {@link AlertModal} for displaying a user alert notification.
    *
-   * @param options - The {@link StaticModalOptions} for the modal.
+   * @param options - The {@link InstanceModalOptions} for the modal.
    */
   static override open<D = Alert, R = boolean>(
-    options: StaticModalOptions<D, R> = {}
+    options: InstanceModalOptions<D, R> = {}
   ): ModalContext<R> {
     return super.open({
       mountPoint: document.body,
@@ -33,12 +33,18 @@ export class AlertModal extends Modal<Alert, boolean> {
 
   protected override renderContent(): TemplateResult {
     return html`
-      <div class="header">
-        <h2 class="title">
-          ${this.data?.title || 'Automator Lite - Notification'}
-        </h2>
-      </div>
+      ${this.data?.title
+        ? html`
+          <div class="header">
+            <h2 class="title">
+              ${this.data?.title}
+            </h2>
+          </div>
+        `
+        : null
+      }
       <div class="body">
+
         ${this.data?.message}
       </div>
       <div class="footer">
@@ -71,7 +77,7 @@ export class AlertModal extends Modal<Alert, boolean> {
                 raised
                 shape="rectangle"
                 color="success"
-                title="Save"
+                title="Confirm"
                 @click="${() => this.close(true)}"
               ></button>
             `
@@ -82,3 +88,5 @@ export class AlertModal extends Modal<Alert, boolean> {
   }
 
 }
+
+export type * from './alert-modal.interfaces.js';

@@ -2,12 +2,14 @@
 
 import '@webcomponents/custom-elements'; // MUST be first!
 
+import { Toast } from '~shared/components/toast.js';
 import { type AutoRecordAction, type AutoRecordState, type RecordingType } from '~shared/models/auto-record.js';
 import type { Alert } from '~shared/utils/alert.interfaces.js';
 import { listenExtension, type ExtensionRequestMessage } from '~shared/utils/extension-messaging.js';
 import log from '~shared/utils/logger.js';
-import fontStyles from '../shared/styles/fonts.scss?inline'; // Cannot use '~' alias for CSS imports.
+import { isTopWindow } from '~shared/utils/window.js';
 import { AlertModal } from '../shared/components/alert-modal.js';
+import fontStyles from '../shared/styles/fonts.scss?inline'; // Cannot use '~' alias for CSS imports.
 import './content.scss';
 import RecordExecutor from './utils/record-executor.js';
 import RecordingContext from './utils/recording-context.js';
@@ -65,6 +67,13 @@ async function init() {
 
   listenExtension('stopRecording', () => {
     recordingCtx.stop();
+  });
+
+  isTopWindow() &&
+  Toast.show({
+    content: 'Automator Lite content script initialized',
+    // content: html`Automator Lite content script initialized<br>This script runs in the context of the web page.<br>Extension ID: <strong>${chrome.runtime.id}</strong>`,
+    duration: 50000,
   });
 }
 

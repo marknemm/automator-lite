@@ -1,5 +1,5 @@
 import { html } from 'lit';
-import type { ModalContext, StaticModalOptions } from '~shared/components/modal.interfaces.js';
+import type { ModalContext, InstanceModalOptions } from '~shared/components/modal.interfaces.js';
 import type { Alert } from '~shared/utils/alert.interfaces.js';
 import { sendExtension } from '~shared/utils/extension-messaging.js';
 import { AlertModal } from '../../shared/components/alert-modal.js';
@@ -12,10 +12,10 @@ export class ScriptingErrorModal {
   /**
    * Opens an {@link AlertModal} for displaying a scripting error alert.
    *
-   * @param options - The {@link StaticModalOptions} for the modal.
+   * @param options - The {@link InstanceModalOptions} for the modal.
    */
   static open(
-    options: StaticModalOptions<string[], void> = {}
+    options: InstanceModalOptions<string[], void> = {}
   ): ModalContext<void> {
     const errors = (options.data instanceof Array ? options.data : []) as string[];
 

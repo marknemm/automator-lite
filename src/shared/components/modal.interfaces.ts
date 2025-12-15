@@ -1,5 +1,12 @@
 import type { TemplateResult } from 'lit';
 import type { MountPoint, Template } from '~shared/utils/mount.interfaces.js';
+import type { Modal } from './modal.js';
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'spark-modal': Modal;
+  }
+}
 
 /**
  * Options for configuring the modal behavior.
@@ -60,15 +67,16 @@ export interface ModalOptions<D = unknown, R = D> {
    * @default '400px'
    */
   width?: string;
+
 }
 
 /**
- * {@link ModalOptions} for a modal that has `static` content.
+ * {@link ModalOptions} for a specific instance of a modal that has `static` content.
  *
  * @template D - The type of data that can be passed to the modal when it is opened.
  * @template R - The type of result that can be passed back when the modal is closed.
  */
-export type StaticModalOptions<D = unknown, R = D> = Omit<ModalOptions<D, R>, 'content'>;
+export type InstanceModalOptions<D = unknown, R = D> = Omit<ModalOptions<D, R>, 'content'>;
 
 /**
  * Contextual data for controlling the modal.
@@ -79,9 +87,9 @@ export type StaticModalOptions<D = unknown, R = D> = Omit<ModalOptions<D, R>, 'c
 export interface ModalContext<R = unknown> extends Promise<R | undefined> {
 
   /**
-   * Function to close the modal and execute the onClose callback.
+   * Function to close the modal and execute the `close` custom event callback.
    *
-   * @param data - Optional data to pass to the onClose callback.
+   * @param data - Optional data to pass to the `close` callback.
    */
   close: (result?: R) => void;
 

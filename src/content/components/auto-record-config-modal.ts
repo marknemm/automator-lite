@@ -1,7 +1,7 @@
 import { html, unsafeCSS, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import '~shared/components/field-help.js';
-import { Modal, type ModalContext, type StaticModalOptions } from '~shared/components/modal.js';
+import { Modal, type ModalContext, type InstanceModalOptions } from '~shared/components/modal.js';
 import sparkButton from '~shared/directives/spark-button.js';
 import { AutoRecordState, type AutoRecordAction } from '~shared/models/auto-record.js';
 import log from '~shared/utils/logger.js';
@@ -32,7 +32,7 @@ export class AutoRecordConfigModal extends Modal<AutoRecordState> {
    * @param options - Either the {@link AutoRecordState} or the {@link ModalOptions} for the modal.
    */
   static open<D = Partial<AutoRecordState>, R = D>(
-    options: StaticModalOptions<D, R> | Partial<AutoRecordState> | AutoRecordAction[] = {}
+    options: InstanceModalOptions<D, R> | Partial<AutoRecordState> | AutoRecordAction[] = {}
   ): ModalContext<R> {
     if (options instanceof Array) {
       options = { data: { actions: options } as D };

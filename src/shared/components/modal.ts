@@ -163,7 +163,7 @@ export class Modal<D = unknown, R = D> extends SparkComponent {
    * Closes the modal dialog and executes the {@link onClose} callback.
    *
    * @param data - Optional data to pass to the {@link onClose} callback.
-   * @returns `true` if the modal was closed, `false` if closing was prevented by the {@link onClose} callback.
+   * @returns `true` if the modal was closed, `false` if closing was prevented by the `close` event callback.
    */
   close(data?: R): boolean {
     const close = this.dispatchEvent(new CustomEvent('close', {

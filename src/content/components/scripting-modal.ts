@@ -1,7 +1,7 @@
 import { html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { type CodeEditorChangeEvent } from '~shared/components/code-editor/code-editor.events.js';
-import { Modal, ModalContext, StaticModalOptions } from '~shared/components/modal.js';
+import { Modal, ModalContext, InstanceModalOptions } from '~shared/components/modal.js';
 import { sparkButton } from '~shared/directives/spark-button.js';
 import styles from './scripting-modal.scss?inline';
 import { repeat } from 'lit/directives/repeat.js';
@@ -43,11 +43,11 @@ export class ScriptingModal extends Modal<ScriptingModalData> {
   /**
    * Opens an {@link ScriptingModal} for editing a script.
    *
-   * @param options - The {@link StaticModalOptions} for the modal.
+   * @param options - The {@link InstanceModalOptions} for the modal.
    * @return A {@link ModalContext} for the opened modal.
    */
   static open<D = ScriptingModalData, R = D>(
-    options: StaticModalOptions<D, R> = {}
+    options: InstanceModalOptions<D, R> = {}
   ): ModalContext<R> {
     return super.open({
       mountPoint: document.body,
