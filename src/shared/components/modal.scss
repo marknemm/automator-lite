@@ -1,65 +1,78 @@
 @use "base" as *;
 
 :host {
-  z-index: 9999;
-  font-family: var(--spark-font-family);
-  font-size: var(--spark-font-size);
-  line-height: var(--spark-line-height);
-}
+  // Theming parameters
+  @include component-theme-variables(
+    "modal",
+    $border-radius: 8px,
+    $box-shadow: 0 0 10px rgba(0, 0, 0, 0.25),
+    $height: fit-content,
+    $max-height: min(90%, 800px),
+    $max-width: 90%,
+    $width: 400px,
+    $z-index: var(--spark-overlay-z-index)
+  );
 
-dialog {
-  display: flex;
-  flex-direction: column;
-  background-color: var(--spark-background);
-  color: var(--spark-foreground);
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  width: var(--spark-modal-width, 400px);
-  height: var(--spark-modal-height, fit-content);
-  max-width: 90%;
-  max-height: min(90%, 800px);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
-  animation: fadeIn 0.3s ease-in-out;
-  transition: width 0.3s ease-in-out,
-              height 0.3s ease-in-out;
-  overflow: hidden;
+  // Layout and base appearance
+  z-index: var(--spark-modal-z-index);
+  font-family: var(--spark-modal-font-family);
+  font-size: var(--spark-modal-font-size);
+  line-height: var(--spark-modal-line-height);
 
-  &::backdrop {
-    background-color: rgba(0, 0, 0, 0.5);
+  dialog {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--spark-modal-background);
+    color: var(--spark-modal-foreground);
+    padding: 0;
+    border: none;
+    border-radius: var(--spark-modal-border-radius);
+    width: var(--spark-modal-width);
+    height: var(--spark-modal-height);
+    max-width: var(--spark-modal-max-width);
+    max-height: var(--spark-modal-max-height);
+    box-shadow: var(--spark-modal-box-shadow);
+    animation: fadeIn 0.3s ease-in-out;
+    transition: width 0.3s ease-in-out,
+                height 0.3s ease-in-out;
+    overflow: hidden;
+
+    &::backdrop {
+      background-color: rgba(0, 0, 0, 0.5);
+    }
   }
-}
 
-.header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: calc(var(--spark-gutter) * 2);
-  border-bottom: 1px solid var(--spark-border-color);
+  .header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--spark-gutter) * 2);
+    border-bottom: 1px solid var(--spark-border-color);
 
-  > * {
-    margin-top: 0;
-    margin-bottom: 0;
-    text-align: center;
+    > * {
+      margin-top: 0;
+      margin-bottom: 0;
+      text-align: center;
+    }
   }
-}
 
-.body {
-  flex-grow: 1;
-  overflow: auto;
-  padding: calc(var(--spark-gutter) * 2);
-}
+  .body {
+    flex-grow: 1;
+    overflow: auto;
+    padding: calc(var(--spark-gutter) * 2);
+  }
 
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: calc(var(--spark-gutter) * 2);
-  border-top: 1px solid var(--spark-border-color);
+  .footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: calc(var(--spark-gutter) * 2);
+    border-top: 1px solid var(--spark-border-color);
 
-  .spark-button {
-    margin-left: 10px;
-    color: var(--spark-foreground);
-    padding: var(--spark-gutter) calc(var(--spark-gutter) * 2);
+    .spark-button {
+      margin-left: 10px;
+      color: var(--spark-foreground);
+      padding: var(--spark-gutter) calc(var(--spark-gutter) * 2);
+    }
   }
 }

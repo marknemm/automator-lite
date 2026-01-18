@@ -1,5 +1,5 @@
-@use "variables" as *;
-@forward "variables";
+@use "constants" as *;
+@forward "constants";
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--spark-font-family-serif);

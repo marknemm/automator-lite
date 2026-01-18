@@ -1,6 +1,6 @@
 @use "sass:color";
-@use "variables" as *;
-@forward "variables";
+@use "constants" as *;
+@forward "constants";
 
 /// Generates CSS variables for a color scale based on a base CSS variable.
 /// @param {string} $base-var The base CSS variable name (e.g. --spark-info).
@@ -48,6 +48,123 @@
                         0px 3px 14px 2px #{rgba($shadow-color, .12)};
 }
 
+/// Generates common theme variables for a component.
+/// @param {string} $component-name The component name to prefix the variables (e.g. "modal").
+/// @param {color} $background The background color variable (default: var(--spark-background)).
+/// @param {color} $border-color The border color variable (default: var(--spark-border-color)).
+/// @param {string} $border-style The border style variable (default: unset).
+/// @param {string} $border-radius The border radius variable (default: unset).
+/// @param {string} $box-shadow The box shadow variable (default: unset).
+/// @param {string} $font-family The font family variable (default: var(--spark-font-family)).
+/// @param {string} $font-size The font size variable (default: var(--spark-font-size)).
+/// @param {color} $foreground The foreground color variable (default: var(--spark-foreground)).
+/// @param {string} $height The height variable (default: unset).
+/// @param {string} $line-height The line height variable (default: var(--spark-line-height)).
+/// @param {string} $margin The margin variable (default: unset).
+/// @param {string} $margin-bottom The margin bottom variable (default: unset).
+/// @param {string} $margin-horizontal The margin horizontal variable (default: unset).
+/// @param {string} $margin-left The margin left variable (default: unset).
+/// @param {string} $margin-right The margin right variable (default: unset).
+/// @param {string} $margin-top The margin top variable (default: unset).
+/// @param {string} $margin-vertical The margin vertical variable (default: unset).
+/// @param {string} $max-height The max height variable (default: unset).
+/// @param {string} $max-width The max width variable (default: unset).
+/// @param {string} $min-height The min height variable (default: unset).
+/// @param {string} $min-width The min width variable (default: unset).
+/// @param {string} $padding The padding variable (default: unset).
+/// @param {string} $padding-bottom The padding bottom variable (default: unset).
+/// @param {string} $padding-horizontal The padding horizontal variable (default: unset).
+/// @param {string} $padding-left The padding left variable (default: unset).
+/// @param {string} $padding-right The padding right variable (default: unset).
+/// @param {string} $padding-top The padding top variable (default: unset).
+/// @param {string} $padding-vertical The padding vertical variable (default: unset).
+/// @param {string} $width The width variable (default: unset).
+/// @param {string} $z-index The z-index variable (default: unset).
+@mixin component-theme-variables(
+  $component-name,
+  $background: var(--spark-background),
+  $border-color: var(--spark-border-color),
+  $border-radius: unset,
+  $border-style: unset,
+  $border-width: unset,
+  $box-shadow: unset,
+  $font-family: var(--spark-font-family),
+  $font-size: var(--spark-font-size),
+  $font-weight: unset,
+  $foreground: var(--spark-foreground),
+  $height: unset,
+  $line-height: var(--spark-line-height),
+  $margin: unset,
+  $margin-bottom: unset,
+  $margin-horizontal: unset,
+  $margin-left: unset,
+  $margin-right: unset,
+  $margin-top: unset,
+  $margin-vertical: unset,
+  $max-height: unset,
+  $max-width: unset,
+  $min-height: unset,
+  $min-width: unset,
+  $padding: unset,
+  $padding-bottom: unset,
+  $padding-horizontal: unset,
+  $padding-left: unset,
+  $padding-right: unset,
+  $padding-top: unset,
+  $padding-vertical: unset,
+  $width: unset,
+  $z-index: unset
+) {
+  @if $background != unset      { --spark-#{$component-name}-background: #{$background}; }
+  @if $border-color != unset    { --spark-#{$component-name}-border-color: #{$border-color}; }
+  @if $border-radius != unset   { --spark-#{$component-name}-border-radius: #{$border-radius}; }
+  @if $border-style != unset     { --spark-#{$component-name}-border-style: #{$border-style}; }
+  @if $border-width != unset     { --spark-#{$component-name}-border-width: #{$border-width}; }
+  @if $box-shadow != unset      { --spark-#{$component-name}-box-shadow: #{$box-shadow}; }
+  @if $font-family != unset     { --spark-#{$component-name}-font-family: #{$font-family}; }
+  @if $font-size != unset       { --spark-#{$component-name}-font-size: #{$font-size}; }
+  @if $font-weight != unset     { --spark-#{$component-name}-font-weight: #{$font-weight}; }
+  @if $foreground != unset      { --spark-#{$component-name}-foreground: #{$foreground}; }
+  @if $height != unset          { --spark-#{$component-name}-height: #{$height}; }
+  @if $line-height != unset     { --spark-#{$component-name}-line-height: #{$line-height}; }
+
+  // Margin with fallback priority: specific > horizontal/vertical > all
+  @if $margin-top != unset or $margin-vertical != unset or $margin != unset {
+    --spark-#{$component-name}-margin-top: #{if($margin-top != unset, $margin-top, if($margin-vertical != unset, $margin-vertical, $margin))};
+  }
+  @if $margin-right != unset or $margin-horizontal != unset or $margin != unset {
+    --spark-#{$component-name}-margin-right: #{if($margin-right != unset, $margin-right, if($margin-horizontal != unset, $margin-horizontal, $margin))};
+  }
+  @if $margin-bottom != unset or $margin-vertical != unset or $margin != unset {
+    --spark-#{$component-name}-margin-bottom: #{if($margin-bottom != unset, $margin-bottom, if($margin-vertical != unset, $margin-vertical, $margin))};
+  }
+  @if $margin-left != unset or $margin-horizontal != unset or $margin != unset {
+    --spark-#{$component-name}-margin-left: #{if($margin-left != unset, $margin-left, if($margin-horizontal != unset, $margin-horizontal, $margin))};
+  }
+
+  @if $max-height != unset      { --spark-#{$component-name}-max-height: #{$max-height}; }
+  @if $max-width != unset       { --spark-#{$component-name}-max-width: #{$max-width}; }
+  @if $min-height != unset      { --spark-#{$component-name}-min-height: #{$min-height}; }
+  @if $min-width != unset       { --spark-#{$component-name}-min-width: #{$min-width}; }
+
+  // Padding with fallback priority: specific > horizontal/vertical > all
+  @if $padding-top != unset or $padding-vertical != unset or $padding != unset {
+    --spark-#{$component-name}-padding-top: #{if($padding-top != unset, $padding-top, if($padding-vertical != unset, $padding-vertical, $padding))};
+  }
+  @if $padding-right != unset or $padding-horizontal != unset or $padding != unset {
+    --spark-#{$component-name}-padding-right: #{if($padding-right != unset, $padding-right, if($padding-horizontal != unset, $padding-horizontal, $padding))};
+  }
+  @if $padding-bottom != unset or $padding-vertical != unset or $padding != unset {
+    --spark-#{$component-name}-padding-bottom: #{if($padding-bottom != unset, $padding-bottom, if($padding-vertical != unset, $padding-vertical, $padding))};
+  }
+  @if $padding-left != unset or $padding-horizontal != unset or $padding != unset {
+    --spark-#{$component-name}-padding-left: #{if($padding-left != unset, $padding-left, if($padding-horizontal != unset, $padding-horizontal, $padding))};
+  }
+
+  @if $width != unset           { --spark-#{$component-name}-width: #{$width}; }
+  @if $z-index != unset         { --spark-#{$component-name}-z-index: #{$z-index}; }
+}
+
 
 // ############################## //
 // Light Theme (Default)
@@ -58,6 +175,7 @@
   --spark-line-height: normal;
   --spark-font-family: #{$sans-serif-font-family}, sans-serif;
   --spark-font-family-serif: #{$serif-font-family}, serif;
+  --spark-overlay-z-index: 1000;
 
   // Light Theme Colors
   $spark-background: #fff;

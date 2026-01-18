@@ -1,5 +1,5 @@
-@use "variables" as *;
-@forward "variables";
+@use "constants" as *;
+@forward "constants";
 
 .shimmer {
 	position: absolute;

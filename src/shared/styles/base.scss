@@ -1,11 +1,12 @@
-@use "variables" as *;
+@use "constants" as *;
+@use "themes" as *;
 @use "effects";
 @use "fonts";
-@use "themes";
 @use "animations";
 @use "icons";
 @use "text";
 @use "button";
 @use "input";
 
-@forward "variables";
+@forward "constants";
+@forward "themes";

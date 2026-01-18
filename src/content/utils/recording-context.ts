@@ -14,6 +14,7 @@ import { isTopWindow } from '~shared/utils/window.js';
 import { ActionParser } from './action-parser.js';
 import { deriveElementSelector } from './element-analysis.js';
 import { ScriptCompiler } from './script-compiler.js';
+import { Toast } from '~shared/components/toast.js';
 
 /**
  * Context for managing the recording state and interactions.
@@ -115,6 +116,7 @@ export class RecordingContext {
   ): Promise<AutoRecord | undefined> {
     if (!recordData || (recordData instanceof Array && !recordData.length)) return; // No valid record to config.
     if (AutoRecordConfigModal.isMounted()) {
+      Toast.show({ content: 'Please close the existing record configuration before opening a new one.' });
       throw new Error('An AutoRecordConfigModal is already open.');
     }
     const saveState = await AutoRecordConfigModal.open(recordData);
